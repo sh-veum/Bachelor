@@ -1,0 +1,40 @@
+version: "3.4"
+
+networks:
+  dev:
+    driver: bridge
+
+services:
+  netbackend:
+    image: docker.io/library/netbackend
+    depends_on:
+      - "postgresTest"
+    container_name: netbackend
+    ports:
+      - "8088:80"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=User ID=postgres;Password=password;Server=postgresTest;Port=5432;Database=postgresTestDB;Pooling=true;
+      - ASPNETCORE_URLS=http://+:80
+    networks:
+      - dev
+
+  postgresTest:
+    image: postgres:latest
+    container_name: postgresTest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgresTestDB
+    ports:
+      - "5433:5432"
+    restart: always
+    volumes:
+      - app_data:/var/lib/postgresql/data
+    networks:
+      - dev
+
+volumes:
+  app_data:
