@@ -24,7 +24,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.¨
-// TODO: Remove app.Environment.IsProduction(), only used to see if this is working
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();

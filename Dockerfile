@@ -1,3 +1,5 @@
+# Modified code from https://youtu.be/_wp2zJHs9l0?si=7LnsRc2Vh86p3M5d
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 80
