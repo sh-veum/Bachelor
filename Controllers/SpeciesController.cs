@@ -9,29 +9,29 @@ namespace NetBackeng.Controllers;
 [Route("[controller]")]
 public class SpeciesController : ControllerBase
 {
-  private readonly ILogger<SpeciesController> _logger;
-  private readonly ApiDbContext _context;
+    private readonly ILogger<SpeciesController> _logger;
+    private readonly ApiDbContext _context;
 
-  public SpeciesController(ILogger<SpeciesController> logger, ApiDbContext context)
-  {
-    _logger = logger;
-    _context = context;
-  }
-
-  [HttpGet(Name = "GetAllSpecies")]
-  public async Task<IActionResult> Get()
-  {
-    var species = new Species()
+    public SpeciesController(ILogger<SpeciesController> logger, ApiDbContext context)
     {
-      Name = "Liten kantål"
-    };
+        _logger = logger;
+        _context = context;
+    }
 
-    _context.Add(species);
+    [HttpGet(Name = "GetAllSpecies")]
+    public async Task<IActionResult> Get()
+    {
+        // var species = new Species()
+        // {
+        //     Name = "Liten kantål"
+        // };
 
-    await _context.SaveChangesAsync();
+        // _context.Add(species);
 
-    var allSpecies = await _context.Species.ToListAsync();
-    return Ok(allSpecies);
-  }
+        // await _context.SaveChangesAsync();
+
+        var allSpecies = await _context.Species.ToListAsync();
+        return Ok(allSpecies);
+    }
 
 }
