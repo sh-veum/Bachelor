@@ -5,5 +5,5 @@ namespace NetBackend.Models.Geometry;
 public abstract class GeoJsonGeometry
 {
     public int Id { get; set; }
-    public string Type { get; set; }
+    public string? Type { get; set; }
 }

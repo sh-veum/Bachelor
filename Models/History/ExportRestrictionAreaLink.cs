@@ -1,9 +1,11 @@
+using NetBackend.Models.ControlAreas;
+
 namespace NetBackend.Models.History;
 
 public class ExportRestrictionAreaLink
 {
-    public int Id { get; set; }
-    public long? LocalityNo { get; set; }
-    public int? Year { get; set; }
-    public int? Week { get; set; }
+    public int ExportRestrictionAreaId { get; set; }
+    public ExportRestrictionArea? ExportRestrictionArea { get; set; }
+    public int DiseaseZoneHistoryId { get; set; }
+    public DiseaseZoneHistory? DiseaseZoneHistory { get; set; }
 }

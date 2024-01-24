@@ -10,18 +10,20 @@ namespace NetBackend.Controllers;
 [Route("[controller]")]
 public class AquaCultureListsController : ControllerBase
 {
+    private readonly ILogger<AquaCultureListsController> _logger;
     private readonly ApiDbContext _context;
 
-    public AquaCultureListsController(ApiDbContext context)
+    public AquaCultureListsController(ILogger<AquaCultureListsController> logger, ApiDbContext context)
     {
+        _logger = logger;
         _context = context;
     }
 
     // GET: /fishhealth/licenseelist
     [HttpGet("fishhealth/licenseelist")]
-    public async Task<ActionResult<IEnumerable<OrganizationNameIdDto>>> GetLicenseeList()
+    public ActionResult GetLicenseeList()
     {
-        return await _context.OrganizationNameIdDtos.ToListAsync();
+        return Content("Not yet implemented");
     }
 
     // GET: /fishhealth/species

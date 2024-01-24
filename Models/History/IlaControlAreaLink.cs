@@ -1,14 +1,19 @@
+using NetBackend.Models.ControlAreas;
+
 namespace NetBackend.Models.History;
 
-public class IlaControlAreaLink
+public class IlaSurveillanceAreaLink
 {
-    public int Id { get; set; }
-    public string? ForskNr { get; set; }
-    public string? ForskNavn { get; set; }
-    public string? ForskLink { get; set; }
-    public DateTime? SistEndret { get; set; }
-    public DateTime? FromDate { get; set; }
-    public DateTime? ToDate { get; set; }
-    public int? Version { get; set; }
-    public DateTime? OriginalDate { get; set; }
+    public int IlaControlAreaId { get; set; }
+    public IlaControlArea? IlaControlArea { get; set; }
+    public int DiseaseZoneHistoryId { get; set; }
+    public DiseaseZoneHistory? DiseaseZoneHistory { get; set; }
+}
+
+public class IlaProtectionAreaLink
+{
+    public int IlaControlAreaId { get; set; }
+    public IlaControlArea? IlaControlArea { get; set; }
+    public int DiseaseZoneHistoryId { get; set; }
+    public DiseaseZoneHistory? DiseaseZoneHistory { get; set; }
 }
