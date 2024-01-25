@@ -1,13 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using NetBackend.Models;
-using NetBackend.Models.Geometry;
 using NetBackend.Models.History;
-using NetBackend.Models.Dto;
 using NetBackend.Models.ControlAreas;
+using NetBackend.Models.User;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace NetBackend.Data;
 
-public class ApiDbContext : DbContext
+public class ApiDbContext : IdentityDbContext<User>
 {
     public DbSet<Species> Species { get; set; }
     public DbSet<DiseaseZoneHistory> DiseaseZoneHistories { get; set; }
@@ -33,10 +34,12 @@ public class ApiDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         // Configure foreign keys
         DbConfiguration.ConfigureRelations(modelBuilder);
 
-        // Seed data
+        // Seed dummy data
         ModelSeedData.Seed(modelBuilder);
     }
 }

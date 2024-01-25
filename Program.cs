@@ -1,20 +1,36 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NetBackend.Data;
+using NetBackend.Models.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-builder.Services.AddDbContext<ApiDbContext>(options =>
-    options.UseNpgsql(connectionString));
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add authentication (modified from https://youtu.be/ORzt0lks2H4?si=kXqRl7VUO9r9BPbN)
+builder.Services.AddAuthentication("Bearer")
+    .AddBearerToken(IdentityConstants.BearerScheme);
+
+// Add authorization
+builder.Services.AddAuthorizationBuilder();
+
+// Configure DbContext
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<ApiDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddIdentityCore<User>()
+    .AddEntityFrameworkStores<ApiDbContext>()
+    .AddApiEndpoints();
+
 var app = builder.Build();
+
+app.MapIdentityApi<User>();
 
 // Automatic migration
 using (var scope = app.Services.CreateScope())
