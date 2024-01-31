@@ -1,5 +1,8 @@
+using backend.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
 using NetBackend.Data;
 using NetBackend.Models.User;
 
@@ -9,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen();
 
 // Add authentication (modified from https://youtu.be/ORzt0lks2H4?si=kXqRl7VUO9r9BPbN)
@@ -19,13 +23,21 @@ builder.Services.AddAuthentication("Bearer")
 builder.Services.AddAuthorizationBuilder();
 
 // Configure DbContext
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var defaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var customerOneConnectionString = builder.Configuration.GetConnectionString("CustomerOneConnection");
+var customerTwoConnectionString = builder.Configuration.GetConnectionString("CustomerTwoConnection");
 
-builder.Services.AddDbContext<ApiDbContext>(options =>
-    options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<MainDbContext>(options =>
+    options.UseNpgsql(defaultConnectionString));
+
+builder.Services.AddDbContext<CustomerOneDbContext>(options =>
+    options.UseNpgsql(customerOneConnectionString));
+
+builder.Services.AddDbContext<CustomerTwoDbContext>(options =>
+    options.UseNpgsql(customerTwoConnectionString));
 
 builder.Services.AddIdentityCore<User>()
-    .AddEntityFrameworkStores<ApiDbContext>()
+    .AddEntityFrameworkStores<MainDbContext>()
     .AddApiEndpoints();
 
 var app = builder.Build();
@@ -35,8 +47,14 @@ app.MapIdentityApi<User>();
 // Automatic migration
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApiDbContext>();
-    dbContext.Database.Migrate();
+    var mainDbContext = scope.ServiceProvider.GetRequiredService<MainDbContext>();
+    mainDbContext.Database.Migrate();
+
+    var customerOneDbContext = scope.ServiceProvider.GetRequiredService<CustomerOneDbContext>();
+    customerOneDbContext.Database.Migrate();
+
+    var customerTwoDbContext = scope.ServiceProvider.GetRequiredService<CustomerTwoDbContext>();
+    customerTwoDbContext.Database.Migrate();
 }
 
 // Configure the HTTP request pipeline.¨

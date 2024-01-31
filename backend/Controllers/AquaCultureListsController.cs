@@ -11,9 +11,9 @@ namespace NetBackend.Controllers;
 public class AquaCultureListsController : ControllerBase
 {
     private readonly ILogger<AquaCultureListsController> _logger;
-    private readonly ApiDbContext _context;
+    private readonly BaseDbContext _context;
 
-    public AquaCultureListsController(ILogger<AquaCultureListsController> logger, ApiDbContext context)
+    public AquaCultureListsController(ILogger<AquaCultureListsController> logger, BaseDbContext context)
     {
         _logger = logger;
         _context = context;

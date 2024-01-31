@@ -4,11 +4,10 @@ using NetBackend.Models.History;
 using NetBackend.Models.ControlAreas;
 using NetBackend.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 
 namespace NetBackend.Data;
 
-public class ApiDbContext : IdentityDbContext<User>
+public abstract class BaseDbContext : IdentityDbContext<User>
 {
     public DbSet<Species> Species { get; set; }
     public DbSet<DiseaseZoneHistory> DiseaseZoneHistories { get; set; }
@@ -28,7 +27,7 @@ public class ApiDbContext : IdentityDbContext<User>
     public DbSet<GeoJsonPoint> GeoJsonPoints { get; set; }
     public DbSet<GeoJsonPolygon> GeoJsonPolygons { get; set; }
 
-    public ApiDbContext(DbContextOptions<ApiDbContext> options) : base(options)
+    public BaseDbContext(DbContextOptions options) : base(options)
     {
     }
 

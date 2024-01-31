@@ -11,9 +11,9 @@ public class ExportRestrictionsController : ControllerBase
 {
 
     private readonly ILogger<ExportRestrictionsController> _logger;
-    private readonly ApiDbContext _context;
+    private readonly BaseDbContext _context;
 
-    public ExportRestrictionsController(ILogger<ExportRestrictionsController> logger, ApiDbContext context)
+    public ExportRestrictionsController(ILogger<ExportRestrictionsController> logger, BaseDbContext context)
     {
         _logger = logger;
         _context = context;

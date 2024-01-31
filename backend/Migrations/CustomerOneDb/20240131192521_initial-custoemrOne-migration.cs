@@ -6,10 +6,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace NetBackend.Migrations
+namespace NetBackend.Migrations.CustomerOneDb
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class initialcustoemrOnemigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
