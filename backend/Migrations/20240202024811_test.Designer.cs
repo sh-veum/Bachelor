@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetBackend.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NetBackend.Migrations.CustomerOneDb
+namespace NetBackend.Migrations
 {
-    [DbContext(typeof(CustomerOneDbContext))]
-    partial class CustomerOneDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(MainDbContext))]
+    [Migration("20240202024811_test")]
+    partial class test
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

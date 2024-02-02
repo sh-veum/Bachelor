@@ -1,5 +1,3 @@
-using NetBackend.Models.Geometry;
-
 namespace NetBackend.Models.Dto;
 
 public class CodSpawningGroundDto
@@ -12,5 +10,4 @@ public class CodSpawningGroundDto
     public string? Bmvalue { get; set; }
     public int? Value { get; set; }
     public DateTime? RegisteredDate { get; set; }
-    public GeoJsonGeometry? Geometry { get; set; }
 }

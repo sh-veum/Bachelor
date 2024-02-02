@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using NetBackend.Models;
 using NetBackend.Models.History;
 using NetBackend.Models.ControlAreas;
-using NetBackend.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using NetBackend.Models.User;
 
 namespace NetBackend.Data;
 
@@ -21,11 +21,6 @@ public abstract class BaseDbContext : IdentityDbContext<User>
     public DbSet<IlaProtectionAreaLink> IlaProtectionAreaLinks { get; set; }
     public DbSet<PdSurveillanceAreaLink> PdSurveillanceAreaLinks { get; set; }
     public DbSet<PdProtectionAreaLink> PdProtectionAreaLinks { get; set; }
-
-    // Geo Placeholders
-    public DbSet<GeoJsonLineString> GeoJsonLineStrings { get; set; }
-    public DbSet<GeoJsonPoint> GeoJsonPoints { get; set; }
-    public DbSet<GeoJsonPolygon> GeoJsonPolygons { get; set; }
 
     public BaseDbContext(DbContextOptions options) : base(options)
     {

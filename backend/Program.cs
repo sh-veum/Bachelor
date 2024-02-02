@@ -1,9 +1,6 @@
 using System.Text.Json.Serialization;
-using backend.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
 using NetBackend.Data;
 using NetBackend.Models.User;
 

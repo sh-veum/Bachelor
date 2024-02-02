@@ -8,5 +8,4 @@ public class MainDbContext : BaseDbContext
     public MainDbContext(DbContextOptions<MainDbContext> options) : base(options)
     {
     }
-
 }
