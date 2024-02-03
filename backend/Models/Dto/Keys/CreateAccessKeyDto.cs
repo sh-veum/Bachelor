@@ -1,8 +1,7 @@
-namespace NetBackend.Models.ApiKey.Dto;
+namespace NetBackend.Models.Keys.Dto;
 
-public class ApiKeyDto
+public class CreateAccessKeyDto
 {
-    public int Id { get; set; }
     public required string KeyName { get; set; }
     public List<string>? AccessibleEndpoints { get; set; }
 }

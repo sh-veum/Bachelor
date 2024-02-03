@@ -18,7 +18,7 @@ public class TokenService : ITokenService
 
         using (Aes aes = Aes.Create())
         {
-            aes.Key = Encoding.UTF8.GetBytes(secretKey);
+            aes.Key = AdjustKeySize(secretKey, 32);
             aes.IV = iv;
 
             ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
@@ -47,7 +47,7 @@ public class TokenService : ITokenService
 
         using (Aes aes = Aes.Create())
         {
-            aes.Key = Encoding.UTF8.GetBytes(secretKey);
+            aes.Key = AdjustKeySize(secretKey, 32);
             aes.IV = iv;
             ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
 
@@ -62,5 +62,12 @@ public class TokenService : ITokenService
                 }
             }
         }
+    }
+
+    private byte[] AdjustKeySize(string secretKey, int size)
+    {
+        var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+        Array.Resize(ref keyBytes, size); // Resize to ensure the key is of the correct size
+        return keyBytes;
     }
 }

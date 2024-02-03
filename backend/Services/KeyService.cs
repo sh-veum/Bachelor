@@ -1,14 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Netbackend.Models.Dto.Keys;
 using Netbackend.Services;
+using NetBackend.Models.Keys.Dto;
 using NetBackend.Models.User;
 
 namespace NetBackend.Services;
 
 public interface IKeyService
 {
-    Task EncryptAndStoreAccessKey(ApiKey apiKey, User user);
-    Task<ActionResult<ApiKey>> DecryptAccessKey(string encryptedKey);
+    Task<AccessKey> EncryptAndStoreAccessKey(ApiKey apiKey, User user);
+    Task<(ApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey, string userId);
     Task<ApiKey> CreateApiKey(User user, string keyName, List<string> endpoints);
 }
 
@@ -43,7 +45,7 @@ public class KeyService : IKeyService
         return apiKey;
     }
 
-    public async Task EncryptAndStoreAccessKey(ApiKey apiKey, User user)
+    public async Task<AccessKey> EncryptAndStoreAccessKey(ApiKey apiKey, User user)
     {
         var dbContext = await _databaseContextService.GetUserDatabaseContext(user);
         var dataToEncrypt = $"Id:{apiKey.Id}";
@@ -56,41 +58,44 @@ public class KeyService : IKeyService
 
         dbContext.Set<AccessKey>().Add(accessKey);
         await dbContext.SaveChangesAsync();
+
+        // Create and return an AccessKeyDto instance
+        return accessKey;
     }
 
-    public async Task<ActionResult<ApiKey>> DecryptAccessKey(string encryptedKey)
+    public async Task<(ApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey, string currentUserId)
     {
         // Decrypt the data
         var decryptedData = _tokenService.Decrypt(encryptedKey, "SecretKey");
-
-        // Parse the decrypted data to extract DatabaseName and Id
         var dataParts = decryptedData.Split(',');
         var idString = dataParts.FirstOrDefault(part => part.StartsWith("Id:"))?.Split(':')[1];
 
         if (idString == null || !int.TryParse(idString, out var id))
         {
-            // If parsing fails or data is missing, return an appropriate error
-            return new BadRequestObjectResult("Invalid encrypted key format.");
+            return (null, new BadRequestObjectResult("Invalid encrypted key format."));
         }
 
-        // Get the database context using the extracted DatabaseName
         var dbContext = await _databaseContextService.GetDatabaseContextByName("Main");
         if (dbContext == null)
         {
-            // If the database context is not found, return an appropriate error
-            return new NotFoundObjectResult("Database context not found.");
+            return (null, new NotFoundObjectResult("Database context not found."));
         }
 
-        // Query the database for the ApiKey using the extracted Id
         var apiKey = await dbContext.Set<ApiKey>().FirstOrDefaultAsync(a => a.Id == id);
-
         if (apiKey == null)
         {
-            // If the ApiKey is not found, return an appropriate error
-            return new NotFoundObjectResult("Api Key not found.");
+            return (null, new NotFoundObjectResult("Api Key not found."));
         }
 
-        // Return the found ApiKey
-        return apiKey;
+        // Check if the current user is the owner of the API key
+        if (apiKey.UserId != currentUserId)
+        {
+            // If not, return unauthorized
+            return (null, new UnauthorizedResult());
+        }
+
+        // Return the found ApiKey with no error
+        return (apiKey, null);
     }
+
 }
