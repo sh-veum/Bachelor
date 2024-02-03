@@ -1,14 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using NetBackend.Models;
-using NetBackend.Models.ControlAreas;
-using NetBackend.Models.History;
 
 namespace NetBackend.Data;
 
 public static class ModelSeedData
 {
 
-    public static void Seed(ModelBuilder modelBuilder)
+    public static void SeedAltOne(ModelBuilder modelBuilder)
     {
         // Seed data for Species
         modelBuilder.Entity<Species>().HasData(
@@ -19,94 +17,34 @@ public static class ModelSeedData
             new Species { Id = 5, Name = "Ørret" }
         );
 
-        modelBuilder.Entity<DiseaseZoneHistory>().HasData(
-            new DiseaseZoneHistory { Id = 1 },
-            new DiseaseZoneHistory { Id = 2 },
-            new DiseaseZoneHistory { Id = 3 });
+        modelBuilder.Entity<Organization>().HasData(
+            new Organization { Id = 1, OrgNo = 101, Name = "Firma AS", Address = "Gateveien 1", PostalCode = "1234", City = "Oslo" },
+            new Organization { Id = 2, OrgNo = 102, Name = "Firma 2 AS", Address = "Gateveien 2", PostalCode = "4321", City = "Oslo" },
+            new Organization { Id = 3, OrgNo = 103, Name = "Firma 3 AS", Address = "Gateveien 3", PostalCode = "5678", City = "Oslo" },
+            new Organization { Id = 4, OrgNo = 104, Name = "Firma 4 AS", Address = "Gateveien 4", PostalCode = "8765", City = "Oslo" }
+        );
+    }
 
-        // Seed data for IlaControlAreaLink
-        modelBuilder.Entity<IlaControlArea>().HasData(
-            new IlaControlArea
-            {
-                Id = 1,
-                ForskNr = "ILA001",
-                ForskNavn = "Control Area 1",
-                ForskLink = "http://example.com/controlarea1",
-                SistEndret = DateTime.SpecifyKind(new DateTime(2023, 01, 15), DateTimeKind.Utc),
-                FromDate = DateTime.SpecifyKind(new DateTime(2023, 01, 01), DateTimeKind.Utc),
-                ToDate = DateTime.SpecifyKind(new DateTime(2023, 06, 30), DateTimeKind.Utc),
-                OriginalDate = DateTime.SpecifyKind(new DateTime(2022, 12, 31), DateTimeKind.Utc),
-                Version = 1,
-            },
-            new IlaControlArea
-            {
-                Id = 2,
-                ForskNr = "ILA002",
-                ForskNavn = "Control Area 2",
-                ForskLink = "http://example.com/controlarea2",
-                SistEndret = DateTime.SpecifyKind(new DateTime(2023, 01, 15), DateTimeKind.Utc),
-                FromDate = DateTime.SpecifyKind(new DateTime(2023, 01, 01), DateTimeKind.Utc),
-                ToDate = DateTime.SpecifyKind(new DateTime(2023, 06, 30), DateTimeKind.Utc),
-                OriginalDate = DateTime.SpecifyKind(new DateTime(2022, 12, 31), DateTimeKind.Utc),
-                Version = 1,
-            });
-
-        // Seed data for PdControlAreaLink
-        modelBuilder.Entity<PdControlArea>().HasData(
-            new PdControlArea
-            {
-                Id = 1,
-                ForskNr = "001",
-                ForskNavn = "Area 1",
-                ForskLink = "http://example.com/area1",
-                SistEndret = DateTime.SpecifyKind(new DateTime(2023, 01, 15), DateTimeKind.Utc),
-                FromDate = DateTime.SpecifyKind(new DateTime(2023, 01, 01), DateTimeKind.Utc),
-                ToDate = DateTime.SpecifyKind(new DateTime(2023, 06, 30), DateTimeKind.Utc),
-                OriginalDate = DateTime.SpecifyKind(new DateTime(2022, 12, 31), DateTimeKind.Utc),
-                Version = 1,
-            },
-            new PdControlArea
-            {
-                Id = 2,
-                ForskNr = "002",
-                ForskNavn = "Area 2",
-                ForskLink = "http://example.com/area2",
-                SistEndret = DateTime.SpecifyKind(new DateTime(2023, 01, 15), DateTimeKind.Utc),
-                FromDate = DateTime.SpecifyKind(new DateTime(2023, 01, 01), DateTimeKind.Utc),
-                ToDate = DateTime.SpecifyKind(new DateTime(2023, 06, 30), DateTimeKind.Utc),
-                OriginalDate = DateTime.SpecifyKind(new DateTime(2022, 12, 31), DateTimeKind.Utc),
-                Version = 1,
-            });
-
-        // Seed data for ExportRestrictionArea
-        modelBuilder.Entity<ExportRestrictionArea>().HasData(
-            new ExportRestrictionArea { Id = 1, LocalityNo = 1, Year = 2022, Week = 1 },
-            new ExportRestrictionArea { Id = 2, LocalityNo = 2, Year = 2022, Week = 2 });
-
-        // Seed data for linking entities
-        modelBuilder.Entity<PdSurveillanceAreaLink>().HasData(
-           new PdSurveillanceAreaLink { PdControlAreaId = 1, DiseaseZoneHistoryId = 1 },
-           new PdSurveillanceAreaLink { PdControlAreaId = 2, DiseaseZoneHistoryId = 2 }
-       );
-
-        modelBuilder.Entity<PdProtectionAreaLink>().HasData(
-            new PdProtectionAreaLink { PdControlAreaId = 1, DiseaseZoneHistoryId = 2 },
-            new PdProtectionAreaLink { PdControlAreaId = 2, DiseaseZoneHistoryId = 3 }
+    public static void SeedAltTwo(ModelBuilder modelBuilder)
+    {
+        // Seed data for Species
+        modelBuilder.Entity<Species>().HasData(
+            new Species { Id = 1, Name = "Liten kantnål" },
+            new Species { Id = 2, Name = "Torsk" },
+            new Species { Id = 3, Name = "Sei" },
+            new Species { Id = 4, Name = "Laks" },
+            new Species { Id = 5, Name = "Ørret" },
+            new Species { Id = 6, Name = "Makrell" },
+            new Species { Id = 7, Name = "Sild" },
+            new Species { Id = 8, Name = "Kveite" },
+            new Species { Id = 9, Name = "Blåkveite" },
+            new Species { Id = 10, Name = "Hyse" }
         );
 
-        modelBuilder.Entity<IlaSurveillanceAreaLink>().HasData(
-            new IlaSurveillanceAreaLink { IlaControlAreaId = 1, DiseaseZoneHistoryId = 1 },
-            new IlaSurveillanceAreaLink { IlaControlAreaId = 2, DiseaseZoneHistoryId = 2 }
-        );
-
-        modelBuilder.Entity<IlaProtectionAreaLink>().HasData(
-            new IlaProtectionAreaLink { IlaControlAreaId = 1, DiseaseZoneHistoryId = 2 },
-            new IlaProtectionAreaLink { IlaControlAreaId = 2, DiseaseZoneHistoryId = 3 }
-        );
-
-        modelBuilder.Entity<ExportRestrictionAreaLink>().HasData(
-            new ExportRestrictionAreaLink { ExportRestrictionAreaId = 1, DiseaseZoneHistoryId = 1 },
-            new ExportRestrictionAreaLink { ExportRestrictionAreaId = 2, DiseaseZoneHistoryId = 2 }
+        modelBuilder.Entity<Organization>().HasData(
+            new Organization { Id = 1, OrgNo = 199, Name = "Kompni AS", Address = "Storvegen 303", PostalCode = "6000", City = "Ålesund" },
+            new Organization { Id = 2, OrgNo = 200, Name = "Kompni 2 AS", Address = "Storvegen 304", PostalCode = "6001", City = "Ålesund" },
+            new Organization { Id = 3, OrgNo = 201, Name = "Kompni 3 AS", Address = "Storvegen 305", PostalCode = "6002", City = "Ålesund" }
         );
     }
 }

@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Netbackend.Models.Dto.Keys;
 using NetBackend.Data;
 using NetBackend.Models.User;
+using NetBackend.Services;
 
 namespace Netbackend.Services;
 
@@ -17,11 +20,15 @@ public class DatabaseContextService : IDatabaseContextService
     private readonly CustomerTwoDbContext _customerTwoContext;
 
 
-    public DatabaseContextService(MainDbContext mainDbContext, CustomerOneDbContext customerOneContext, CustomerTwoDbContext customerTwoContext)
+    public DatabaseContextService(
+    MainDbContext mainDbContext,
+    CustomerOneDbContext customerOneContext,
+    CustomerTwoDbContext customerTwoContext)
     {
         _mainDbContext = mainDbContext;
         _customerOneContext = customerOneContext;
         _customerTwoContext = customerTwoContext;
+
     }
 
     public Task<DbContext> GetUserDatabaseContext(User user)

@@ -3,13 +3,13 @@ using System.Text;
 
 namespace Netbackend.Services;
 
-public interface ITokenService
+public interface ICryptologyService
 {
     string Encrypt(string text, string secretKey);
     string Decrypt(string cipherText, string secretKey);
 }
 
-public class TokenService : ITokenService
+public class CryptologyService : ICryptologyService
 {
     public string Encrypt(string text, string secretKey)
     {

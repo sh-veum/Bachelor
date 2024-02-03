@@ -9,4 +9,11 @@ public class CustomerOneDbContext : BaseDbContext
     {
     }
 
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Seed dummy data
+        ModelSeedData.SeedAltOne(modelBuilder);
+    }
 }

@@ -76,7 +76,7 @@ builder.Services.AddIdentityCore<User>()
 // Services
 builder.Services.AddScoped<IDatabaseContextService, DatabaseContextService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddSingleton<ITokenService, TokenService>();
+builder.Services.AddSingleton<ICryptologyService, CryptologyService>();
 builder.Services.AddScoped<IKeyService, KeyService>();
 
 var app = builder.Build();
