@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Netbackend.Services;
 using NetBackend.Data;
 using NetBackend.Models.User;
+using NetBackend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,7 @@ builder.Services.AddSwaggerGen(options =>
     // Define the Bearer Authentication Scheme
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Description = "Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
         Name = "Authorization",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
         Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
@@ -75,12 +76,15 @@ builder.Services.AddIdentityCore<User>()
 // Services
 builder.Services.AddScoped<IDatabaseContextService, DatabaseContextService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<ICryptologyService, CryptologyService>();
+builder.Services.AddScoped<IKeyService, KeyService>();
 
 var app = builder.Build();
 
 app.MapIdentityApi<User>();
 
 // app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Automatic migration

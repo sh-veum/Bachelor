@@ -3,18 +3,21 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetBackend.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NetBackend.Migrations.CustomerTwoDb
+namespace NetBackend.Migrations.CustomerOneDb
 {
-    [DbContext(typeof(CustomerTwoDbContext))]
-    partial class CustomerTwoDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(CustomerOneDbContext))]
+    [Migration("20240203174439_reduced-database")]
+    partial class reduceddatabase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -186,29 +189,38 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         new
                         {
                             Id = 1,
-                            Address = "Storvegen 303",
-                            City = "Ålesund",
-                            Name = "Kompni AS",
-                            OrgNo = 199,
-                            PostalCode = "6000"
+                            Address = "Gateveien 1",
+                            City = "Oslo",
+                            Name = "Firma AS",
+                            OrgNo = 101,
+                            PostalCode = "1234"
                         },
                         new
                         {
                             Id = 2,
-                            Address = "Storvegen 304",
-                            City = "Ålesund",
-                            Name = "Kompni 2 AS",
-                            OrgNo = 200,
-                            PostalCode = "6001"
+                            Address = "Gateveien 2",
+                            City = "Oslo",
+                            Name = "Firma 2 AS",
+                            OrgNo = 102,
+                            PostalCode = "4321"
                         },
                         new
                         {
                             Id = 3,
-                            Address = "Storvegen 305",
-                            City = "Ålesund",
-                            Name = "Kompni 3 AS",
-                            OrgNo = 201,
-                            PostalCode = "6002"
+                            Address = "Gateveien 3",
+                            City = "Oslo",
+                            Name = "Firma 3 AS",
+                            OrgNo = 103,
+                            PostalCode = "5678"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Address = "Gateveien 4",
+                            City = "Oslo",
+                            Name = "Firma 4 AS",
+                            OrgNo = 104,
+                            PostalCode = "8765"
                         });
                 });
 
@@ -253,31 +265,6 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         {
                             Id = 5,
                             Name = "Ørret"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "Makrell"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Name = "Sild"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Name = "Kveite"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Name = "Blåkveite"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Name = "Hyse"
                         });
                 });
 
