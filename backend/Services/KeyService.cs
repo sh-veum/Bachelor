@@ -9,7 +9,7 @@ public interface IKeyService
 {
     Task EncryptAndStoreAccessKey(ApiKey apiKey, User user);
     Task<ActionResult<ApiKey>> DecryptAccessKey(string encryptedKey);
-    Task<ApiKey> CreateApiKey(User user, List<string> endpoints);
+    Task<ApiKey> CreateApiKey(User user, string keyName, List<string> endpoints);
 }
 
 public class KeyService : IKeyService
@@ -23,7 +23,7 @@ public class KeyService : IKeyService
         _databaseContextService = databaseContextService;
     }
 
-    public async Task<ApiKey> CreateApiKey(User user, List<string> endpoints)
+    public async Task<ApiKey> CreateApiKey(User user, string keyName, List<string> endpoints)
     {
         var dbContext = await _databaseContextService.GetDatabaseContextByName("Main");
 
@@ -31,6 +31,7 @@ public class KeyService : IKeyService
         var apiKey = new ApiKey
         {
             UserId = user.Id,
+            KeyName = keyName,
             AccessibleEndpoints = endpoints,
             User = user
         };

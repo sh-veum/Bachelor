@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Name.Models.Dto;
 using Netbackend.Services;
+using NetBackend.Models.ApiKey.Dto;
 using NetBackend.Models.Dto;
 using NetBackend.Models.User;
 using NetBackend.Services;
@@ -67,7 +68,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("create-apikey")]
-    public async Task<IActionResult> CreateApiKey([FromBody] CreateApiKeyRequestDto model)
+    public async Task<IActionResult> CreateApiKey([FromBody] CreateApiKeyDto model)
     {
         var user = await _userManager.GetUserAsync(HttpContext.User);
         if (user == null)
@@ -75,12 +76,12 @@ public class UserController : ControllerBase
             return Unauthorized();
         }
 
-        if (model.Endpoints == null)
+        if (model.AccessibleEndpoints == null)
         {
             return BadRequest("Endpoints are be null.");
         }
 
-        var apiKey = await _keyService.CreateApiKey(user, model.Endpoints);
+        var apiKey = await _keyService.CreateApiKey(user, model.KeyName, model.AccessibleEndpoints);
 
         if (apiKey == null)
         {
@@ -91,8 +92,8 @@ public class UserController : ControllerBase
         var apiKeyDto = new ApiKeyDto
         {
             Id = apiKey.Id,
-            UserName = apiKey.User.UserName ?? "",
-            AccessibleEndpoints = apiKey.AccessibleEndpoints,
+            KeyName = apiKey.KeyName,
+            AccessibleEndpoints = apiKey.AccessibleEndpoints
         };
 
         return Ok(apiKeyDto);
