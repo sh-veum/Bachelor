@@ -9,7 +9,6 @@ public interface IUserService
     Task<(User user, ActionResult error)> GetUserAsync(HttpContext httpContext);
 }
 
-
 public class UserService : IUserService
 {
     private readonly UserManager<User> _userManager;

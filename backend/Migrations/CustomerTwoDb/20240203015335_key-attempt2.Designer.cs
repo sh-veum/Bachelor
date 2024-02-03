@@ -3,18 +3,21 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetBackend.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NetBackend.Migrations.CustomerOneDb
+namespace NetBackend.Migrations.CustomerTwoDb
 {
-    [DbContext(typeof(CustomerOneDbContext))]
-    partial class CustomerOneDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(CustomerTwoDbContext))]
+    [Migration("20240203015335_key-attempt2")]
+    partial class keyattempt2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -22,6 +22,9 @@ public abstract class BaseDbContext : IdentityDbContext<User>
     public DbSet<PdSurveillanceAreaLink> PdSurveillanceAreaLinks { get; set; }
     public DbSet<PdProtectionAreaLink> PdProtectionAreaLinks { get; set; }
 
+    // Key
+    public DbSet<AccessKey> AccessKeys { get; set; }
+
     public BaseDbContext(DbContextOptions options) : base(options)
     {
     }

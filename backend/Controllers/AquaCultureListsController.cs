@@ -1,17 +1,12 @@
-using backend.Enums;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Services;
 using NetBackend.Models;
-using NetBackend.Models.User;
 
 namespace NetBackend.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-[Authorize]
 public class AquaCultureListsController : ControllerBase
 {
     private readonly ILogger<AquaCultureListsController> _logger;
