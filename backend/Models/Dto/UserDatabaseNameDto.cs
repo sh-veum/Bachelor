@@ -1,6 +1,6 @@
-namespace Name.Models.Dto;
+namespace NetBackend.Models.Dto;
 
-using backend.Enums;
+using NetBackend.Enums;
 
 public class UserDatabaseNameDto
 {

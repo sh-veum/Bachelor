@@ -1,12 +1,8 @@
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Models.Dto.Keys;
-using Netbackend.Services;
-using NetBackend.Data;
 using NetBackend.Models;
 using NetBackend.Models.Dto;
-using NetBackend.Models.User;
 using NetBackend.Services;
 
 namespace NetBackend.Controllers;

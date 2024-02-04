@@ -1,5 +1,3 @@
-using NetBackend.Models.Dto;
-
 namespace NetBackend.Models;
 
 public class Organization

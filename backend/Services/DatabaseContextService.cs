@@ -1,11 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Netbackend.Models.Dto.Keys;
 using NetBackend.Data;
 using NetBackend.Models.User;
-using NetBackend.Services;
 
-namespace Netbackend.Services;
+namespace NetBackend.Services;
 
 public interface IDatabaseContextService
 {

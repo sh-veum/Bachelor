@@ -1,4 +1,4 @@
-namespace backend.Enums;
+namespace NetBackend.Enums;
 
 public enum DatabaseType
 {
