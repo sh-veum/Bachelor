@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-def run_migration_commands(migrations_name, folder_path='Data/DbContexts/'):
+def run_migration_and_update(migrations_name, folder_path='Data/DbContexts/'):
     # Ensure the folder exists
     if not os.path.exists(folder_path):
         print(f"The folder {folder_path} does not exist.")
@@ -31,4 +31,4 @@ def run_migration_commands(migrations_name, folder_path='Data/DbContexts/'):
 
 if __name__ == "__main__":
     migrations_name = input("Enter the migrations name: ")
-    run_migration_commands(migrations_name)
+    run_migration_and_update(migrations_name)
