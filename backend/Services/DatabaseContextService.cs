@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using NetBackend.Data;
+using NetBackend.Constants;
+using NetBackend.Data.DbContexts;
 using NetBackend.Models.User;
 
 namespace NetBackend.Services;
@@ -37,9 +38,9 @@ public class DatabaseContextService : IDatabaseContextService
 
         DbContext context = user.DatabaseName switch
         {
-            "Main" => _mainDbContext,
-            "Customer1" => _customerOneContext,
-            "Customer2" => _customerTwoContext,
+            DatabaseConstants.MainDbName => _mainDbContext,
+            DatabaseConstants.CustomerOneDbName => _customerOneContext,
+            DatabaseConstants.CustomerTwoDbName => _customerTwoContext,
             _ => throw new ArgumentException("Database not found or not assigned to user.")
         };
 
@@ -55,9 +56,9 @@ public class DatabaseContextService : IDatabaseContextService
 
         DbContext context = databaseName switch
         {
-            "Main" => _mainDbContext,
-            "Customer1" => _customerOneContext,
-            "Customer2" => _customerTwoContext,
+            DatabaseConstants.MainDbName => _mainDbContext,
+            DatabaseConstants.CustomerOneDbName => _customerOneContext,
+            DatabaseConstants.CustomerTwoDbName => _customerTwoContext,
             _ => throw new ArgumentException("Database not found or not assigned.")
         };
 

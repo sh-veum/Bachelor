@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Models.Dto.Keys;
+using NetBackend.Constants;
 using NetBackend.Models;
 using NetBackend.Models.Dto;
 using NetBackend.Services;
@@ -8,7 +9,7 @@ using NetBackend.Services;
 namespace NetBackend.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route(ControllerConstants.AquaCultureListControllerRoute)]
 public class AquaCultureListsController : ControllerBase
 {
     private readonly ILogger<AquaCultureListsController> _logger;
@@ -44,17 +45,15 @@ public class AquaCultureListsController : ControllerBase
 
                 dbContext = await _databaseContextService.GetUserDatabaseContext(user);
             }
-            else
+            else if (model != null)
             {
-                if (model != null)
-                {
-                    // Get the database context using the access key
-                    (dbContext, var errorResult) = await _keyService.ProcessAccessKey(model.EncryptedKey);
-                    if (errorResult != null) return errorResult;
+                // Get the database context using the access key
+                (dbContext, var errorResult) = await _keyService.ProcessAccessKey(model.EncryptedKey);
+                if (errorResult != null) return errorResult;
 
-                    if (dbContext is null) return BadRequest("Database context is null.");
-                }
+                if (dbContext is null) return BadRequest("Database context is null.");
             }
+
 
             if (dbContext is null) return BadRequest("Database context is null.");
 
@@ -87,16 +86,13 @@ public class AquaCultureListsController : ControllerBase
 
                 dbContext = await _databaseContextService.GetUserDatabaseContext(user);
             }
-            else
+            else if (model != null)
             {
-                if (model != null)
-                {
-                    // Get the database context using the access key
-                    (dbContext, var errorResult) = await _keyService.ProcessAccessKey(model.EncryptedKey);
-                    if (errorResult != null) return errorResult;
+                // Get the database context using the access key
+                (dbContext, var errorResult) = await _keyService.ProcessAccessKey(model.EncryptedKey);
+                if (errorResult != null) return errorResult;
 
-                    if (dbContext is null) return BadRequest("Database context is null.");
-                }
+                if (dbContext is null) return BadRequest("Database context is null.");
             }
 
             if (dbContext is null) return BadRequest("Database context is null.");

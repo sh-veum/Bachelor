@@ -5,16 +5,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using NetBackend.Data;
+using NetBackend.Data.DbContexts;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NetBackend.Migrations
+namespace NetBackend.Migrations.CustomerOneDb
 {
-    [DbContext(typeof(MainDbContext))]
-    [Migration("20240203174326_reduced-database")]
-    partial class reduceddatabase
+    [DbContext(typeof(CustomerOneDbContext))]
+    [Migration("20240204155828_initial-migration")]
+    partial class initialmigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -158,6 +158,132 @@ namespace NetBackend.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("NetBackend.Models.Organization", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("City")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("OrgNo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Organization");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Address = "Gateveien 1",
+                            City = "Oslo",
+                            Name = "Firma AS",
+                            OrgNo = 101,
+                            PostalCode = "1234"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Address = "Gateveien 2",
+                            City = "Oslo",
+                            Name = "Firma 2 AS",
+                            OrgNo = 102,
+                            PostalCode = "4321"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Address = "Gateveien 3",
+                            City = "Oslo",
+                            Name = "Firma 3 AS",
+                            OrgNo = 103,
+                            PostalCode = "5678"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Address = "Gateveien 4",
+                            City = "Oslo",
+                            Name = "Firma 4 AS",
+                            OrgNo = 104,
+                            PostalCode = "8765"
+                        });
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Species", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Species");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Liten kantnål"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Torsk"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Sei"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Laks"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Ørret"
+                        });
+                });
+
+            modelBuilder.Entity("NetBackend.Models.User.AccessKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("KeyHash")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccessKeys");
+                });
+
             modelBuilder.Entity("NetBackend.Models.User.ApiKey", b =>
                 {
                     b.Property<int>("Id")
@@ -181,7 +307,7 @@ namespace NetBackend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Keys");
+                    b.ToTable("ApiKey");
                 });
 
             modelBuilder.Entity("NetBackend.Models.User.User", b =>

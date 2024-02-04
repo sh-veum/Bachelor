@@ -1,13 +1,16 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Services;
+using NetBackend.Constants;
 using NetBackend.Models.User;
 
 namespace NetBackend.Services;
 
 public interface IKeyService
 {
-    Task<AccessKey> EncryptAndStoreAccessKey(ApiKey apiKey, User user);
+    Task<string> EncryptAndStoreAccessKey(ApiKey apiKey, User user);
     Task<(ApiKey?, IActionResult?)> DecryptAccessKeyUserCheck(string encryptedKey, string userId);
     Task<(ApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey);
     Task<ApiKey> CreateApiKey(User user, string keyName, List<string> endpoints);
@@ -35,7 +38,7 @@ public class KeyService : IKeyService
 
     public async Task<ApiKey> CreateApiKey(User user, string keyName, List<string> endpoints)
     {
-        var dbContext = await _databaseContextService.GetDatabaseContextByName("Main");
+        var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
         // Create a new ApiKey instance
         var apiKey = new ApiKey
@@ -53,28 +56,30 @@ public class KeyService : IKeyService
         return apiKey;
     }
 
-    public async Task<AccessKey> EncryptAndStoreAccessKey(ApiKey apiKey, User user)
+    public async Task<string> EncryptAndStoreAccessKey(ApiKey apiKey, User user)
     {
         var dbContext = await _databaseContextService.GetUserDatabaseContext(user);
         var dataToEncrypt = $"Id:{apiKey.Id}";
-        var encryptedKey = _cryptologyService.Encrypt(dataToEncrypt, "SecretKey"); // TODO: STORE THIS SECRET KEY IN A SAFE PLACE
+        var encryptedKey = _cryptologyService.Encrypt(dataToEncrypt, CryptologyConstants.SecretKey);
+
+        // Compute hash of the encrypted key.
+        var keyHash = ComputeSha256Hash(encryptedKey);
 
         var accessKey = new AccessKey
         {
-            EncryptedKey = encryptedKey,
+            KeyHash = keyHash
         };
 
         dbContext.Set<AccessKey>().Add(accessKey);
         await dbContext.SaveChangesAsync();
 
-        // Create and return an AccessKeyDto instance
-        return accessKey;
+        return encryptedKey;
     }
 
     public async Task<(ApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey)
     {
         // Decrypt the data
-        var decryptedData = _cryptologyService.Decrypt(encryptedKey, "SecretKey");
+        var decryptedData = _cryptologyService.Decrypt(encryptedKey, CryptologyConstants.SecretKey);
         var dataParts = decryptedData.Split(',');
         var idString = dataParts.FirstOrDefault(part => part.StartsWith("Id:"))?.Split(':')[1];
 
@@ -83,7 +88,7 @@ public class KeyService : IKeyService
             return (null, new BadRequestObjectResult("Invalid encrypted key format."));
         }
 
-        var dbContext = await _databaseContextService.GetDatabaseContextByName("Main");
+        var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         if (dbContext == null)
         {
             return (null, new NotFoundObjectResult("Database context not found."));
@@ -133,10 +138,35 @@ public class KeyService : IKeyService
 
         if (apiKey?.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
 
-        var mainDbContext = await _databaseContextService.GetDatabaseContextByName("Main");
+        var mainDbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         string databaseName = mainDbContext.Set<User>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
 
         var selectedContext = await _databaseContextService.GetDatabaseContextByName(databaseName);
+
+        // Compute hash of the encrypted key and check if it exists in the database
+        var keyHash = ComputeSha256Hash(encryptedKey);
+        var accessKey = await selectedContext.Set<AccessKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
+        if (accessKey == null)
+        {
+            return (null, new UnauthorizedResult());
+        }
+
         return (selectedContext, null);
     }
+
+    private static string ComputeSha256Hash(string rawData)
+    {
+        using (SHA256 sha256Hash = SHA256.Create())
+        {
+            byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                builder.Append(bytes[i].ToString("x2"));
+            }
+            return builder.ToString();
+        }
+    }
 }
+

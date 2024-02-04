@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using NetBackend.Models.User;
 
-namespace NetBackend.Data;
+namespace NetBackend.Data.DbContexts;
 
 public class MainDbContext : IdentityDbContext<User>
 {

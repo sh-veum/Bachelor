@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace NetBackend.Data;
+namespace NetBackend.Data.DbContexts;
 
 public class CustomerOneDbContext : BaseDbContext
 {

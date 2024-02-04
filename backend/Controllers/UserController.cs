@@ -7,11 +7,12 @@ using Netbackend.Models.Dto.Keys;
 using NetBackend.Models.Keys.Dto;
 using NetBackend.Models.User;
 using NetBackend.Services;
+using NetBackend.Constants;
 
 namespace NetBackend.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route(ControllerConstants.UserControllerRoute)]
 [Authorize]
 public class UserController : ControllerBase
 {
@@ -59,9 +60,9 @@ public class UserController : ControllerBase
 
             user.DatabaseName = model.Database switch
             {
-                DatabaseType.Main => "Main",
-                DatabaseType.Customer1 => "Customer1",
-                DatabaseType.Customer2 => "Customer2",
+                DatabaseType.Main => DatabaseConstants.MainDbName,
+                DatabaseType.Customer1 => DatabaseConstants.CustomerOneDbName,
+                DatabaseType.Customer2 => DatabaseConstants.CustomerTwoDbName,
                 _ => user.DatabaseName // In case of an invalid enum value, do not change the database name
             };
 
@@ -110,7 +111,7 @@ public class UserController : ControllerBase
 
             var accesKeyDto = new AccessKeyDto
             {
-                EncryptedKey = accesKey.EncryptedKey ?? ""
+                EncryptedKey = accesKey ?? ""
             };
 
             return Ok(accesKeyDto);
