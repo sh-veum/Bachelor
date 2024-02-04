@@ -4,17 +4,12 @@ Docker Desktop
 
 .NET 8.0 SDK
 
+Python (only if you need to run update-databases.py)
+
+## Run
+
 run command: "docker-compose up --build"
 
-### To Test: http://localhost:8088/swagger
+### To update databases
 
-## DB:
-
-Port: 5433
-UserID: postgres
-password: password
-Database: postgresTestDB
-
-## Error
-
-Might have to run command: "dotnet ef migrations add Initial". If so, remember to install the dotnet-ef tool
+run command: py update-databases.py
