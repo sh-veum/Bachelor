@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Services;
+using NetBackend.Constants;
 using NetBackend.Data.DbContexts;
 using NetBackend.Models.User;
 using NetBackend.Services;
@@ -79,9 +80,25 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<ICryptologyService, CryptologyService>();
 builder.Services.AddScoped<IKeyService, KeyService>();
 
+// CORS policy with the frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "AllowSpecificOrigin",
+                      policy =>
+                      {
+                          policy.WithOrigins(FrontendConstants.FrontEndURL)
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
+
+
 var app = builder.Build();
 
 app.MapIdentityApi<User>();
+
+// Apllying CORS policy
+app.UseCors("AllowSpecificOrigin");
 
 // app.UseHttpsRedirection();
 app.UseAuthentication();

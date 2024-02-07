@@ -37,7 +37,7 @@ public class AquaCultureListsController : ControllerBase
             DbContext? dbContext = null;
 
             // If there is sent an access key, use it to get the database context
-            if (model == null || model?.EncryptedKey == "string" || model?.EncryptedKey == "")
+            if (model == null || model?.EncryptedKey == null || model?.EncryptedKey == "string" || model?.EncryptedKey == "")
             {
                 // If there is no access key, use the bearer key to get the database context
                 var (user, error) = await _userService.GetUserAsync(HttpContext);
@@ -78,7 +78,7 @@ public class AquaCultureListsController : ControllerBase
             DbContext? dbContext = null;
 
             // If there is sent an access key, use it to get the database context
-            if (model == null || model?.EncryptedKey == "string" || model?.EncryptedKey == "")
+            if (model == null || model?.EncryptedKey == null || model?.EncryptedKey == "string" || model?.EncryptedKey == "")
             {
                 // If there is no access key, use the bearer key to get the database context
                 var (user, error) = await _userService.GetUserAsync(HttpContext);
