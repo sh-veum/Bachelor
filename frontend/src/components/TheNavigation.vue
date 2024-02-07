@@ -26,6 +26,11 @@ import {
           Customer page
         </NavigationMenuLink>
       </NavigationMenuItem>
+      <NavigationMenuItem>
+        <NavigationMenuLink href="/login" :class="navigationMenuTriggerStyle()">
+          Login
+        </NavigationMenuLink>
+      </NavigationMenuItem>
     </NavigationMenuList>
   </NavigationMenu>
 </template>
