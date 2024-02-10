@@ -15,6 +15,7 @@ public interface IKeyService
     Task<(ApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey);
     Task<ApiKey> CreateApiKey(User user, string keyName, List<string> endpoints);
     Task<(DbContext?, IActionResult?)> ProcessAccessKey(string encryptedKey);
+    Task<IActionResult> RemoveAccessKey(string encryptedKey);
 }
 
 public class KeyService : IKeyService
@@ -46,7 +47,9 @@ public class KeyService : IKeyService
             UserId = user.Id,
             KeyName = keyName,
             AccessibleEndpoints = endpoints,
-            User = user
+            User = user,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresIn = KeyConstants.ExpiresIn
         };
 
         // Add the new ApiKey to the DbContext
@@ -127,6 +130,15 @@ public class KeyService : IKeyService
         var (apiKey, errorResult) = await DecryptAccessKey(encryptedKey);
         if (errorResult != null) return (null, errorResult);
 
+        if (apiKey != null)
+        {
+            var expirationDate = apiKey.CreatedAt.AddDays(apiKey.ExpiresIn);
+            if (DateTime.UtcNow > expirationDate)
+            {
+                return (null, new UnauthorizedResult());
+            }
+        }
+
         var httpContext = _httpContextAccessor.HttpContext;
         if (apiKey != null
             && apiKey.AccessibleEndpoints != null
@@ -153,6 +165,45 @@ public class KeyService : IKeyService
 
         return (selectedContext, null);
     }
+
+    public async Task<IActionResult> RemoveAccessKey(string encryptedKey)
+    {
+        var (apiKey, errorResult) = await DecryptAccessKey(encryptedKey);
+        if (errorResult != null)
+        {
+            return errorResult;
+        }
+
+        var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        if (dbContext == null)
+        {
+            return new NotFoundObjectResult("Database context not found.");
+        }
+
+        if (apiKey != null)
+        {
+            dbContext.Set<ApiKey>().Remove(apiKey);
+            await dbContext.SaveChangesAsync();
+        }
+
+        return new OkResult();
+    }
+
+    // public async Task<IActionResult> RemoveAccessKey(string encryptedKey)
+    // {
+    //     var (apiKey, errorResult) = await DecryptAccessKey(encryptedKey);
+    //     if (errorResult != null)
+    //     {
+    //         return errorResult;
+    //     }
+
+    //     if (apiKey != null)
+    //     {
+    //         apiKey.ExpiresIn = 0;
+    //     }
+
+    //     return new OkResult();
+    // }
 
     private static string ComputeSha256Hash(string rawData)
     {

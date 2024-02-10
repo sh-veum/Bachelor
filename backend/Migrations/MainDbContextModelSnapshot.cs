@@ -166,6 +166,12 @@ namespace NetBackend.Migrations
                     b.Property<List<string>>("AccessibleEndpoints")
                         .HasColumnType("text[]");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpiresIn")
+                        .HasColumnType("integer");
+
                     b.Property<string>("KeyName")
                         .IsRequired()
                         .HasColumnType("text");

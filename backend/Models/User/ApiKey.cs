@@ -7,4 +7,6 @@ public class ApiKey
     public required string UserId { get; set; }
     public required User User { get; set; }
     public List<string>? AccessibleEndpoints { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int ExpiresIn { get; set; }
 }
