@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NetBackend.Constants;
+using NetBackend.Services;
 
 namespace NetBackend.Controllers;
 
@@ -11,10 +12,12 @@ namespace NetBackend.Controllers;
 public class DatabaseController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
+    private readonly IApiService _apiService;
 
-    public DatabaseController(ILogger<UserController> logger)
+    public DatabaseController(ILogger<UserController> logger, IApiService apiService)
     {
         _logger = logger;
+        _apiService = apiService;
     }
 
     [HttpGet("get-database-names")]
@@ -27,5 +30,20 @@ public class DatabaseController : ControllerBase
             .ToList();
 
         return Ok(databaseNames);
+    }
+
+    [HttpGet("get-default-endpoints")]
+    public ActionResult GetDefaultApiEndpoints()
+    {
+        var endpointsInfo = DatabaseConstants.DefaultApiEndpoints
+            .Select(endpoint => new
+            {
+                endpoint.Path,
+                endpoint.Method,
+                ExpectedBody = endpoint.ExpectedBodyType != null ? _apiService.GetDtoStructure(endpoint.ExpectedBodyType) : null
+            })
+            .ToList();
+
+        return Ok(endpointsInfo);
     }
 }

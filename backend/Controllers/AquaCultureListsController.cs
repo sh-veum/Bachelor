@@ -59,7 +59,7 @@ public class AquaCultureListsController : ControllerBase
 
             // Fetch all licensees
             var allLicenses = await dbContext.Set<Organization>()
-                .Select(o => new OrganizationNameIdDto { OrgNo = o.OrgNo, Name = o.Name })
+                .Select(o => new OrganizationDto { OrgNo = o.OrgNo, Name = o.Name })
                 .ToListAsync();
             return Ok(allLicenses);
         }

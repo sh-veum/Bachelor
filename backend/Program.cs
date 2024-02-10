@@ -81,6 +81,7 @@ builder.Services.AddScoped<IDatabaseContextService, DatabaseContextService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<ICryptologyService, CryptologyService>();
 builder.Services.AddScoped<IKeyService, KeyService>();
+builder.Services.AddSingleton<IApiService, ApiService>();
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>
