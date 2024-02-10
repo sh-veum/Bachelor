@@ -1,3 +1,123 @@
+<script setup lang="ts">
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+
+interface User {
+  userName: string
+  email: string
+  assignedDatabase: string | null
+  role: string | null
+  isEditing: boolean
+}
+
+// New interfaces for dropdowns
+interface EditableUser extends User {
+  newRole?: string
+  newDatabase?: string
+}
+
+const users = ref<EditableUser[]>([])
+const databases = ref<string[]>([])
+const roles = ref<string[]>([])
+
+// Fetch all users, databases, and roles
+const fetchData = async () => {
+  try {
+    const usersResponse = await axios.get('http://localhost:8088/api/user/get-all-users')
+    users.value = usersResponse.data.map((user: User) => ({ ...user, isEditing: false }))
+
+    const databasesResponse = await axios.get(
+      'http://localhost:8088/api/database/get-database-names'
+    )
+    databases.value = databasesResponse.data
+
+    const rolesResponse = await axios.get('http://localhost:8088/api/user/roles')
+    roles.value = rolesResponse.data
+  } catch (error) {
+    console.error('Failed to fetch data:', error)
+  }
+}
+
+const editUser = (user: EditableUser) => {
+  user.isEditing = true
+  user.newDatabase = user.assignedDatabase ?? undefined
+  user.newRole = user.role ?? undefined
+}
+
+const saveChanges = async (user: EditableUser) => {
+  try {
+    if (user.newRole !== user.role) {
+      await axios.post('http://localhost:8088/api/user/change-role', {
+        email: user.email,
+        role: user.newRole
+      })
+    }
+    if (user.newDatabase !== user.assignedDatabase) {
+      await axios.post('http://localhost:8088/api/user/update-database-name', {
+        email: user.email,
+        database: user.newDatabase
+      })
+    }
+    user.assignedDatabase = user.newDatabase ?? null
+    user.role = user.newRole ?? null
+    user.isEditing = false
+    // fetchData()
+  } catch (error) {
+    console.error('Failed to save changes:', error)
+  }
+}
+
+onMounted(fetchData)
+</script>
+
 <template>
-  <h1>You are an Admin!</h1>
+  <Table class="w-[800px]">
+    <TableCaption>List of All Users</TableCaption>
+    <TableHeader>
+      <TableRow>
+        <TableHead class="w-[200px]">Email</TableHead>
+        <TableHead class="w-[200px]">Database</TableHead>
+        <TableHead class="w-[200px]">Role</TableHead>
+        <TableHead class="w-[200px]">Actions</TableHead>
+      </TableRow>
+    </TableHeader>
+    <TableBody>
+      <TableRow v-for="user in users" :key="user.email" class="h-20">
+        <TableCell>{{ user.email }}</TableCell>
+        <TableCell>
+          <select v-if="user.isEditing" v-model="user.newDatabase" class="p-2 border rounded">
+            <option v-for="db in databases" :key="db" :value="db">{{ db }}</option>
+          </select>
+          <span v-else>{{ user.assignedDatabase || 'N/A' }}</span>
+        </TableCell>
+        <TableCell>
+          <select v-if="user.isEditing" v-model="user.newRole" class="p-2 border rounded">
+            <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
+          </select>
+          <span v-else>{{ user.role || 'Unassigned' }}</span>
+        </TableCell>
+        <TableCell>
+          <button
+            v-if="user.isEditing"
+            @click="saveChanges(user)"
+            class="p-2 bg-blue-500 text-white rounded"
+          >
+            Save
+          </button>
+          <button v-else @click="editUser(user)" class="p-2 bg-green-500 text-white rounded">
+            Edit
+          </button>
+        </TableCell>
+      </TableRow>
+    </TableBody>
+  </Table>
 </template>
