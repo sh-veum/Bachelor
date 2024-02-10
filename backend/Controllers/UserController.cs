@@ -33,10 +33,6 @@ public class UserController : ControllerBase
         try
         {
             var user = await _userManager.GetUserAsync(HttpContext.User);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
 
             return Ok(user);
         }
@@ -48,6 +44,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("update-database-name")]
+    [Authorize(Roles = RoleConstants.AdminRole)]
     public async Task<IActionResult> UpdateUserDatabaseName([FromBody] UserDatabaseNameDto model)
     {
         try

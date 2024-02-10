@@ -71,6 +71,8 @@ builder.Services.AddDbContext<CustomerTwoDbContext>(options =>
     options.UseNpgsql(customerTwoConnectionString));
 
 builder.Services.AddIdentityCore<User>()
+    .AddRoles<IdentityRole>()
+    .AddDefaultTokenProviders()
     .AddEntityFrameworkStores<MainDbContext>()
     .AddApiEndpoints();
 
@@ -107,13 +109,34 @@ app.UseAuthorization();
 // Automatic migration
 using (var scope = app.Services.CreateScope())
 {
-    var mainDbContext = scope.ServiceProvider.GetRequiredService<MainDbContext>();
-    mainDbContext.Database.Migrate();
+    var services = scope.ServiceProvider;
 
-    var customerOneDbContext = scope.ServiceProvider.GetRequiredService<CustomerOneDbContext>();
+    var dbContext = services.GetRequiredService<MainDbContext>();
+
+    dbContext.Database.Migrate();
+
+    // Make sure the roles and admin user is created
+    try
+    {
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = services.GetRequiredService<UserManager<User>>();
+
+        await ApplicationDbInitializer.SeedRoles(roleManager);
+        // Admin user
+        await ApplicationDbInitializer.EnsureUser(userManager, roleManager, SecretConstants.AdminEmail, SecretConstants.AdminPassword, RoleConstants.AdminRole);
+        // Test user
+        await ApplicationDbInitializer.EnsureUser(userManager, roleManager, SecretConstants.TestEmail, SecretConstants.TestPassword, RoleConstants.CustomerRole);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred seeding the DB.");
+    }
+
+    var customerOneDbContext = services.GetRequiredService<CustomerOneDbContext>();
     customerOneDbContext.Database.Migrate();
 
-    var customerTwoDbContext = scope.ServiceProvider.GetRequiredService<CustomerTwoDbContext>();
+    var customerTwoDbContext = services.GetRequiredService<CustomerTwoDbContext>();
     customerTwoDbContext.Database.Migrate();
 }
 

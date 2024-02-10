@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using NetBackend.Models.User;
 
 namespace NetBackend.Data.DbContexts;
 
-public class MainDbContext : IdentityDbContext<User>
+public class MainDbContext : IdentityDbContext<User, IdentityRole, string>
 {
     public DbSet<ApiKey> Keys { get; set; }
 
@@ -20,5 +21,6 @@ public class MainDbContext : IdentityDbContext<User>
             .HasMany(u => u.ApiKey)
             .WithOne(k => k.User)
             .HasForeignKey(k => k.UserId);
+
     }
 }

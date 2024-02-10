@@ -23,7 +23,12 @@ public class UserService : IUserService
         var user = await _userManager.GetUserAsync(httpContext.User);
         if (user == null)
         {
-            return (null!, new UnauthorizedResult());
+            var httpContextUser = httpContext.User.Identity?.Name;
+
+            return (null!, new UnauthorizedObjectResult(new
+            {
+                message = $"User not found. {httpContextUser}"
+            }));
         }
 
         return (user, null!);

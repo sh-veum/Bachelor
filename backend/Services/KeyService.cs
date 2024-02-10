@@ -63,7 +63,7 @@ public class KeyService : IKeyService
     {
         var dbContext = await _databaseContextService.GetUserDatabaseContext(user);
         var dataToEncrypt = $"Id:{apiKey.Id}";
-        var encryptedKey = _cryptologyService.Encrypt(dataToEncrypt, CryptologyConstants.SecretKey);
+        var encryptedKey = _cryptologyService.Encrypt(dataToEncrypt, SecretConstants.SecretKey);
 
         // Compute hash of the encrypted key.
         var keyHash = ComputeSha256Hash(encryptedKey);
@@ -82,7 +82,7 @@ public class KeyService : IKeyService
     public async Task<(ApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey)
     {
         // Decrypt the data
-        var decryptedData = _cryptologyService.Decrypt(encryptedKey, CryptologyConstants.SecretKey);
+        var decryptedData = _cryptologyService.Decrypt(encryptedKey, SecretConstants.SecretKey);
         var dataParts = decryptedData.Split(',');
         var idString = dataParts.FirstOrDefault(part => part.StartsWith("Id:"))?.Split(':')[1];
 

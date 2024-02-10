@@ -9,9 +9,9 @@ import axios from 'axios'
 // Axios interceptor to add the bearer token to every request
 axios.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    const authToken = localStorage.getItem('authToken')
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`
     }
     return config
   },
