@@ -6,6 +6,7 @@ const refreshToken = ref(localStorage.getItem('refreshToken'))
 
 export function useAuth() {
   const isLoggedIn = computed(() => authToken.value !== null)
+  const isRegistered = ref(false)
 
   const login = async (email: string, password: string) => {
     // Example login logic
@@ -23,5 +24,15 @@ export function useAuth() {
     localStorage.removeItem('authToken')
   }
 
-  return { isLoggedIn, login, logout }
+  const register = async (email: string, password: string) => {
+    // Example login logic
+    const response = await axios.post('http://localhost:8088/register', { email, password })
+    if (response.status === 200) {
+      isRegistered.value = true
+    } else {
+      isRegistered.value = false
+    }
+  }
+
+  return { isLoggedIn, login, logout, register, isRegistered }
 }

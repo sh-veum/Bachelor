@@ -31,6 +31,11 @@ import {
           Login
         </NavigationMenuLink>
       </NavigationMenuItem>
+      <NavigationMenuItem>
+        <NavigationMenuLink href="/register" :class="navigationMenuTriggerStyle()">
+          Register
+        </NavigationMenuLink>
+      </NavigationMenuItem>
     </NavigationMenuList>
   </NavigationMenu>
 </template>
