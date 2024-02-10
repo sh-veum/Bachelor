@@ -19,14 +19,12 @@ public class UserController : ControllerBase
     private readonly ILogger<UserController> _logger;
     private readonly UserManager<User> _userManager;
     private readonly IKeyService _keyService;
-    private readonly RoleManager<IdentityRole> _roleManager;
 
-    public UserController(ILogger<UserController> logger, UserManager<User> userManager, IKeyService keyService, RoleManager<IdentityRole> roleManager)
+    public UserController(ILogger<UserController> logger, UserManager<User> userManager, IKeyService keyService)
     {
         _logger = logger;
         _userManager = userManager;
         _keyService = keyService;
-        _roleManager = roleManager;
     }
 
     [HttpGet("userinfo")]
@@ -170,16 +168,34 @@ public class UserController : ControllerBase
         }
     }
 
-    [HttpGet("api-endpoint-test")]
-    public IActionResult GetApiEndpoint()
+    [HttpGet("get-all-users")]
+    public async Task<ActionResult<List<UserInfoDto>>> GetAllUsers()
     {
         try
         {
-            return Ok(HttpContext.Request.Path.Value);
+            var users = _userManager.Users;
+            var userDtos = new List<UserInfoDto>();
+
+            foreach (var user in users)
+            {
+                var role = await _userManager.GetRolesAsync(user);
+
+                var userDto = new UserInfoDto
+                {
+                    Email = user.Email,
+                    UserName = user.UserName,
+                    AssignedDatabase = user.DatabaseName,
+                    Role = role.FirstOrDefault()
+                };
+
+                userDtos.Add(userDto);
+            }
+
+            return Ok(userDtos);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while fetching http context.");
+            _logger.LogError(ex, "Error occurred while fetching all users.");
             return BadRequest(ex.Message);
         }
     }
