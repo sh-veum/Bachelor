@@ -8,6 +8,7 @@ using NetBackend.Models.Keys.Dto;
 using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Constants;
+using Microsoft.EntityFrameworkCore;
 
 namespace NetBackend.Controllers;
 
@@ -19,12 +20,14 @@ public class UserController : ControllerBase
     private readonly ILogger<UserController> _logger;
     private readonly UserManager<User> _userManager;
     private readonly IKeyService _keyService;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
-    public UserController(ILogger<UserController> logger, UserManager<User> userManager, IKeyService keyService)
+    public UserController(ILogger<UserController> logger, UserManager<User> userManager, IKeyService keyService, RoleManager<IdentityRole> roleManager)
     {
         _logger = logger;
         _userManager = userManager;
         _keyService = keyService;
+        _roleManager = roleManager;
     }
 
     [HttpGet("userinfo")]
@@ -92,100 +95,26 @@ public class UserController : ControllerBase
         }
     }
 
-    [HttpPost("create-accesskey")]
-    public async Task<IActionResult> CreateAccessKey([FromBody] CreateAccessKeyDto model)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(HttpContext.User);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
-
-            // Create Api Key
-            if (model.AccessibleEndpoints == null)
-            {
-                return BadRequest("Endpoints are be null.");
-            }
-
-            var apiKey = await _keyService.CreateApiKey(user, model.KeyName, model.AccessibleEndpoints);
-
-            if (apiKey == null)
-            {
-                _logger.LogError("Failed to create API key for user: {UserId}", user.Id);
-                return BadRequest("Failed to create API key.");
-            }
-
-            // Encrypt and store access key
-            var accesKey = await _keyService.EncryptAndStoreAccessKey(apiKey, user);
-
-            var accesKeyDto = new AccessKeyDto
-            {
-                EncryptedKey = accesKey ?? ""
-            };
-
-            return Ok(accesKeyDto);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while creating access key.");
-            return BadRequest(ex.Message);
-        }
-    }
-
-    [HttpPost("decrypt-accesskey")]
-    public async Task<IActionResult> DecryptAccessKey([FromBody] AccessKeyDto model)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(HttpContext.User);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
-
-            var (apiKey, errorResult) = await _keyService.DecryptAccessKeyUserCheck(model.EncryptedKey, user.Id);
-            if (errorResult != null)
-            {
-                return errorResult;
-            }
-
-            var apiKeyDto = new ApiKeyDto
-            {
-                Id = apiKey?.Id ?? 0,
-                KeyName = apiKey?.KeyName ?? "",
-                CreatedBy = apiKey?.User.Email ?? "",
-                AccessibleEndpoints = apiKey?.AccessibleEndpoints
-            };
-
-            return Ok(apiKeyDto);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while decrypting access key.");
-            return BadRequest(ex.Message);
-        }
-    }
-
     [HttpGet("get-all-users")]
+    [Authorize(Roles = RoleConstants.AdminRole)]
     public async Task<ActionResult<List<UserInfoDto>>> GetAllUsers()
     {
         try
         {
-            var users = _userManager.Users;
+            var users = await _userManager.Users.ToListAsync();
+
             var userDtos = new List<UserInfoDto>();
 
             foreach (var user in users)
             {
-                var role = await _userManager.GetRolesAsync(user);
+                var roles = await _userManager.GetRolesAsync(user);
 
                 var userDto = new UserInfoDto
                 {
                     Email = user.Email,
                     UserName = user.UserName,
                     AssignedDatabase = user.DatabaseName,
-                    Role = role.FirstOrDefault()
+                    Role = roles.FirstOrDefault()
                 };
 
                 userDtos.Add(userDto);
@@ -196,6 +125,54 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while fetching all users.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpGet("roles")]
+    [Authorize(Roles = RoleConstants.AdminRole)]
+    public async Task<ActionResult> GetAllRoles()
+    {
+        try
+        {
+            var roles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
+            return Ok(roles);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while fetching all roles.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("change-role")]
+    [Authorize(Roles = RoleConstants.AdminRole)]
+    public async Task<ActionResult> ChangeUserRole([FromBody] UserRoleDto model)
+    {
+        try
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return NotFound($"User with email {model.Email} not found.");
+            }
+
+            var roleExists = await _roleManager.RoleExistsAsync(model.Role);
+            if (!roleExists)
+            {
+                return BadRequest($"Role {model.Role} does not exist.");
+            }
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, userRoles);
+
+            await _userManager.AddToRoleAsync(user, model.Role);
+
+            return Ok($"User's role updated to {model.Role}.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while changing user role.");
             return BadRequest(ex.Message);
         }
     }
