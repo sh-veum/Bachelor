@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAuth } from '@/lib/useAuth'
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -6,6 +7,8 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle
 } from './ui/navigation-menu'
+
+const { isAdmin } = useAuth()
 </script>
 
 <template>
@@ -34,6 +37,11 @@ import {
       <NavigationMenuItem>
         <NavigationMenuLink href="/register" :class="navigationMenuTriggerStyle()">
           Register
+        </NavigationMenuLink>
+      </NavigationMenuItem>
+      <NavigationMenuItem v-if="isAdmin">
+        <NavigationMenuLink href="/admin" :class="navigationMenuTriggerStyle()">
+          Admin Page
         </NavigationMenuLink>
       </NavigationMenuItem>
     </NavigationMenuList>

@@ -11,10 +11,14 @@ const password = ref('')
 
 const testAPIResponseData = ref('')
 
-const { isLoggedIn, login, logout } = useAuth()
+const { isLoggedIn, login, logout, isAdmin } = useAuth()
 
-const handleSubmit = async () => {
+const handleLogin = async () => {
   await login(email.value, password.value)
+}
+
+const handleLogout = async () => {
+  logout()
 }
 
 const testApi = async () => {
@@ -50,17 +54,25 @@ const testApi = async () => {
 
 <template>
   <div class="pl-5">
-    <form @submit.prevent="handleSubmit">
+    <form @submit.prevent="handleLogin">
       <Input v-model="email" type="email" placeholder="Email" />
       <Input v-model="password" type="password" placeholder="Password" />
       <Button type="submit">Login</Button>
     </form>
-    <Button @click="logout">Logout</Button>
+    <form @submit.prevent="handleLogout">
+      <Button type="submit">Logout</Button>
+    </form>
     <div v-if="isLoggedIn">
       <p class="text-green-500 font-bold">Logged in</p>
     </div>
     <div v-else>
       <p class="text-red-500 font-bold">No user logged in</p>
+    </div>
+    <div v-if="isAdmin">
+      <p class="text-green-500 font-bold">Is admin</p>
+    </div>
+    <div v-else>
+      <p class="text-red-500 font-bold">Is not admin</p>
     </div>
     <Button @click="testApi">Test Api</Button>
     <TextArea
