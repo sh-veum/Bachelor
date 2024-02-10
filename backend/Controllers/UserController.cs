@@ -19,12 +19,14 @@ public class UserController : ControllerBase
     private readonly ILogger<UserController> _logger;
     private readonly UserManager<User> _userManager;
     private readonly IKeyService _keyService;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
-    public UserController(ILogger<UserController> logger, UserManager<User> userManager, IKeyService keyService)
+    public UserController(ILogger<UserController> logger, UserManager<User> userManager, IKeyService keyService, RoleManager<IdentityRole> roleManager)
     {
         _logger = logger;
         _userManager = userManager;
         _keyService = keyService;
+        _roleManager = roleManager;
     }
 
     [HttpGet("userinfo")]
@@ -33,8 +35,22 @@ public class UserController : ControllerBase
         try
         {
             var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
 
-            return Ok(user);
+            var role = await _userManager.GetRolesAsync(user);
+
+            var userDto = new UserInfoDto
+            {
+                Email = user.Email,
+                UserName = user.UserName,
+                AssignedDatabase = user.DatabaseName,
+                Role = role.FirstOrDefault()
+            };
+
+            return Ok(userDto);
         }
         catch (Exception ex)
         {
