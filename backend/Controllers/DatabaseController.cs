@@ -35,7 +35,7 @@ public class DatabaseController : ControllerBase
     [HttpGet("get-default-endpoints")]
     public ActionResult GetDefaultApiEndpoints()
     {
-        var endpointsInfo = DatabaseConstants.DefaultApiEndpoints
+        var endpointsInfo = ApiConstants.DefaultApiEndpoints
             .Select(endpoint => new
             {
                 endpoint.Path,

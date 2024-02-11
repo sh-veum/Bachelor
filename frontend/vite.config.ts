@@ -5,20 +5,20 @@ import vue from '@vitejs/plugin-vue'
 
 import tailwind from 'tailwindcss'
 import autoprefixer from 'autoprefixer'
+import path from 'node:path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    vue(),
-  ],
+  plugins: [vue()],
   css: {
     postcss: {
-      plugins: [tailwind(),autoprefixer(),],
-    },
+      plugins: [tailwind(), autoprefixer()]
+    }
   },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      //   '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': path.resolve(__dirname, './src')
     }
   }
 })

@@ -1,7 +1,5 @@
 namespace NetBackend.Models.Dto;
 
-using NetBackend.Enums;
-
 public class UserInfoDto
 {
     public string? UserName { get; set; }

@@ -98,7 +98,9 @@ public class AquaCultureListsController : ControllerBase
             if (dbContext is null) return BadRequest("Database context is null.");
 
             // Fetch all species
-            var allSpecies = await dbContext.Set<Species>().ToListAsync();
+            var allSpecies = await dbContext.Set<Species>()
+                .Select(s => new SpeciesDto { Name = s.Name }) // Map to SpeciesDto
+                .ToListAsync();
             return Ok(allSpecies);
         }
         catch (Exception ex)
