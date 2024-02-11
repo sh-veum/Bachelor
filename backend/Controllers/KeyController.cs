@@ -103,4 +103,30 @@ public class KeyController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
+
+    [HttpPost("delete-accesskey")]
+    public async Task<IActionResult> DeleteAccessKey([FromBody] AccessKeyDto model)
+    {
+        try
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var result = await _keyService.RemoveAccessKey(model.EncryptedKey);
+            if (result == null)
+            {
+                return BadRequest("Failed to delete API key.");
+            }
+
+            return Ok("API key deleted successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting access key.");
+            return BadRequest(ex.Message);
+        }
+    }
 }
