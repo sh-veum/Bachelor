@@ -3,5 +3,5 @@ import TheApiOverview from '@/components/TheApiOverview.vue'
 </script>
 
 <template>
-  <TheApiOverview />
+  <TheApiOverview class="ml-6" />
 </template>
