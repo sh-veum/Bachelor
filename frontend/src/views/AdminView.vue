@@ -8,6 +8,15 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
@@ -94,15 +103,35 @@ onMounted(fetchData)
       <TableRow v-for="user in users" :key="user.email" class="h-20">
         <TableCell>{{ user.email }}</TableCell>
         <TableCell>
-          <select v-if="user.isEditing" v-model="user.newDatabase" class="p-2 border rounded">
-            <option v-for="db in databases" :key="db" :value="db">{{ db }}</option>
-          </select>
+          <Select v-if="user.isEditing" v-model="user.newDatabase">
+            <SelectTrigger>
+              <SelectValue :value="user.newDatabase" placeholder="Select a database" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Databases</SelectLabel>
+                <SelectItem v-for="db in databases" :key="db" :value="db">
+                  {{ db }}
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
           <span v-else>{{ user.assignedDatabase || 'N/A' }}</span>
         </TableCell>
         <TableCell>
-          <select v-if="user.isEditing" v-model="user.newRole" class="p-2 border rounded">
-            <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
-          </select>
+          <Select v-if="user.isEditing" v-model="user.newRole">
+            <SelectTrigger>
+              <SelectValue :value="user.newRole" placeholder="Select a role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Roles</SelectLabel>
+                <SelectItem v-for="role in roles" :key="role" :value="role">
+                  {{ role }}
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
           <span v-else>{{ user.role || 'Unassigned' }}</span>
         </TableCell>
         <TableCell>
