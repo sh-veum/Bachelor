@@ -1,8 +1,18 @@
 <script setup lang="ts">
+import { ref, defineEmits } from 'vue'
 import TheApiOverview from '@/components/TheApiOverview.vue'
+import { Input } from '@/components/ui/input'
+
+const accessKey = ref('')
+
+const emits = defineEmits(['check-accesskey'])
+
+emits('check-accesskey', accessKey.value)
 </script>
 
 <template>
-  <!-- Need to be logged in as a user and connected to backend to see -->
-  <TheApiOverview class="ml-6" />
+  <div class="ml-6 w-[800px]">
+    <Input v-model="accessKey" placeholder="place accesskey here" />
+    <TheApiOverview :accessKey="accessKey" class="mt-2" />
+  </div>
 </template>

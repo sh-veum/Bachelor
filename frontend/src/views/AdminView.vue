@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
@@ -135,16 +136,16 @@ onMounted(fetchData)
           <span v-else>{{ user.role || 'Unassigned' }}</span>
         </TableCell>
         <TableCell>
-          <button
+          <Button
             v-if="user.isEditing"
             @click="saveChanges(user)"
             class="p-2 bg-blue-500 text-white rounded"
           >
             Save
-          </button>
-          <button v-else @click="editUser(user)" class="p-2 bg-green-500 text-white rounded">
+          </Button>
+          <Button v-else @click="editUser(user)" class="p-2 bg-green-500 text-white rounded">
             Edit
-          </button>
+          </Button>
         </TableCell>
       </TableRow>
     </TableBody>

@@ -13,21 +13,23 @@ namespace NetBackend.Controllers;
 
 [ApiController]
 [Route(ControllerConstants.KeyControllerRoute)]
-[Authorize]
 public class KeyController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
     private readonly UserManager<User> _userManager;
     private readonly IKeyService _keyService;
+    private readonly IApiService _apiService;
 
-    public KeyController(ILogger<UserController> logger, UserManager<User> userManager, IKeyService keyService)
+    public KeyController(ILogger<UserController> logger, UserManager<User> userManager, IKeyService keyService, IApiService apiService)
     {
         _logger = logger;
         _userManager = userManager;
         _keyService = keyService;
+        _apiService = apiService;
     }
 
     [HttpPost("create-accesskey")]
+    [Authorize]
     public async Task<IActionResult> CreateAccessKey([FromBody] CreateAccessKeyDto model)
     {
         try
@@ -105,6 +107,7 @@ public class KeyController : ControllerBase
     }
 
     [HttpPost("delete-accesskey")]
+    [Authorize]
     public async Task<IActionResult> DeleteAccessKey([FromBody] AccessKeyDto model)
     {
         try
@@ -126,6 +129,42 @@ public class KeyController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while deleting access key.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("accesskey-endpoints")]
+    public async Task<IActionResult> GetEndpointInfo([FromBody] AccessKeyDto accessKeyDto)
+    {
+        try
+        {
+            var (apiKey, errorResult) = await _keyService.DecryptAccessKey(accessKeyDto.EncryptedKey);
+            if (errorResult != null)
+            {
+                return errorResult;
+            }
+
+            // Assuming apiKey.AccessibleEndpoints contains paths
+            var validEndpoints = ApiConstants.DefaultApiEndpoints
+                .Where(endpoint => apiKey?.AccessibleEndpoints?.Contains(endpoint.Path) ?? false)
+                .Select(endpoint => new
+                {
+                    endpoint.Path,
+                    endpoint.Method,
+                    ExpectedBody = endpoint.ExpectedBodyType != null ? _apiService.GetDtoStructure(endpoint.ExpectedBodyType) : null
+                })
+                .ToList();
+
+            if (!validEndpoints.Any())
+            {
+                return NotFound("No valid endpoints found for the provided access key.");
+            }
+
+            return Ok(validEndpoints);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while retrieving endpoint information.");
             return BadRequest(ex.Message);
         }
     }

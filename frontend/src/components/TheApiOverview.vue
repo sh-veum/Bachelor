@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { watch, ref, defineProps } from 'vue'
 
 interface Endpoint {
   path: string
@@ -20,24 +20,56 @@ interface Endpoint {
   }
 }
 
+const props = defineProps({
+  accessKey: String
+})
+
 const endpoints = ref<Endpoint[]>([])
 
-const fetchDefaultEndpoints = async () => {
-  try {
-    // Fetch default endpoints
-    const endpointsResponse = await axios.get(
-      'http://localhost:8088/api/database/get-default-endpoints'
-    )
-    endpoints.value = endpointsResponse.data
-  } catch (error) {
-    console.error('Failed to fetch data:', error)
+// const fetchDefaultEndpoints = async () => {
+//   try {
+//     // Fetch default endpoints
+//     const response = await axios.get('http://localhost:8088/api/database/get-default-endpoints')
+//     endpoints.value = response.data
+//   } catch (error) {
+//     console.error('Failed to fetch data:', error)
+//   }
+// }
+
+const fetchAccesskeyEndpoint = async (accessKey: string) => {
+  if (
+    accessKey &&
+    /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/g.test(accessKey)
+  ) {
+    try {
+      const response = await axios.post('http://localhost:8088/api/key/accesskey-endpoints', {
+        encryptedKey: accessKey
+      })
+      endpoints.value = response.data
+    } catch (error) {
+      console.error('Failed to fetch data:', error)
+    }
+  } else {
+    // Clear the endpoints if the accessKey is empty or invalid
+    endpoints.value = []
   }
 }
 
+watch(
+  () => props.accessKey,
+  (newAccessKey) => {
+    if (newAccessKey) {
+      fetchAccesskeyEndpoint(newAccessKey)
+    } else {
+      // Optionally, fetch default endpoints or handle the absence of an access key
+      // fetchDefaultEndpoints()
+    }
+  },
+  { immediate: true }
+)
+
 const formatProperty = (property: { name: string; type: string }) =>
   `${property.name}: ${property.type}`
-
-onMounted(fetchDefaultEndpoints)
 
 // Helper to get border color class
 const methodBaseColors: { [key: string]: string } = {
