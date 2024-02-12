@@ -13,6 +13,6 @@ emits('check-accesskey', accessKey.value)
 <template>
   <div class="ml-6 w-[800px]">
     <Input v-model="accessKey" placeholder="place accesskey here" />
-    <TheApiOverview :accessKey="accessKey" class="mt-2" />
+    <TheApiOverview :accessKey="accessKey" />
   </div>
 </template>

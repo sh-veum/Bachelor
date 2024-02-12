@@ -5,9 +5,10 @@ import {
   AccordionItem,
   AccordionTrigger
 } from '@/components/ui/accordion'
-import { Badge } from '@/components/ui/badge'
 import axios from 'axios'
 import { watch, ref, defineProps } from 'vue'
+import { TextArea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 
 interface Endpoint {
   path: string
@@ -25,16 +26,7 @@ const props = defineProps({
 })
 
 const endpoints = ref<Endpoint[]>([])
-
-// const fetchDefaultEndpoints = async () => {
-//   try {
-//     // Fetch default endpoints
-//     const response = await axios.get('http://localhost:8088/api/database/get-default-endpoints')
-//     endpoints.value = response.data
-//   } catch (error) {
-//     console.error('Failed to fetch data:', error)
-//   }
-// }
+const APIResponseData = ref('')
 
 const fetchAccesskeyEndpoint = async (accessKey: string) => {
   if (
@@ -55,14 +47,41 @@ const fetchAccesskeyEndpoint = async (accessKey: string) => {
   }
 }
 
+const testApiEndpointWithAccessKey = async (endpoint: Endpoint) => {
+  try {
+    let response
+    const url = `http://localhost:8088${endpoint.path}`
+    const body = {
+      encryptedKey: props.accessKey
+    }
+
+    // Check the method and send the request accordingly
+    switch (endpoint.method) {
+      case 'POST':
+        response = await axios.post(url, body)
+        break
+      case 'GET':
+        response = await axios.get(url)
+        break
+      default:
+        console.error(`Method ${endpoint.method} is not supported`)
+        // TODO: Implement checks for other methods
+        return
+    }
+
+    console.log('API Response:', response.data)
+    APIResponseData.value = JSON.stringify(response.data, null, 2)
+  } catch (error) {
+    console.error('API Test error:', error)
+    APIResponseData.value = JSON.stringify((error as any).response?.data || 'Error', null, 2)
+  }
+}
+
 watch(
   () => props.accessKey,
   (newAccessKey) => {
     if (newAccessKey) {
       fetchAccesskeyEndpoint(newAccessKey)
-    } else {
-      // Optionally, fetch default endpoints or handle the absence of an access key
-      // fetchDefaultEndpoints()
     }
   },
   { immediate: true }
@@ -87,7 +106,7 @@ const getBadgeBgColorClass = (method: string) => `bg-${methodBaseColors[method]}
 </script>
 
 <template>
-  <Accordion type="single" class="w-[800px]" collapsible>
+  <Accordion type="single" class="mt-2" collapsible>
     <AccordionItem
       v-for="(endpoint, index) in endpoints"
       :key="index"
@@ -97,10 +116,11 @@ const getBadgeBgColorClass = (method: string) => `bg-${methodBaseColors[method]}
     >
       <AccordionTrigger>
         <div>
-          <Badge
+          <Button
+            @click="testApiEndpointWithAccessKey(endpoint)"
             :class="getBadgeBgColorClass(endpoint.method)"
             class="rounded-sm h-8 px-4 font-bold text-base text-center"
-            >{{ endpoint.method }}</Badge
+            >{{ endpoint.method }}</Button
           >
         </div>
         <div class="text-base text-left">
@@ -114,4 +134,10 @@ const getBadgeBgColorClass = (method: string) => `bg-${methodBaseColors[method]}
       </AccordionContent>
     </AccordionItem>
   </Accordion>
+  <TextArea
+    v-if="endpoints.length > 0"
+    v-model="APIResponseData"
+    class="mt-2 h-72 w-2/4"
+    placeholder="API response will appear here..."
+  />
 </template>
