@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Netbackend.Services;
 using NetBackend.Constants;
 using NetBackend.Data.DbContexts;
+using NetBackend.GraphQL;
 using NetBackend.Models.User;
 using NetBackend.Services;
 
@@ -95,6 +96,7 @@ builder.Services.AddCors(options =>
                       });
 });
 
+builder.Services.AddGraphQLServer().AddQueryType<Query>();
 
 var app = builder.Build();
 
@@ -147,6 +149,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseRouting().UseEndpoints(endpoints =>
+    {
+        endpoints.MapGraphQL();
+    });
 
 app.MapControllers();
 

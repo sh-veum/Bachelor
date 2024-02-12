@@ -180,7 +180,7 @@ namespace NetBackend.Migrations.CustomerOneDb
 
                     b.HasKey("Id");
 
-                    b.ToTable("Organization");
+                    b.ToTable("Organizations");
 
                     b.HasData(
                         new
