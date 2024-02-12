@@ -8,11 +8,14 @@ Python (only if you need to run update-databases.py)
 
 ## Run
 
+```
 run command: "docker-compose up --build"
+```
 
 ### To update databases
 
-download dotnet ef tool by running command: 
+download dotnet ef tool by running command:
+
 ```
 dotnet tool install --global dotnet-ef
 ```
