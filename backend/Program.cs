@@ -5,6 +5,7 @@ using Netbackend.Services;
 using NetBackend.Constants;
 using NetBackend.Data.DbContexts;
 using NetBackend.GraphQL;
+using NetBackend.GraphQL.Mutations;
 using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Services.Interfaces;
