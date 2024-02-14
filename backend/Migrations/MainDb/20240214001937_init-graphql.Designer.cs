@@ -10,11 +10,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NetBackend.Migrations
+namespace NetBackend.Migrations.MainDb
 {
     [DbContext(typeof(MainDbContext))]
-    [Migration("20240204161930_test-python-script")]
-    partial class testpythonscript
+    [Migration("20240214001937_init-graphql")]
+    partial class initgraphql
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -158,7 +158,7 @@ namespace NetBackend.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.ApiKey", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -169,12 +169,16 @@ namespace NetBackend.Migrations
                     b.Property<List<string>>("AccessibleEndpoints")
                         .HasColumnType("text[]");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpiresIn")
+                        .HasColumnType("integer");
+
                     b.Property<string>("KeyName")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -184,7 +188,7 @@ namespace NetBackend.Migrations
                     b.ToTable("Keys");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.User", b =>
+            modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -262,7 +266,7 @@ namespace NetBackend.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -271,7 +275,7 @@ namespace NetBackend.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -286,7 +290,7 @@ namespace NetBackend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -295,25 +299,23 @@ namespace NetBackend.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.ApiKey", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", "User")
+                    b.HasOne("NetBackend.Models.User.UserModel", "User")
                         .WithMany("ApiKey")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.User", b =>
+            modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>
                 {
                     b.Navigation("ApiKey");
                 });

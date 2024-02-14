@@ -2,10 +2,10 @@
 
 #nullable disable
 
-namespace NetBackend.Migrations.CustomerOneDb
+namespace NetBackend.Migrations.CustomerTwoDb
 {
     /// <inheritdoc />
-    public partial class testpythonscript : Migration
+    public partial class graphqlupdateupdate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

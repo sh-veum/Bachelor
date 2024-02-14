@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using NetBackend.Enums;
-using NetBackend.Models.Dto;
 using Netbackend.Models.Dto.Keys;
 using NetBackend.Models.Keys.Dto;
 using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Constants;
+using NetBackend.Models.Keys;
 
 namespace NetBackend.Controllers;
 
@@ -16,11 +15,11 @@ namespace NetBackend.Controllers;
 public class KeyController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
-    private readonly UserManager<User> _userManager;
+    private readonly UserManager<UserModel> _userManager;
     private readonly IKeyService _keyService;
     private readonly IApiService _apiService;
 
-    public KeyController(ILogger<UserController> logger, UserManager<User> userManager, IKeyService keyService, IApiService apiService)
+    public KeyController(ILogger<UserController> logger, UserManager<UserModel> userManager, IKeyService keyService, IApiService apiService)
     {
         _logger = logger;
         _userManager = userManager;
@@ -89,13 +88,44 @@ public class KeyController : ControllerBase
                 return errorResult;
             }
 
-            var apiKeyDto = new ApiKeyDto
+            if (apiKey == null)
             {
-                Id = apiKey?.Id ?? 0,
-                KeyName = apiKey?.KeyName ?? "",
-                CreatedBy = apiKey?.User.Email ?? "",
-                AccessibleEndpoints = apiKey?.AccessibleEndpoints
-            };
+                return NotFound("API key not found.");
+            }
+
+            // Correctly calculate ExpiresIn to reflect the remaining time until expiration
+            var currentTime = DateTime.UtcNow;
+            var creationTime = apiKey.CreatedAt;
+            var expirationTime = creationTime.AddMinutes(apiKey.ExpiresIn);
+            var expiresInMinutes = (expirationTime - currentTime).TotalMinutes;
+
+            IApiKeyDto? apiKeyDto = null;
+
+            if (apiKey is ApiKey api)
+            {
+                if (api != null)
+                {
+                    apiKeyDto = new ApiKeyDto
+                    {
+                        Id = api.Id,
+                        KeyName = api.KeyName ?? "",
+                        CreatedBy = api.User.Email ?? "",
+                        ExpiresIn = (int)expiresInMinutes,
+                        AccessibleEndpoints = api.AccessibleEndpoints
+                    };
+                }
+            }
+            else if (apiKey is GraphQLApiKey graphQLApiKey)
+            {
+                apiKeyDto = new GraphQLApiKeyDto
+                {
+                    Id = graphQLApiKey.Id,
+                    KeyName = graphQLApiKey.KeyName ?? "",
+                    CreatedBy = graphQLApiKey.User.Email ?? "",
+                    ExpiresIn = (int)expiresInMinutes,
+                    AllowedQueries = graphQLApiKey.AllowedQueries
+                };
+            }
 
             return Ok(apiKeyDto);
         }
@@ -105,6 +135,7 @@ public class KeyController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
+
 
     [HttpPost("delete-accesskey")]
     [Authorize]
@@ -144,20 +175,25 @@ public class KeyController : ControllerBase
                 return errorResult;
             }
 
-            // Assuming apiKey.AccessibleEndpoints contains paths
-            var validEndpoints = ApiConstants.DefaultApiEndpoints
-                .Where(endpoint => apiKey?.AccessibleEndpoints?.Contains(endpoint.Path) ?? false)
-                .Select(endpoint => new
-                {
-                    endpoint.Path,
-                    endpoint.Method,
-                    ExpectedBody = endpoint.ExpectedBodyType != null ? _apiService.GetDtoStructure(endpoint.ExpectedBodyType) : null
-                })
-                .ToList();
+            var validEndpoints = new List<object>();
 
-            if (!validEndpoints.Any())
+            if (apiKey is ApiKey api)
             {
-                return NotFound("No valid endpoints found for the provided access key.");
+                // Assuming apiKey.AccessibleEndpoints contains paths
+                validEndpoints = ApiConstants.DefaultApiEndpoints
+                    .Where(endpoint => api?.AccessibleEndpoints?.Contains(endpoint.Path) ?? false)
+                    .Select(endpoint => new
+                    {
+                        endpoint.Path,
+                        endpoint.Method,
+                        ExpectedBody = endpoint.ExpectedBodyType != null ? _apiService.GetDtoStructure(endpoint.ExpectedBodyType) : null
+                    })
+                    .ToList<object>();
+
+                if (!validEndpoints.Any())
+                {
+                    return NotFound("No valid endpoints found for the provided access key.");
+                }
             }
 
             return Ok(validEndpoints);

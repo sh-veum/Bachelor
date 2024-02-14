@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetBackend.Data.DbContexts;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,10 +12,12 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace NetBackend.Migrations
 {
-    [DbContext(typeof(MainDbContext))]
-    partial class MainDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(CustomerOneDbContext))]
+    [Migration("20240214004147_graphql-update")]
+    partial class graphqlupdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,7 +158,23 @@ namespace NetBackend.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.ApiKey", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.AccessKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("KeyHash")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccessKeys");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -173,21 +192,159 @@ namespace NetBackend.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("KeyName")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Keys");
+                    b.ToTable("ApiKey");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.User", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<List<string>>("AllowedQueries")
+                        .HasColumnType("text[]");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpiresIn")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("KeyName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GraphQLApiKey");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Organization", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("City")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("OrgNo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Organizations");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Address = "Gateveien 1",
+                            City = "Oslo",
+                            Name = "Firma AS",
+                            OrgNo = 101,
+                            PostalCode = "1234"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Address = "Gateveien 2",
+                            City = "Oslo",
+                            Name = "Firma 2 AS",
+                            OrgNo = 102,
+                            PostalCode = "4321"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Address = "Gateveien 3",
+                            City = "Oslo",
+                            Name = "Firma 3 AS",
+                            OrgNo = 103,
+                            PostalCode = "5678"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Address = "Gateveien 4",
+                            City = "Oslo",
+                            Name = "Firma 4 AS",
+                            OrgNo = 104,
+                            PostalCode = "8765"
+                        });
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Species", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Species");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Liten kantnål"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Torsk"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Sei"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Laks"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Ørret"
+                        });
+                });
+
+            modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -265,7 +422,7 @@ namespace NetBackend.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -274,7 +431,7 @@ namespace NetBackend.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -289,7 +446,7 @@ namespace NetBackend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -298,27 +455,36 @@ namespace NetBackend.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.ApiKey", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", "User")
+                    b.HasOne("NetBackend.Models.User.UserModel", "User")
                         .WithMany("ApiKey")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.User", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
+                {
+                    b.HasOne("NetBackend.Models.User.UserModel", "User")
+                        .WithMany("GraphQLApiKey")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>
                 {
                     b.Navigation("ApiKey");
+
+                    b.Navigation("GraphQLApiKey");
                 });
 #pragma warning restore 612, 618
         }

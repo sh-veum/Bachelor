@@ -1,13 +1,15 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using NetBackend.Models.Keys;
 using NetBackend.Models.User;
 
 namespace NetBackend.Data.DbContexts;
 
-public class MainDbContext : IdentityDbContext<User, IdentityRole, string>
+public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
 {
-    public DbSet<ApiKey> Keys { get; set; }
+    public DbSet<ApiKey> ApiKeys { get; set; }
+    public DbSet<GraphQLApiKey> GraphQLApiKeys { get; set; }
 
     public MainDbContext(DbContextOptions<MainDbContext> options) : base(options)
     {
@@ -17,10 +19,14 @@ public class MainDbContext : IdentityDbContext<User, IdentityRole, string>
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<User>()
+        modelBuilder.Entity<UserModel>()
             .HasMany(u => u.ApiKey)
             .WithOne(k => k.User)
             .HasForeignKey(k => k.UserId);
 
+        modelBuilder.Entity<UserModel>()
+            .HasMany(u => u.GraphQLApiKey)
+            .WithOne(k => k.User)
+            .HasForeignKey(k => k.UserId);
     }
 }

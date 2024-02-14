@@ -10,11 +10,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NetBackend.Migrations
+namespace NetBackend.Migrations.CustomerTwoDb
 {
-    [DbContext(typeof(MainDbContext))]
-    [Migration("20240210134050_apikey-expirationdate")]
-    partial class apikeyexpirationdate
+    [DbContext(typeof(CustomerTwoDbContext))]
+    [Migration("20240214001930_init-graphql")]
+    partial class initgraphql
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -158,7 +158,23 @@ namespace NetBackend.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.ApiKey", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.AccessKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("KeyHash")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccessKeys");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -176,21 +192,145 @@ namespace NetBackend.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("KeyName")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Keys");
+                    b.ToTable("ApiKey");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.User", b =>
+            modelBuilder.Entity("NetBackend.Models.Organization", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("City")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("OrgNo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Organizations");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Address = "Storvegen 303",
+                            City = "Ålesund",
+                            Name = "Kompni AS",
+                            OrgNo = 199,
+                            PostalCode = "6000"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Address = "Storvegen 304",
+                            City = "Ålesund",
+                            Name = "Kompni 2 AS",
+                            OrgNo = 200,
+                            PostalCode = "6001"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Address = "Storvegen 305",
+                            City = "Ålesund",
+                            Name = "Kompni 3 AS",
+                            OrgNo = 201,
+                            PostalCode = "6002"
+                        });
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Species", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Species");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Liten kantnål"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Torsk"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Sei"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Laks"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Ørret"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Makrell"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Sild"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Kveite"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Blåkveite"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Hyse"
+                        });
+                });
+
+            modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -268,7 +408,7 @@ namespace NetBackend.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -277,7 +417,7 @@ namespace NetBackend.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -292,7 +432,7 @@ namespace NetBackend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -301,25 +441,23 @@ namespace NetBackend.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.ApiKey", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", "User")
+                    b.HasOne("NetBackend.Models.User.UserModel", "User")
                         .WithMany("ApiKey")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.User", b =>
+            modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>
                 {
                     b.Navigation("ApiKey");
                 });

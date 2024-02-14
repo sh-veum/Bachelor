@@ -3,21 +3,18 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetBackend.Data.DbContexts;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NetBackend.Migrations.CustomerTwoDb
+namespace NetBackend.Migrations
 {
-    [DbContext(typeof(CustomerTwoDbContext))]
-    [Migration("20240204161924_test-python-script")]
-    partial class testpythonscript
+    [DbContext(typeof(CustomerOneDbContext))]
+    partial class CustomerOneDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -158,6 +155,82 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("NetBackend.Models.Keys.AccessKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("KeyHash")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccessKeys");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<List<string>>("AccessibleEndpoints")
+                        .HasColumnType("text[]");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpiresIn")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("KeyName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ApiKey");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<List<string>>("AllowedQueries")
+                        .HasColumnType("text[]");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpiresIn")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("KeyName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GraphQLApiKey");
+                });
+
             modelBuilder.Entity("NetBackend.Models.Organization", b =>
                 {
                     b.Property<int>("Id")
@@ -183,35 +256,44 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
                     b.HasKey("Id");
 
-                    b.ToTable("Organization");
+                    b.ToTable("Organizations");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
-                            Address = "Storvegen 303",
-                            City = "Ålesund",
-                            Name = "Kompni AS",
-                            OrgNo = 199,
-                            PostalCode = "6000"
+                            Address = "Gateveien 1",
+                            City = "Oslo",
+                            Name = "Firma AS",
+                            OrgNo = 101,
+                            PostalCode = "1234"
                         },
                         new
                         {
                             Id = 2,
-                            Address = "Storvegen 304",
-                            City = "Ålesund",
-                            Name = "Kompni 2 AS",
-                            OrgNo = 200,
-                            PostalCode = "6001"
+                            Address = "Gateveien 2",
+                            City = "Oslo",
+                            Name = "Firma 2 AS",
+                            OrgNo = 102,
+                            PostalCode = "4321"
                         },
                         new
                         {
                             Id = 3,
-                            Address = "Storvegen 305",
-                            City = "Ålesund",
-                            Name = "Kompni 3 AS",
-                            OrgNo = 201,
-                            PostalCode = "6002"
+                            Address = "Gateveien 3",
+                            City = "Oslo",
+                            Name = "Firma 3 AS",
+                            OrgNo = 103,
+                            PostalCode = "5678"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Address = "Gateveien 4",
+                            City = "Oslo",
+                            Name = "Firma 4 AS",
+                            OrgNo = 104,
+                            PostalCode = "8765"
                         });
                 });
 
@@ -256,77 +338,10 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         {
                             Id = 5,
                             Name = "Ørret"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "Makrell"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Name = "Sild"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Name = "Kveite"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Name = "Blåkveite"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Name = "Hyse"
                         });
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.AccessKey", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("KeyHash")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AccessKeys");
-                });
-
-            modelBuilder.Entity("NetBackend.Models.User.ApiKey", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<List<string>>("AccessibleEndpoints")
-                        .HasColumnType("text[]");
-
-                    b.Property<string>("KeyName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ApiKey");
-                });
-
-            modelBuilder.Entity("NetBackend.Models.User.User", b =>
+            modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -404,7 +419,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -413,7 +428,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -428,7 +443,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -437,27 +452,36 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", null)
+                    b.HasOne("NetBackend.Models.User.UserModel", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.ApiKey", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
-                    b.HasOne("NetBackend.Models.User.User", "User")
+                    b.HasOne("NetBackend.Models.User.UserModel", "User")
                         .WithMany("ApiKey")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.User.User", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
+                {
+                    b.HasOne("NetBackend.Models.User.UserModel", "User")
+                        .WithMany("GraphQLApiKey")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>
                 {
                     b.Navigation("ApiKey");
+
+                    b.Navigation("GraphQLApiKey");
                 });
 #pragma warning restore 612, 618
         }

@@ -6,19 +6,19 @@ namespace NetBackend.Services;
 
 public interface IUserService
 {
-    Task<(User user, ActionResult error)> GetUserAsync(HttpContext httpContext);
+    Task<(UserModel user, ActionResult error)> GetUserAsync(HttpContext httpContext);
 }
 
 public class UserService : IUserService
 {
-    private readonly UserManager<User> _userManager;
+    private readonly UserManager<UserModel> _userManager;
 
-    public UserService(UserManager<User> userManager)
+    public UserService(UserManager<UserModel> userManager)
     {
         _userManager = userManager;
     }
 
-    public async Task<(User user, ActionResult error)> GetUserAsync(HttpContext httpContext)
+    public async Task<(UserModel user, ActionResult error)> GetUserAsync(HttpContext httpContext)
     {
         var user = await _userManager.GetUserAsync(httpContext.User);
         if (user == null)

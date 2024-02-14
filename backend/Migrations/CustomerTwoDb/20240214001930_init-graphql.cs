@@ -5,14 +5,29 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NetBackend.Migrations
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
+namespace NetBackend.Migrations.CustomerTwoDb
 {
     /// <inheritdoc />
-    public partial class initialmigration : Migration
+    public partial class initgraphql : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "AccessKeys",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    KeyHash = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccessKeys", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -54,6 +69,36 @@ namespace NetBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Organizations",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    OrgNo = table.Column<int>(type: "integer", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    PostalCode = table.Column<string>(type: "text", nullable: true),
+                    City = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Organizations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Species",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Species", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -72,6 +117,28 @@ namespace NetBackend.Migrations
                         principalTable: "AspNetRoles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ApiKey",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    KeyName = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: true),
+                    AccessibleEndpoints = table.Column<List<string>>(type: "text[]", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ExpiresIn = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApiKey", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ApiKey_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -159,26 +226,37 @@ namespace NetBackend.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "Keys",
-                columns: table => new
+            migrationBuilder.InsertData(
+                table: "Organizations",
+                columns: new[] { "Id", "Address", "City", "Name", "OrgNo", "PostalCode" },
+                values: new object[,]
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    KeyName = table.Column<string>(type: "text", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    AccessibleEndpoints = table.Column<List<string>>(type: "text[]", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Keys", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Keys_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                    { 1, "Storvegen 303", "Ålesund", "Kompni AS", 199, "6000" },
+                    { 2, "Storvegen 304", "Ålesund", "Kompni 2 AS", 200, "6001" },
+                    { 3, "Storvegen 305", "Ålesund", "Kompni 3 AS", 201, "6002" }
                 });
+
+            migrationBuilder.InsertData(
+                table: "Species",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Liten kantnål" },
+                    { 2, "Torsk" },
+                    { 3, "Sei" },
+                    { 4, "Laks" },
+                    { 5, "Ørret" },
+                    { 6, "Makrell" },
+                    { 7, "Sild" },
+                    { 8, "Kveite" },
+                    { 9, "Blåkveite" },
+                    { 10, "Hyse" }
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ApiKey_UserId",
+                table: "ApiKey",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -216,16 +294,17 @@ namespace NetBackend.Migrations
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Keys_UserId",
-                table: "Keys",
-                column: "UserId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AccessKeys");
+
+            migrationBuilder.DropTable(
+                name: "ApiKey");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -242,7 +321,10 @@ namespace NetBackend.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Keys");
+                name: "Organizations");
+
+            migrationBuilder.DropTable(
+                name: "Species");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

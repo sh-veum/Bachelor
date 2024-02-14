@@ -1,9 +1,11 @@
 using System.Text.Json.Serialization;
+using HotChocolate.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Services;
 using NetBackend.Constants;
 using NetBackend.Data.DbContexts;
+using NetBackend.GraphQL;
 using NetBackend.Models.User;
 using NetBackend.Services;
 
@@ -70,7 +72,7 @@ builder.Services.AddDbContext<CustomerOneDbContext>(options =>
 builder.Services.AddDbContext<CustomerTwoDbContext>(options =>
     options.UseNpgsql(customerTwoConnectionString));
 
-builder.Services.AddIdentityCore<User>()
+builder.Services.AddIdentityCore<UserModel>()
     .AddRoles<IdentityRole>()
     .AddDefaultTokenProviders()
     .AddEntityFrameworkStores<MainDbContext>()
@@ -95,13 +97,22 @@ builder.Services.AddCors(options =>
                       });
 });
 
+builder.Services
+    .AddGraphQLServer()
+    // .RegisterDbContext<MainDbContext>(DbContextKind.Pooled)
+    // .RegisterDbContext<CustomerOneDbContext>(DbContextKind.Pooled)
+    // .RegisterDbContext<CustomerTwoDbContext>(DbContextKind.Pooled)
+    .AddQueryType<Query>()
+    .AddMutationType<ApiKeyMutation>();
 
 var app = builder.Build();
 
-app.MapIdentityApi<User>();
+app.MapIdentityApi<UserModel>();
 
 // Apllying CORS policy
 app.UseCors("AllowSpecificOrigin");
+
+app.UseRouting();
 
 // app.UseHttpsRedirection();
 app.UseAuthentication();
@@ -120,7 +131,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = services.GetRequiredService<UserManager<User>>();
+        var userManager = services.GetRequiredService<UserManager<UserModel>>();
 
         await ApplicationDbInitializer.SeedRoles(roleManager);
         // Admin user
@@ -149,5 +160,6 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 }
 
 app.MapControllers();
+app.MapGraphQL();
 
 app.Run();
