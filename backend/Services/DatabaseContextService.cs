@@ -7,7 +7,7 @@ namespace NetBackend.Services;
 
 public interface IDatabaseContextService
 {
-    Task<DbContext> GetUserDatabaseContext(User user);
+    Task<DbContext> GetUserDatabaseContext(UserModel user);
     Task<DbContext> GetDatabaseContextByName(string databaseName);
 }
 
@@ -29,7 +29,7 @@ public class DatabaseContextService : IDatabaseContextService
 
     }
 
-    public Task<DbContext> GetUserDatabaseContext(User user)
+    public Task<DbContext> GetUserDatabaseContext(UserModel user)
     {
         if (user == null)
         {

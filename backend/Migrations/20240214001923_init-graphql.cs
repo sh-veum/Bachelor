@@ -7,10 +7,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace NetBackend.Migrations.CustomerTwoDb
+namespace NetBackend.Migrations
 {
     /// <inheritdoc />
-    public partial class initialmigration : Migration
+    public partial class initgraphql : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -69,7 +69,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 });
 
             migrationBuilder.CreateTable(
-                name: "Organization",
+                name: "Organizations",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -82,7 +82,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Organization", x => x.Id);
+                    table.PrimaryKey("PK_Organizations", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -125,9 +125,11 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    KeyName = table.Column<string>(type: "text", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    AccessibleEndpoints = table.Column<List<string>>(type: "text[]", nullable: true)
+                    KeyName = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: true),
+                    AccessibleEndpoints = table.Column<List<string>>(type: "text[]", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ExpiresIn = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -136,8 +138,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         name: "FK_ApiKey_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -226,13 +227,14 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 });
 
             migrationBuilder.InsertData(
-                table: "Organization",
+                table: "Organizations",
                 columns: new[] { "Id", "Address", "City", "Name", "OrgNo", "PostalCode" },
                 values: new object[,]
                 {
-                    { 1, "Storvegen 303", "Ålesund", "Kompni AS", 199, "6000" },
-                    { 2, "Storvegen 304", "Ålesund", "Kompni 2 AS", 200, "6001" },
-                    { 3, "Storvegen 305", "Ålesund", "Kompni 3 AS", 201, "6002" }
+                    { 1, "Gateveien 1", "Oslo", "Firma AS", 101, "1234" },
+                    { 2, "Gateveien 2", "Oslo", "Firma 2 AS", 102, "4321" },
+                    { 3, "Gateveien 3", "Oslo", "Firma 3 AS", 103, "5678" },
+                    { 4, "Gateveien 4", "Oslo", "Firma 4 AS", 104, "8765" }
                 });
 
             migrationBuilder.InsertData(
@@ -244,12 +246,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     { 2, "Torsk" },
                     { 3, "Sei" },
                     { 4, "Laks" },
-                    { 5, "Ørret" },
-                    { 6, "Makrell" },
-                    { 7, "Sild" },
-                    { 8, "Kveite" },
-                    { 9, "Blåkveite" },
-                    { 10, "Hyse" }
+                    { 5, "Ørret" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -320,7 +317,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Organization");
+                name: "Organizations");
 
             migrationBuilder.DropTable(
                 name: "Species");

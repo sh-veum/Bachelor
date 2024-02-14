@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using NetBackend.Enums;
-using NetBackend.Models.Dto;
 using Netbackend.Models.Dto.Keys;
 using NetBackend.Models.Keys.Dto;
 using NetBackend.Models.User;
@@ -16,11 +14,11 @@ namespace NetBackend.Controllers;
 public class KeyController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
-    private readonly UserManager<User> _userManager;
+    private readonly UserManager<UserModel> _userManager;
     private readonly IKeyService _keyService;
     private readonly IApiService _apiService;
 
-    public KeyController(ILogger<UserController> logger, UserManager<User> userManager, IKeyService keyService, IApiService apiService)
+    public KeyController(ILogger<UserController> logger, UserManager<UserModel> userManager, IKeyService keyService, IApiService apiService)
     {
         _logger = logger;
         _userManager = userManager;

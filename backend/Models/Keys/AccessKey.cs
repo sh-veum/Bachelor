@@ -1,4 +1,4 @@
-namespace NetBackend.Models.User;
+namespace NetBackend.Models.Keys;
 
 public class AccessKey
 {

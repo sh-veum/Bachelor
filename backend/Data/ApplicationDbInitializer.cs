@@ -17,12 +17,12 @@ public static class ApplicationDbInitializer
         }
     }
 
-    public static async Task EnsureUser(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, string userEmail, string userPassword, string roleName)
+    public static async Task EnsureUser(UserManager<UserModel> userManager, RoleManager<IdentityRole> roleManager, string userEmail, string userPassword, string roleName)
     {
         var user = await userManager.FindByEmailAsync(userEmail);
         if (user == null)
         {
-            user = new User
+            user = new UserModel
             {
                 UserName = userEmail,
                 Email = userEmail,

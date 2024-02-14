@@ -4,18 +4,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Services;
 using NetBackend.Constants;
+using NetBackend.Models.Keys;
 using NetBackend.Models.User;
 
 namespace NetBackend.Services;
 
 public interface IKeyService
 {
-    Task<string> EncryptAndStoreAccessKey(ApiKey apiKey, User user);
+    Task<string> EncryptAndStoreAccessKey(ApiKey apiKey, UserModel user);
     Task<(ApiKey?, IActionResult?)> DecryptAccessKeyUserCheck(string encryptedKey, string userId);
     Task<(ApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey);
-    Task<ApiKey> CreateApiKey(User user, string keyName, List<string> endpoints);
+    Task<ApiKey> CreateApiKey(UserModel user, string keyName, List<string> endpoints);
     Task<(DbContext?, IActionResult?)> ProcessAccessKey(string encryptedKey);
     Task<IActionResult> RemoveAccessKey(string encryptedKey);
+    Task<GraphQLApiKey> CreateGraphQLApiKey(string userId, string keyName, List<string> allowedQueries);
 }
 
 public class KeyService : IKeyService
@@ -37,7 +39,7 @@ public class KeyService : IKeyService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<ApiKey> CreateApiKey(User user, string keyName, List<string> endpoints)
+    public async Task<ApiKey> CreateApiKey(UserModel user, string keyName, List<string> endpoints)
     {
         var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
@@ -59,7 +61,7 @@ public class KeyService : IKeyService
         return apiKey;
     }
 
-    public async Task<string> EncryptAndStoreAccessKey(ApiKey apiKey, User user)
+    public async Task<string> EncryptAndStoreAccessKey(ApiKey apiKey, UserModel user)
     {
         var dbContext = await _databaseContextService.GetUserDatabaseContext(user);
         var dataToEncrypt = $"Id:{apiKey.Id}";
@@ -151,7 +153,7 @@ public class KeyService : IKeyService
         if (apiKey?.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
 
         var mainDbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-        string databaseName = mainDbContext.Set<User>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
+        string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
 
         var selectedContext = await _databaseContextService.GetDatabaseContextByName(databaseName);
 
@@ -218,6 +220,35 @@ public class KeyService : IKeyService
             }
             return builder.ToString();
         }
+    }
+
+    // GraphQL
+    public async Task<GraphQLApiKey> CreateGraphQLApiKey(string userEmail, string keyName, List<string> allowedQueries)
+    {
+        var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        var user = await dbContext.Set<UserModel>().FirstOrDefaultAsync(u => u.Email == userEmail);
+        _logger.LogInformation($"User found: {user?.Email}");
+
+        if (user == null)
+        {
+            throw new Exception("User not found.");
+        }
+
+        var graphQLApiKey = new GraphQLApiKey
+        {
+            KeyName = keyName,
+            UserId = user.Id,
+            User = user,
+            AllowedQueries = allowedQueries,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresIn = KeyConstants.ExpiresIn
+        };
+
+        dbContext.Set<GraphQLApiKey>().Add(graphQLApiKey);
+        await dbContext.SaveChangesAsync();
+
+        return graphQLApiKey;
     }
 }
 
