@@ -88,13 +88,16 @@ public class KeyController : ControllerBase
                 return errorResult;
             }
 
-            // Calculate ExpiresIn based on the current date, CreatedAt, and ExpiresIn values
-            int expiresInMinutes = 0;
-            if (apiKey != null)
+            if (apiKey == null)
             {
-                var expiresIn = (DateTime.UtcNow - apiKey.CreatedAt).TotalMinutes + apiKey.ExpiresIn;
-                expiresInMinutes = expiresIn > 0 ? (int)expiresIn : 0;
+                return NotFound("API key not found.");
             }
+
+            // Correctly calculate ExpiresIn to reflect the remaining time until expiration
+            var currentTime = DateTime.UtcNow;
+            var creationTime = apiKey.CreatedAt;
+            var expirationTime = creationTime.AddMinutes(apiKey.ExpiresIn);
+            var expiresInMinutes = (expirationTime - currentTime).TotalMinutes;
 
             IApiKeyDto? apiKeyDto = null;
 
@@ -107,7 +110,7 @@ public class KeyController : ControllerBase
                         Id = api.Id,
                         KeyName = api.KeyName ?? "",
                         CreatedBy = api.User.Email ?? "",
-                        ExpiresIn = expiresInMinutes,
+                        ExpiresIn = (int)expiresInMinutes,
                         AccessibleEndpoints = api.AccessibleEndpoints
                     };
                 }
@@ -119,7 +122,7 @@ public class KeyController : ControllerBase
                     Id = graphQLApiKey.Id,
                     KeyName = graphQLApiKey.KeyName ?? "",
                     CreatedBy = graphQLApiKey.User.Email ?? "",
-                    ExpiresIn = expiresInMinutes,
+                    ExpiresIn = (int)expiresInMinutes,
                     AllowedQueries = graphQLApiKey.AllowedQueries
                 };
             }
