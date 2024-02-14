@@ -116,7 +116,7 @@ public class KeyService : IKeyService
         return (apiKey, null);
     }
 
-    public async Task<(DbContext?, IActionResult?)> ProcessAccessKey(string encryptedKey, string? query = null)
+    public async Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessAccessKey(string encryptedKey, string? query = null)
     {
         var (apiKey, errorResult) = await DecryptAccessKey(encryptedKey);
         if (errorResult != null) return (null, errorResult);

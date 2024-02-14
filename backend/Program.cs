@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using HotChocolate.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Services;
@@ -11,6 +10,8 @@ using NetBackend.Services;
 using NetBackend.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddHttpContextAccessor();
 
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -84,7 +85,7 @@ builder.Services.AddScoped<IDbContextService, DbContextService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<ICryptoService, CryptoService>();
 builder.Services.AddScoped<IKeyService, KeyService>();
-builder.Services.AddSingleton<IApiService, ApiService>();
+builder.Services.AddScoped<IApiService, ApiService>();
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>

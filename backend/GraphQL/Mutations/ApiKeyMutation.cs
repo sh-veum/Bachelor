@@ -4,6 +4,7 @@ using NetBackend.Constants;
 using NetBackend.Models.User;
 using NetBackend.Services.Interfaces;
 
+
 public class ApiKeyMutation
 {
     public async Task<AccessKeyDto> CreateGraphQLApiKey(
@@ -16,13 +17,7 @@ public class ApiKeyMutation
     {
         var dbContext = await databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
-        var user = await dbContext.Set<UserModel>().FirstOrDefaultAsync(u => u.Email == userEmail);
-
-        if (user == null)
-        {
-            throw new Exception("User not found.");
-        }
-
+        var user = await dbContext.Set<UserModel>().FirstOrDefaultAsync(u => u.Email == userEmail) ?? throw new Exception("User not found.");
         var graphQLApiKey = await apiService.CreateGraphQLApiKey(user, keyName, allowedQueries);
 
         // Encrypt and store access key

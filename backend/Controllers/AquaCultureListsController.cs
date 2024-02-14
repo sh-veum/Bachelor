@@ -4,7 +4,6 @@ using Netbackend.Models.Dto.Keys;
 using NetBackend.Constants;
 using NetBackend.Models;
 using NetBackend.Models.Dto;
-using NetBackend.Services;
 using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Controllers;
@@ -37,15 +36,15 @@ public class AquaCultureListsController : ControllerBase
         {
             DbContext? dbContext = null;
 
-            // If there is sent an access key, use it to get the database context
+            // If there is no access key, use the bearer key to get the database context
             if (model == null || model?.EncryptedKey == null || model?.EncryptedKey == "string" || model?.EncryptedKey == "")
             {
-                // If there is no access key, use the bearer key to get the database context
                 var (user, error) = await _userService.GetUserAsync(HttpContext);
                 if (error != null) return error;
 
                 dbContext = await _databaseContextService.GetUserDatabaseContext(user);
             }
+            // If there is sent an access key, use it to get the database context
             else if (model != null)
             {
                 // Get the database context using the access key
