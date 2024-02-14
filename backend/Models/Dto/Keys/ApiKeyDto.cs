@@ -1,10 +1,6 @@
 namespace NetBackend.Models.Keys.Dto;
 
-public class ApiKeyDto
+public class ApiKeyDto : IApiKeyDto
 {
-    public int Id { get; set; }
-    public required string KeyName { get; set; }
-    public required string CreatedBy { get; set; }
     public List<string>? AccessibleEndpoints { get; set; }
-    public int ExpiresIn { get; set; }
 }

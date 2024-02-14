@@ -11,13 +11,13 @@ namespace NetBackend.Services;
 
 public interface IKeyService
 {
-    Task<string> EncryptAndStoreAccessKey(ApiKey apiKey, UserModel user);
-    Task<(ApiKey?, IActionResult?)> DecryptAccessKeyUserCheck(string encryptedKey, string userId);
-    Task<(ApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey);
+    Task<string> EncryptAndStoreAccessKey(IApiKey apiKey, UserModel user);
+    Task<(IApiKey?, IActionResult?)> DecryptAccessKeyUserCheck(string encryptedKey, string userId);
+    Task<(IApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey);
     Task<ApiKey> CreateApiKey(UserModel user, string keyName, List<string> endpoints);
     Task<(DbContext?, IActionResult?)> ProcessAccessKey(string encryptedKey);
     Task<IActionResult> RemoveAccessKey(string encryptedKey);
-    Task<GraphQLApiKey> CreateGraphQLApiKey(string userId, string keyName, List<string> allowedQueries);
+    Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<string> allowedQueries);
 }
 
 public class KeyService : IKeyService
@@ -61,10 +61,10 @@ public class KeyService : IKeyService
         return apiKey;
     }
 
-    public async Task<string> EncryptAndStoreAccessKey(ApiKey apiKey, UserModel user)
+    public async Task<string> EncryptAndStoreAccessKey(IApiKey apiKey, UserModel user)
     {
         var dbContext = await _databaseContextService.GetUserDatabaseContext(user);
-        var dataToEncrypt = $"Id:{apiKey.Id}";
+        var dataToEncrypt = $"Id:{apiKey.Id},Type:{apiKey.GetType().Name}";
         var encryptedKey = _cryptologyService.Encrypt(dataToEncrypt, SecretConstants.SecretKey);
 
         // Compute hash of the encrypted key.
@@ -81,14 +81,19 @@ public class KeyService : IKeyService
         return encryptedKey;
     }
 
-    public async Task<(ApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey)
+    public async Task<(IApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey)
     {
         // Decrypt the data
         var decryptedData = _cryptologyService.Decrypt(encryptedKey, SecretConstants.SecretKey);
         var dataParts = decryptedData.Split(',');
+
+        var typePart = dataParts.FirstOrDefault(part => part.StartsWith("Type:"))?.Split(':')[1];
         var idString = dataParts.FirstOrDefault(part => part.StartsWith("Id:"))?.Split(':')[1];
 
-        if (idString == null || !int.TryParse(idString, out var id))
+        _logger.LogInformation($"Type: {typePart}, Id: {idString}");
+        _logger.LogInformation($"decryptedData: {decryptedData}");
+
+        if (typePart == null || idString == null || !int.TryParse(idString, out var id))
         {
             return (null, new BadRequestObjectResult("Invalid encrypted key format."));
         }
@@ -99,16 +104,32 @@ public class KeyService : IKeyService
             return (null, new NotFoundObjectResult("Database context not found."));
         }
 
-        var apiKey = await dbContext.Set<ApiKey>().FirstOrDefaultAsync(a => a.Id == id);
-        if (apiKey == null)
+        // Determine the type of the key and query accordingly
+        if (typePart.Equals("ApiKey", StringComparison.OrdinalIgnoreCase))
         {
-            return (null, new NotFoundObjectResult("Api Key not found."));
+            var apiKey = await dbContext.Set<ApiKey>().Include(a => a.User).FirstOrDefaultAsync(a => a.Id == id);
+            if (apiKey == null)
+            {
+                return (null, new NotFoundObjectResult("Api Key not found."));
+            }
+            return (apiKey, null);
         }
-
-        return (apiKey, null);
+        else if (typePart.Equals("GraphQLApiKey", StringComparison.OrdinalIgnoreCase))
+        {
+            var graphQLApiKey = await dbContext.Set<GraphQLApiKey>().Include(a => a.User).FirstOrDefaultAsync(a => a.Id == id);
+            if (graphQLApiKey == null)
+            {
+                return (null, new NotFoundObjectResult("GraphQL Api Key not found."));
+            }
+            return (graphQLApiKey, null);
+        }
+        else
+        {
+            return (null, new BadRequestObjectResult($"Unknown key type: {typePart}."));
+        }
     }
 
-    public async Task<(ApiKey?, IActionResult?)> DecryptAccessKeyUserCheck(string encryptedKey, string currentUserId)
+    public async Task<(IApiKey?, IActionResult?)> DecryptAccessKeyUserCheck(string encryptedKey, string currentUserId)
     {
         var (apiKey, result) = await DecryptAccessKey(encryptedKey);
         if (result != null)
@@ -142,12 +163,20 @@ public class KeyService : IKeyService
         }
 
         var httpContext = _httpContextAccessor.HttpContext;
-        if (apiKey != null
-            && apiKey.AccessibleEndpoints != null
-            && !string.IsNullOrEmpty(httpContext?.Request.Path.Value)
-            && !apiKey.AccessibleEndpoints.Contains(httpContext.Request.Path.Value))
+        if (apiKey != null)
         {
-            return (null, new UnauthorizedResult());
+            // Handle access control based on key type
+            bool isAuthorized = apiKey switch
+            {
+                ApiKey api => api.AccessibleEndpoints != null && api.AccessibleEndpoints.Contains(httpContext?.Request.Path.Value ?? ""),
+                GraphQLApiKey gqlApi => true, // Assuming GraphQL keys have different access control mechanisms
+                _ => false
+            };
+
+            if (!isAuthorized)
+            {
+                return (null, new UnauthorizedResult());
+            }
         }
 
         if (apiKey?.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
@@ -168,6 +197,7 @@ public class KeyService : IKeyService
         return (selectedContext, null);
     }
 
+
     public async Task<IActionResult> RemoveAccessKey(string encryptedKey)
     {
         var (apiKey, errorResult) = await DecryptAccessKey(encryptedKey);
@@ -184,7 +214,14 @@ public class KeyService : IKeyService
 
         if (apiKey != null)
         {
-            dbContext.Set<ApiKey>().Remove(apiKey);
+            if (apiKey is ApiKey api)
+            {
+                dbContext.Set<ApiKey>().Remove(api);
+            }
+            else if (apiKey is GraphQLApiKey gqlApi)
+            {
+                dbContext.Set<GraphQLApiKey>().Remove(gqlApi);
+            }
             await dbContext.SaveChangesAsync();
         }
 
@@ -223,17 +260,9 @@ public class KeyService : IKeyService
     }
 
     // GraphQL
-    public async Task<GraphQLApiKey> CreateGraphQLApiKey(string userEmail, string keyName, List<string> allowedQueries)
+    public async Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<string> allowedQueries)
     {
         var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-
-        var user = await dbContext.Set<UserModel>().FirstOrDefaultAsync(u => u.Email == userEmail);
-        _logger.LogInformation($"User found: {user?.Email}");
-
-        if (user == null)
-        {
-            throw new Exception("User not found.");
-        }
 
         var graphQLApiKey = new GraphQLApiKey
         {

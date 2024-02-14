@@ -112,6 +112,8 @@ app.MapIdentityApi<UserModel>();
 // Apllying CORS policy
 app.UseCors("AllowSpecificOrigin");
 
+app.UseRouting();
+
 // app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -157,11 +159,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwaggerUI();
 }
 
-app.UseRouting().UseEndpoints(endpoints =>
-    {
-        endpoints.MapGraphQL();
-    });
-
 app.MapControllers();
+app.MapGraphQL();
 
 app.Run();
