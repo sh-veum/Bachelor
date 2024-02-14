@@ -16,5 +16,4 @@ public abstract class BaseDbContext(DbContextOptions options) : IdentityDbContex
     // For GraphQL
     public IQueryable<Species> GetSpecies() => Species;
     public IQueryable<Organization> GetOrganizations() => Organizations;
-
 }

@@ -15,7 +15,7 @@ public interface IKeyService
     Task<(IApiKey?, IActionResult?)> DecryptAccessKeyUserCheck(string encryptedKey, string userId);
     Task<(IApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey);
     Task<ApiKey> CreateApiKey(UserModel user, string keyName, List<string> endpoints);
-    Task<(DbContext?, IActionResult?)> ProcessAccessKey(string encryptedKey);
+    Task<(DbContext?, IActionResult?)> ProcessAccessKey(string encryptedKey, string? query = null);
     Task<IActionResult> RemoveAccessKey(string encryptedKey);
     Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<string> allowedQueries);
 }
@@ -148,38 +148,41 @@ public class KeyService : IKeyService
         return (apiKey, null);
     }
 
-    public async Task<(DbContext?, IActionResult?)> ProcessAccessKey(string encryptedKey)
+    public async Task<(DbContext?, IActionResult?)> ProcessAccessKey(string encryptedKey, string? query = null)
     {
         var (apiKey, errorResult) = await DecryptAccessKey(encryptedKey);
         if (errorResult != null) return (null, errorResult);
 
-        if (apiKey != null)
+        if (apiKey == null)
         {
-            var expirationDate = apiKey.CreatedAt.AddDays(apiKey.ExpiresIn);
-            if (DateTime.UtcNow > expirationDate)
-            {
-                return (null, new UnauthorizedResult());
-            }
+            return (null, new BadRequestObjectResult("API key not found."));
+        }
+
+        var expirationDate = apiKey.CreatedAt.AddDays(apiKey.ExpiresIn);
+        if (DateTime.UtcNow > expirationDate)
+        {
+            return (null, new UnauthorizedResult());
         }
 
         var httpContext = _httpContextAccessor.HttpContext;
-        if (apiKey != null)
+        if (apiKey is ApiKey api)
         {
-            // Handle access control based on key type
-            bool isAuthorized = apiKey switch
+            if (!string.IsNullOrEmpty(httpContext?.Request.Path.Value) &&
+                api.AccessibleEndpoints != null &&
+                !api.AccessibleEndpoints.Contains(httpContext.Request.Path.Value))
             {
-                ApiKey api => api.AccessibleEndpoints != null && api.AccessibleEndpoints.Contains(httpContext?.Request.Path.Value ?? ""),
-                GraphQLApiKey gqlApi => true, // Assuming GraphQL keys have different access control mechanisms
-                _ => false
-            };
-
-            if (!isAuthorized)
+                return (null, new UnauthorizedResult());
+            }
+        }
+        else if (apiKey is GraphQLApiKey gqlApi)
+        {
+            if (!string.IsNullOrEmpty(query) && gqlApi.AllowedQueries != null && !gqlApi.AllowedQueries.Contains(query))
             {
                 return (null, new UnauthorizedResult());
             }
         }
 
-        if (apiKey?.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
+        if (apiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
 
         var mainDbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
@@ -196,7 +199,6 @@ public class KeyService : IKeyService
 
         return (selectedContext, null);
     }
-
 
     public async Task<IActionResult> RemoveAccessKey(string encryptedKey)
     {

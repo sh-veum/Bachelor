@@ -1,20 +1,33 @@
 using NetBackend.Data;
 using NetBackend.Models;
+using NetBackend.Models.Dto;
 using NetBackend.Services;
 
 namespace NetBackend.GraphQL;
 
 public class Query
 {
-    public IQueryable<Species>? GetSpecies([Service] IDatabaseContextService dbContextService, string dbContextName)
+    public async Task<IQueryable<Species>?> GetSpecies([Service] IKeyService keyService, string encryptedKey)
     {
-        var dbContext = dbContextService.GetDatabaseContextByName(dbContextName).Result as BaseDbContext;
-        return dbContext?.GetSpecies();
+        var (dbContext, errorResult) = await keyService.ProcessAccessKey(encryptedKey, "GetSpecies");
+
+        if (errorResult != null || dbContext == null || dbContext is not BaseDbContext baseDbContext)
+        {
+            return null;
+        }
+
+        return baseDbContext.GetSpecies();
     }
 
-    public IQueryable<Organization>? GetOrganizations([Service] IDatabaseContextService dbContextService, string dbContextName)
+    public async Task<IQueryable<Organization>?> GetOrganizations([Service] IKeyService keyService, string encryptedKey)
     {
-        var dbContext = dbContextService.GetDatabaseContextByName(dbContextName).Result as BaseDbContext;
-        return dbContext?.GetOrganizations();
+        var (dbContext, errorResult) = await keyService.ProcessAccessKey(encryptedKey, "GetOrganizations");
+
+        if (errorResult != null || dbContext == null || dbContext is not BaseDbContext baseDbContext)
+        {
+            return null;
+        }
+
+        return baseDbContext.GetOrganizations();
     }
 }
