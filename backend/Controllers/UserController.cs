@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using NetBackend.Enums;
 using NetBackend.Models.Dto;
 using NetBackend.Models.User;
-using NetBackend.Services;
 using NetBackend.Constants;
 using Microsoft.EntityFrameworkCore;
+using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Controllers;
 
@@ -17,14 +17,12 @@ public class UserController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
     private readonly UserManager<UserModel> _userManager;
-    private readonly IKeyService _keyService;
     private readonly RoleManager<IdentityRole> _roleManager;
 
-    public UserController(ILogger<UserController> logger, UserManager<UserModel> userManager, IKeyService keyService, RoleManager<IdentityRole> roleManager)
+    public UserController(ILogger<UserController> logger, UserManager<UserModel> userManager, RoleManager<IdentityRole> roleManager)
     {
         _logger = logger;
         _userManager = userManager;
-        _keyService = keyService;
         _roleManager = roleManager;
     }
 

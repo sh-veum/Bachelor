@@ -1,13 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using NetBackend.Models.User;
+using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Services;
-
-public interface IUserService
-{
-    Task<(UserModel user, ActionResult error)> GetUserAsync(HttpContext httpContext);
-}
 
 public class UserService : IUserService
 {

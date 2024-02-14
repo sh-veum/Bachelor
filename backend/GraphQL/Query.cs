@@ -1,7 +1,6 @@
 using NetBackend.Data;
 using NetBackend.Models;
-using NetBackend.Models.Dto;
-using NetBackend.Services;
+using NetBackend.Services.Interfaces;
 
 namespace NetBackend.GraphQL;
 

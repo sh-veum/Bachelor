@@ -1,15 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Models.Dto.Keys;
 using NetBackend.Constants;
-using NetBackend.Models.Keys;
 using NetBackend.Models.User;
-using NetBackend.Services;
+using NetBackend.Services.Interfaces;
 
 public class ApiKeyMutation
 {
     public async Task<AccessKeyDto> CreateGraphQLApiKey(
         [Service] IKeyService keyService,
-        [Service] IDatabaseContextService databaseContextService,
+        [Service] IApiService apiService,
+        [Service] IDbContextService databaseContextService,
         string keyName,
         List<string> allowedQueries,
         string userEmail)
@@ -23,7 +23,7 @@ public class ApiKeyMutation
             throw new Exception("User not found.");
         }
 
-        var graphQLApiKey = await keyService.CreateGraphQLApiKey(user, keyName, allowedQueries);
+        var graphQLApiKey = await apiService.CreateGraphQLApiKey(user, keyName, allowedQueries);
 
         // Encrypt and store access key
         var accesKey = await keyService.EncryptAndStoreAccessKey(graphQLApiKey, user);

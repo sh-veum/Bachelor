@@ -5,6 +5,7 @@ using NetBackend.Constants;
 using NetBackend.Models;
 using NetBackend.Models.Dto;
 using NetBackend.Services;
+using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Controllers;
 
@@ -13,13 +14,13 @@ namespace NetBackend.Controllers;
 public class AquaCultureListsController : ControllerBase
 {
     private readonly ILogger<AquaCultureListsController> _logger;
-    private readonly IDatabaseContextService _databaseContextService;
+    private readonly IDbContextService _databaseContextService;
     private readonly IKeyService _keyService;
     private readonly IUserService _userService;
 
     public AquaCultureListsController(
         ILogger<AquaCultureListsController> logger,
-        IDatabaseContextService databaseContextService,
+        IDbContextService databaseContextService,
         IKeyService keyService,
         IUserService userService)
     {

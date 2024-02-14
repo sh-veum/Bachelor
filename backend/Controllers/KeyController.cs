@@ -7,6 +7,7 @@ using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Constants;
 using NetBackend.Models.Keys;
+using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Controllers;
 
@@ -45,7 +46,7 @@ public class KeyController : ControllerBase
                 return BadRequest("Endpoints are be null.");
             }
 
-            var apiKey = await _keyService.CreateApiKey(user, model.KeyName, model.AccessibleEndpoints);
+            var apiKey = await _apiService.CreateRESTApiKey(user, model.KeyName, model.AccessibleEndpoints);
 
             if (apiKey == null)
             {
@@ -93,11 +94,14 @@ public class KeyController : ControllerBase
                 return NotFound("API key not found.");
             }
 
-            // Correctly calculate ExpiresIn to reflect the remaining time until expiration
+            // Calculate ExpiresIn to reflect the remaining time until expiration
             var currentTime = DateTime.UtcNow;
             var creationTime = apiKey.CreatedAt;
             var expirationTime = creationTime.AddMinutes(apiKey.ExpiresIn);
             var expiresInMinutes = (expirationTime - currentTime).TotalMinutes;
+
+            // Make expiresInMinutes 0 if it's 0 or a negative number
+            expiresInMinutes = expiresInMinutes > 0 ? expiresInMinutes : 0;
 
             IApiKeyDto? apiKeyDto = null;
 
@@ -110,7 +114,7 @@ public class KeyController : ControllerBase
                         Id = api.Id,
                         KeyName = api.KeyName ?? "",
                         CreatedBy = api.User.Email ?? "",
-                        ExpiresIn = (int)expiresInMinutes,
+                        ExpiresIn = expiresInMinutes < 0 ? 0 : (int)expiresInMinutes,
                         AccessibleEndpoints = api.AccessibleEndpoints
                     };
                 }
@@ -122,7 +126,7 @@ public class KeyController : ControllerBase
                     Id = graphQLApiKey.Id,
                     KeyName = graphQLApiKey.KeyName ?? "",
                     CreatedBy = graphQLApiKey.User.Email ?? "",
-                    ExpiresIn = (int)expiresInMinutes,
+                    ExpiresIn = expiresInMinutes < 0 ? 0 : (int)expiresInMinutes,
                     AllowedQueries = graphQLApiKey.AllowedQueries
                 };
             }

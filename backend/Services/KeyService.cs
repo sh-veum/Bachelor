@@ -6,59 +6,27 @@ using Netbackend.Services;
 using NetBackend.Constants;
 using NetBackend.Models.Keys;
 using NetBackend.Models.User;
+using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Services;
-
-public interface IKeyService
-{
-    Task<string> EncryptAndStoreAccessKey(IApiKey apiKey, UserModel user);
-    Task<(IApiKey?, IActionResult?)> DecryptAccessKeyUserCheck(string encryptedKey, string userId);
-    Task<(IApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey);
-    Task<ApiKey> CreateApiKey(UserModel user, string keyName, List<string> endpoints);
-    Task<(DbContext?, IActionResult?)> ProcessAccessKey(string encryptedKey, string? query = null);
-    Task<IActionResult> RemoveAccessKey(string encryptedKey);
-    Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<string> allowedQueries);
-}
 
 public class KeyService : IKeyService
 {
     private readonly ILogger<KeyService> _logger;
-    private readonly ICryptologyService _cryptologyService;
-    private readonly IDatabaseContextService _databaseContextService;
+    private readonly ICryptoService _cryptologyService;
+    private readonly IDbContextService _databaseContextService;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public KeyService(
         ILogger<KeyService> logger,
-        ICryptologyService cryptologyService,
-        IDatabaseContextService databaseContextService,
+        ICryptoService cryptologyService,
+        IDbContextService databaseContextService,
         IHttpContextAccessor httpContextAccessor)
     {
         _logger = logger;
         _cryptologyService = cryptologyService;
         _databaseContextService = databaseContextService;
         _httpContextAccessor = httpContextAccessor;
-    }
-
-    public async Task<ApiKey> CreateApiKey(UserModel user, string keyName, List<string> endpoints)
-    {
-        var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-
-        // Create a new ApiKey instance
-        var apiKey = new ApiKey
-        {
-            UserId = user.Id,
-            KeyName = keyName,
-            AccessibleEndpoints = endpoints,
-            User = user,
-            CreatedAt = DateTime.UtcNow,
-            ExpiresIn = KeyConstants.ExpiresIn
-        };
-
-        // Add the new ApiKey to the DbContext
-        dbContext.Set<ApiKey>().Add(apiKey);
-        await dbContext.SaveChangesAsync();
-
-        return apiKey;
     }
 
     public async Task<string> EncryptAndStoreAccessKey(IApiKey apiKey, UserModel user)
@@ -248,38 +216,18 @@ public class KeyService : IKeyService
 
     private static string ComputeSha256Hash(string rawData)
     {
-        using (SHA256 sha256Hash = SHA256.Create())
+        if (string.IsNullOrEmpty(rawData))
         {
-            byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < bytes.Length; i++)
-            {
-                builder.Append(bytes[i].ToString("x2"));
-            }
-            return builder.ToString();
+            throw new ArgumentException("Raw data cannot be null or empty.", nameof(rawData));
         }
-    }
+        byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
 
-    // GraphQL
-    public async Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<string> allowedQueries)
-    {
-        var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-
-        var graphQLApiKey = new GraphQLApiKey
+        StringBuilder builder = new StringBuilder();
+        foreach (var b in bytes)
         {
-            KeyName = keyName,
-            UserId = user.Id,
-            User = user,
-            AllowedQueries = allowedQueries,
-            CreatedAt = DateTime.UtcNow,
-            ExpiresIn = KeyConstants.ExpiresIn
-        };
-
-        dbContext.Set<GraphQLApiKey>().Add(graphQLApiKey);
-        await dbContext.SaveChangesAsync();
-
-        return graphQLApiKey;
+            builder.Append(b.ToString("x2"));
+        }
+        return builder.ToString();
     }
 }
 

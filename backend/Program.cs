@@ -8,6 +8,7 @@ using NetBackend.Data.DbContexts;
 using NetBackend.GraphQL;
 using NetBackend.Models.User;
 using NetBackend.Services;
+using NetBackend.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,9 +80,9 @@ builder.Services.AddIdentityCore<UserModel>()
     .AddApiEndpoints();
 
 // Services
-builder.Services.AddScoped<IDatabaseContextService, DatabaseContextService>();
+builder.Services.AddScoped<IDbContextService, DbContextService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddSingleton<ICryptologyService, CryptologyService>();
+builder.Services.AddSingleton<ICryptoService, CryptoService>();
 builder.Services.AddScoped<IKeyService, KeyService>();
 builder.Services.AddSingleton<IApiService, ApiService>();
 

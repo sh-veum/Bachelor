@@ -2,23 +2,18 @@ using Microsoft.EntityFrameworkCore;
 using NetBackend.Constants;
 using NetBackend.Data.DbContexts;
 using NetBackend.Models.User;
+using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Services;
 
-public interface IDatabaseContextService
-{
-    Task<DbContext> GetUserDatabaseContext(UserModel user);
-    Task<DbContext> GetDatabaseContextByName(string databaseName);
-}
-
-public class DatabaseContextService : IDatabaseContextService
+public class DbContextService : IDbContextService
 {
     private readonly MainDbContext _mainDbContext;
     private readonly CustomerOneDbContext _customerOneContext;
     private readonly CustomerTwoDbContext _customerTwoContext;
 
 
-    public DatabaseContextService(
+    public DbContextService(
     MainDbContext mainDbContext,
     CustomerOneDbContext customerOneContext,
     CustomerTwoDbContext customerTwoContext)
