@@ -102,9 +102,6 @@ builder.Services.AddCors(options =>
 
 builder.Services
     .AddGraphQLServer()
-    // .RegisterDbContext<MainDbContext>(DbContextKind.Pooled)
-    // .RegisterDbContext<CustomerOneDbContext>(DbContextKind.Pooled)
-    // .RegisterDbContext<CustomerTwoDbContext>(DbContextKind.Pooled)
     .AddQueryType<Query>()
     .AddMutationType<ApiKeyMutation>();
 

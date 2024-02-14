@@ -19,60 +19,85 @@ public class Query
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<IQueryable<Species>?> GetSpecies([Service] IKeyService keyService, [Service] IUserService userService, [Service] IDbContextService dbContextService, string? encryptedKey = null)
+    public async Task<IQueryable<Species>?> GetSpecies([Service] IKeyService keyService, [Service] IUserService userService, [Service(ServiceKind.Synchronized)] IDbContextService dbContextService, string? encryptedKey = null)
     {
-        BaseDbContext? dbContext;
-
-        if (string.IsNullOrWhiteSpace(encryptedKey))
+        try
         {
-            var userResult = await GetUserFromContext(userService, dbContextService);
-            if (userResult.Error != null) return null;
+            BaseDbContext? dbContext;
 
-            dbContext = userResult.DbContext as BaseDbContext;
+            if (string.IsNullOrWhiteSpace(encryptedKey))
+            {
+                var userResult = await GetContextFromUser(userService, dbContextService);
+                if (userResult.Error != null) return null;
+
+                dbContext = userResult.DbContext as BaseDbContext;
+            }
+            else
+            {
+                var keyResult = await keyService.ProcessAccessKey(encryptedKey, GraphQLConstants.GetSpeciesQuery);
+                if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
+
+                dbContext = keyResult.dbContext as BaseDbContext;
+            }
+
+            return dbContext?.GetSpecies();
         }
-        else
+        catch (Exception ex)
         {
-            var keyResult = await keyService.ProcessAccessKey(encryptedKey, GraphQLConstants.GetSpeciesQuery);
-            if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
-
-            dbContext = keyResult.dbContext as BaseDbContext;
+            _logger.LogError(ex, "Error getting species");
+            return null;
         }
 
-        return dbContext?.GetSpecies();
     }
 
-    public async Task<IQueryable<Organization>?> GetOrganizations([Service] IKeyService keyService, [Service] IUserService userService, [Service] IDbContextService dbContextService, string? encryptedKey = null)
+    public async Task<IQueryable<Organization>?> GetOrganizations([Service] IKeyService keyService, [Service] IUserService userService, [Service(ServiceKind.Synchronized)] IDbContextService dbContextService, string? encryptedKey = null)
     {
-        BaseDbContext? dbContext;
-
-        if (string.IsNullOrWhiteSpace(encryptedKey))
+        try
         {
-            var userResult = await GetUserFromContext(userService, dbContextService);
-            if (userResult.Error != null) return null;
+            BaseDbContext? dbContext;
 
-            dbContext = userResult.DbContext as BaseDbContext;
+            if (string.IsNullOrWhiteSpace(encryptedKey))
+            {
+                var userResult = await GetContextFromUser(userService, dbContextService);
+                if (userResult.Error != null) return null;
+
+                dbContext = userResult.DbContext as BaseDbContext;
+            }
+            else
+            {
+                var keyResult = await keyService.ProcessAccessKey(encryptedKey, GraphQLConstants.GetOrganizationsQuery);
+                if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
+
+                dbContext = keyResult.dbContext as BaseDbContext;
+            }
+
+            return dbContext?.GetOrganizations();
         }
-        else
+        catch (Exception ex)
         {
-            var keyResult = await keyService.ProcessAccessKey(encryptedKey, GraphQLConstants.GetOrganizationsQuery);
-            if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
-
-            dbContext = keyResult.dbContext as BaseDbContext;
+            _logger.LogError(ex, "Error getting organizations");
+            return null;
         }
-
-        return dbContext?.GetOrganizations();
     }
 
-    private async Task<(DbContext? DbContext, IActionResult? Error)> GetUserFromContext(IUserService userService, IDbContextService dbContextService)
+    private async Task<(DbContext? DbContext, IActionResult? Error)> GetContextFromUser(IUserService userService, IDbContextService dbContextService)
     {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext == null) return (null, null);
+        try
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext == null) return (null, null);
 
-        var (user, error) = await userService.GetUserAsync(httpContext);
-        if (error != null) return (null, error);
+            var (user, error) = await userService.GetUserAsync(httpContext);
+            if (error != null) return (null, error);
 
-        var dbContext = await dbContextService.GetUserDatabaseContext(user);
-        return (dbContext, null);
+            var dbContext = await dbContextService.GetUserDatabaseContext(user);
+            return (dbContext, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error context from user");
+            return (null, new StatusCodeResult(StatusCodes.Status500InternalServerError));
+        }
     }
 
     public List<string?> GetAvailableGraphQLQueries()
