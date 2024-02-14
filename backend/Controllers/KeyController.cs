@@ -6,6 +6,7 @@ using NetBackend.Models.Keys.Dto;
 using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Constants;
+using NetBackend.Models.Keys;
 
 namespace NetBackend.Controllers;
 
@@ -87,13 +88,41 @@ public class KeyController : ControllerBase
                 return errorResult;
             }
 
-            var apiKeyDto = new ApiKeyDto
+            // Calculate ExpiresIn based on the current date, CreatedAt, and ExpiresIn values
+            int expiresInMinutes = 0;
+            if (apiKey != null)
             {
-                Id = apiKey?.Id ?? 0,
-                KeyName = apiKey?.KeyName ?? "",
-                CreatedBy = apiKey?.User.Email ?? "",
-                AccessibleEndpoints = apiKey?.AccessibleEndpoints
-            };
+                var expiresIn = (DateTime.UtcNow - apiKey.CreatedAt).TotalMinutes + apiKey.ExpiresIn;
+                expiresInMinutes = expiresIn > 0 ? (int)expiresIn : 0;
+            }
+
+            IApiKeyDto? apiKeyDto = null;
+
+            if (apiKey is ApiKey api)
+            {
+                if (api != null)
+                {
+                    apiKeyDto = new ApiKeyDto
+                    {
+                        Id = api.Id,
+                        KeyName = api.KeyName ?? "",
+                        CreatedBy = api.User.Email ?? "",
+                        ExpiresIn = expiresInMinutes,
+                        AccessibleEndpoints = api.AccessibleEndpoints
+                    };
+                }
+            }
+            else if (apiKey is GraphQLApiKey graphQLApiKey)
+            {
+                apiKeyDto = new GraphQLApiKeyDto
+                {
+                    Id = graphQLApiKey.Id,
+                    KeyName = graphQLApiKey.KeyName ?? "",
+                    CreatedBy = graphQLApiKey.User.Email ?? "",
+                    ExpiresIn = expiresInMinutes,
+                    AllowedQueries = graphQLApiKey.AllowedQueries
+                };
+            }
 
             return Ok(apiKeyDto);
         }
@@ -103,6 +132,7 @@ public class KeyController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
+
 
     [HttpPost("delete-accesskey")]
     [Authorize]
@@ -142,20 +172,25 @@ public class KeyController : ControllerBase
                 return errorResult;
             }
 
-            // Assuming apiKey.AccessibleEndpoints contains paths
-            var validEndpoints = ApiConstants.DefaultApiEndpoints
-                .Where(endpoint => apiKey?.AccessibleEndpoints?.Contains(endpoint.Path) ?? false)
-                .Select(endpoint => new
-                {
-                    endpoint.Path,
-                    endpoint.Method,
-                    ExpectedBody = endpoint.ExpectedBodyType != null ? _apiService.GetDtoStructure(endpoint.ExpectedBodyType) : null
-                })
-                .ToList();
+            var validEndpoints = new List<object>();
 
-            if (!validEndpoints.Any())
+            if (apiKey is ApiKey api)
             {
-                return NotFound("No valid endpoints found for the provided access key.");
+                // Assuming apiKey.AccessibleEndpoints contains paths
+                validEndpoints = ApiConstants.DefaultApiEndpoints
+                    .Where(endpoint => api?.AccessibleEndpoints?.Contains(endpoint.Path) ?? false)
+                    .Select(endpoint => new
+                    {
+                        endpoint.Path,
+                        endpoint.Method,
+                        ExpectedBody = endpoint.ExpectedBodyType != null ? _apiService.GetDtoStructure(endpoint.ExpectedBodyType) : null
+                    })
+                    .ToList<object>();
+
+                if (!validEndpoints.Any())
+                {
+                    return NotFound("No valid endpoints found for the provided access key.");
+                }
             }
 
             return Ok(validEndpoints);
