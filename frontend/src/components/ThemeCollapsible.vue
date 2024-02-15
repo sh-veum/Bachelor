@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Button } from '@/components/ui/button'
 import { ChevronsUpDown } from 'lucide-vue-next'
 import { ChevronsDown } from 'lucide-vue-next'
 import { ChevronsUp } from 'lucide-vue-next'

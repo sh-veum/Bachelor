@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import ThemeCollapsible from '@/components/ThemeCollapsible.vue'
 import { Button } from '@/components/ui/button'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
+import * as z from 'zod'
 
 import {
   Table,
@@ -23,8 +26,16 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form'
+
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
-import { ref } from 'vue'
 
 import {
   Command,
@@ -37,24 +48,37 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 
-const frameworks = [
-  { value: 'next.js', label: 'Next.js' },
-  { value: 'sveltekit', label: 'SvelteKit' },
-  { value: 'nuxt.js', label: 'Nuxt.js' },
-  { value: 'remix', label: 'Remix' },
-  { value: 'astro', label: 'Astro' }
+const themes = [
+  { value: 'AquaCultureLists', label: 'Aquaculture Lists' },
+  { value: 'CodSpawningGround', label: 'Cod Spawning Ground' },
+  { value: 'DiseaseHistory', label: 'Disease History' },
+  { value: 'Export Restrictions', label: 'Export Restrictions' }
 ]
-
-const open = ref(false)
-const value = ref<string>('')
-
-// const filterFunction = (list: typeof frameworks, search: string) => list.filter(i => i.value.toLowerCase().includes(search.toLowerCase()))
 
 const keys = [
   { name: 'Key 1', themes: ['Theme 1', 'Theme 2', 'Theme 3'] },
   { name: 'Key 2', themes: ['Theme 1', 'Theme 2', 'Theme 3'] },
   { name: 'Key 3', themes: ['Theme 1', 'Theme 2', 'Theme 3'] }
 ]
+
+const formSchema = toTypedSchema(
+  z.object({
+    name: z
+      .string({
+        required_error: 'Please enter a name.'
+      })
+      .min(1, 'Please enter a name.'),
+    themes: z.array(z.string()).min(1, 'Please select at least one theme.')
+  })
+)
+
+const { handleSubmit, setValues, values } = useForm({
+  validationSchema: formSchema
+})
+
+const onSubmit = handleSubmit((values) => {
+  console.log(values)
+})
 </script>
 
 <template>
@@ -69,68 +93,91 @@ const keys = [
           Choose a name for the key and which themes the key can access.
         </DialogDescription>
       </DialogHeader>
-      <div class="grid gap-4 py-4">
-        <div class="grid grid-cols-4 items-center gap-4">
-          <!-- TODO: maybe have a label? -->
-          <!-- <Label for="name" class="text-right">
-            Name
-          </Label> -->
-          <Input id="name" class="col-span-3" placeholder="Name" />
-        </div>
-        <Popover v-model:open="open">
-          <PopoverTrigger as-child>
-            <Button
-              variant="outline"
-              role="combobox"
-              :aria-expanded="open"
-              class="w-[200px] justify-between"
-            >
-              {{
-                value
-                  ? frameworks.find((framework) => framework.value === value)?.label
-                  : 'Select framework...'
-              }}
-              <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent class="w-[200px] p-0">
-            <Command>
-              <CommandInput class="h-9" placeholder="Search framework..." />
-              <CommandEmpty>No framework found.</CommandEmpty>
-              <CommandList>
-                <CommandGroup>
-                  <CommandItem
-                    v-for="framework in frameworks"
-                    :key="framework.value"
-                    :value="framework.value"
-                    @select="
-                      (ev) => {
-                        if (typeof ev.detail.value === 'string') {
-                          value = ev.detail.value
-                        }
-                        open = false
-                      }
-                    "
-                  >
-                    {{ framework.label }}
-                    <Check
+      <form class="space-y-6" @submit="onSubmit">
+        <div class="grid gap-4 py-4">
+          <FormField v-slot="{ componentField }" name="name">
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input type="text" placeholder="Name" v-bind="componentField" />
+              </FormControl>
+              <FormDescription> The name of the key. </FormDescription>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+
+          <FormField name="themes">
+            <FormItem class="flex flex-col">
+              <FormLabel>Themes</FormLabel>
+              <Popover>
+                <PopoverTrigger as-child>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
                       :class="
                         cn(
-                          'ml-auto h-4 w-4',
-                          value === framework.value ? 'opacity-100' : 'opacity-0'
+                          'w-[200px] justify-between',
+                          !values.themes?.length && 'text-muted-foreground'
                         )
                       "
-                    />
-                  </CommandItem>
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
-      <DialogFooter>
-        <Button type="submit"> Create </Button>
-      </DialogFooter>
+                    >
+                      {{
+                        values.themes?.length
+                          ? values.themes.length === 1
+                            ? themes.find((t) => t.value === values.themes?.[0])?.label
+                            : `${values.themes.length} themes selected`
+                          : 'Select themes...'
+                      }}
+                      <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent class="w-[200px] p-0">
+                  <Command multiple>
+                    <CommandInput placeholder="Search themes..." />
+                    <CommandEmpty>Nothing found.</CommandEmpty>
+                    <CommandList>
+                      <CommandGroup>
+                        <CommandItem
+                          v-for="theme in themes"
+                          :key="theme.value"
+                          :value="theme.value"
+                          @select="
+                            () => {
+                              const selectedThemes = values.themes?.includes(theme.value)
+                                ? values.themes.filter((t) => t !== theme.value)
+                                : [...(values.themes ?? []), theme.value]
+                              setValues({
+                                themes: selectedThemes
+                              })
+                            }
+                          "
+                        >
+                          <Check
+                            :class="
+                              cn(
+                                'mr-2 h-4 w-4',
+                                values.themes?.includes(theme.value) ? 'opacity-100' : 'opacity-0'
+                              )
+                            "
+                          />
+                          {{ theme.label }}
+                        </CommandItem>
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <FormDescription> These are the themes that the key can access. </FormDescription>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+        </div>
+        <DialogFooter>
+          <Button type="submit"> Create </Button>
+        </DialogFooter>
+      </form>
     </DialogContent>
   </Dialog>
 
