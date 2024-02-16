@@ -15,6 +15,15 @@ def run_migration_and_update(migrations_name, folder_path='Data/DbContexts/'):
         print(f"No .cs files found in {folder_path}.")
         return
 
+    # Ask if tables should be deleted
+    delete_tables = input("Do you want to delete the database tables before running the migration? (Y/N): ").lower()
+    if delete_tables == 'y':
+        delete_tables_are_you_certain = input("\033[91mDo ARE ABSOLUTELY SURE AND KNOW WHAT YOU ARE DOING? (Y/N): \033[0m").lower()
+        if delete_tables_are_you_certain == 'y':
+            for file in files:
+                context_name = file.replace('.cs', '')
+                delete_database_tables(context_name)
+
     # Run migration add command for each file
     for file in files:
         context_name = file.replace('.cs', '')
@@ -28,6 +37,13 @@ def run_migration_and_update(migrations_name, folder_path='Data/DbContexts/'):
         update_command = f'dotnet ef database update --context {context_name}'
         print(f"Running: {update_command}")
         subprocess.run(update_command, shell=True)
+
+def delete_database_tables(context_name):
+    # Example command to delete tables, adjust according to your project setup
+    # This might be a raw SQL script execution or an EF Core command
+    delete_command = f'dotnet ef database drop --context {context_name} --force'
+    print(f"Deleting tables for context: {context_name}")
+    subprocess.run(delete_command, shell=True)
 
 if __name__ == "__main__":
     migrations_name = input("Enter the migrations name: ")
