@@ -16,27 +16,27 @@ namespace NetBackend.Services;
 public partial class KeyService : IKeyService
 {
     private readonly ILogger<KeyService> _logger;
-    private readonly ICryptoService _cryptologyService;
-    private readonly IDbContextService _databaseContextService;
+    private readonly ICryptoService _cryptoService;
+    private readonly IDbContextService _dbContextService;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public KeyService(
         ILogger<KeyService> logger,
-        ICryptoService cryptologyService,
-        IDbContextService databaseContextService,
+        ICryptoService cryptoService,
+        IDbContextService dbContextService,
         IHttpContextAccessor httpContextAccessor)
     {
         _logger = logger;
-        _cryptologyService = cryptologyService;
-        _databaseContextService = databaseContextService;
+        _cryptoService = cryptoService;
+        _dbContextService = dbContextService;
         _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<string> EncryptAndStoreAccessKey(IApiKey apiKey, UserModel user)
     {
-        var dbContext = await _databaseContextService.GetUserDatabaseContext(user);
+        var dbContext = await _dbContextService.GetUserDatabaseContext(user);
         var dataToEncrypt = $"Id:{apiKey.Id},Type:{apiKey.GetType().Name}";
-        var encryptedKey = _cryptologyService.Encrypt(dataToEncrypt, SecretConstants.SecretKey);
+        var encryptedKey = _cryptoService.Encrypt(dataToEncrypt, SecretConstants.SecretKey);
 
         // Compute hash of the encrypted key.
         var keyHash = ComputeSha256Hash(encryptedKey);
@@ -55,7 +55,7 @@ public partial class KeyService : IKeyService
     public async Task<(IApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey)
     {
         // Decrypt the data
-        var decryptedData = _cryptologyService.Decrypt(encryptedKey, SecretConstants.SecretKey);
+        var decryptedData = _cryptoService.Decrypt(encryptedKey, SecretConstants.SecretKey);
         var dataParts = decryptedData.Split(',');
 
         var typePart = dataParts.FirstOrDefault(part => part.StartsWith("Type:"))?.Split(':')[1];
@@ -69,7 +69,7 @@ public partial class KeyService : IKeyService
             return (null, new BadRequestObjectResult("Invalid encrypted key format."));
         }
 
-        var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         if (dbContext == null)
         {
             return (null, new NotFoundObjectResult("Database context not found."));
@@ -148,10 +148,10 @@ public partial class KeyService : IKeyService
 
         if (apiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
 
-        var mainDbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
 
-        var selectedContext = await _databaseContextService.GetDatabaseContextByName(databaseName);
+        var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
 
         // Compute hash of the encrypted key and check if it exists in the database
         var keyHash = ComputeSha256Hash(encryptedKey);
@@ -205,10 +205,10 @@ public partial class KeyService : IKeyService
 
         if (apiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
 
-        var mainDbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
 
-        var selectedContext = await _databaseContextService.GetDatabaseContextByName(databaseName);
+        var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
 
         // Compute hash of the encrypted key and check if it exists in the database
         var keyHash = ComputeSha256Hash(encryptedKey);
@@ -229,7 +229,7 @@ public partial class KeyService : IKeyService
             return errorResult;
         }
 
-        var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         if (dbContext == null)
         {
             return new NotFoundObjectResult("Database context not found.");
@@ -304,7 +304,7 @@ public partial class KeyService : IKeyService
                 return false;
             }
 
-            var allowedFields = permission.AllowedFields.Select(f => f.ToLowerInvariant()).ToList();
+            var allowedFields = permission.AllowedFields?.Select(f => f.ToLowerInvariant()).ToList() ?? [];
 
             _logger.LogInformation($"Allowed fields for operation '{operation.Key}': {string.Join(", ", allowedFields)}");
 
@@ -325,7 +325,7 @@ public partial class KeyService : IKeyService
 
     private async Task<List<AccessKeyPermission>> GetAccessKeyPermission(int graphQLApiKeyId)
     {
-        var mainDbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
         var accessKeyPermissions = await mainDbContext.Set<AccessKeyPermission>()
             .Where(p => p.GraphQLApiKeyId == graphQLApiKeyId)

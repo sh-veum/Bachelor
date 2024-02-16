@@ -49,4 +49,23 @@ public static class ModelSeedData
             new Organization { Id = 3, OrgNo = 201, Name = "Kompni 3 AS", Address = "Storvegen 305", PostalCode = "6002", City = "Ålesund" }
         );
     }
+
+    public static void SeedAltThree(ModelBuilder modelBuilder, int speciesCount, int organizationCount, string identifierName)
+    {
+        // Seed data for Species
+        var speciesList = new List<Species>();
+        for (int i = 1; i <= speciesCount; i++)
+        {
+            speciesList.Add(new Species { Id = i + 100, Name = $"{identifierName}: Species {i}" });
+        }
+        modelBuilder.Entity<Species>().HasData(speciesList);
+
+        // Seed data for Organizations
+        var organizationList = new List<Organization>();
+        for (int i = 1; i <= organizationCount; i++)
+        {
+            organizationList.Add(new Organization { Id = i + 100, OrgNo = 100 + i, Name = $"{identifierName}: Organization {i}", Address = $"Address {i}", PostalCode = $"PostalCode {i}", City = $"City {i}" });
+        }
+        modelBuilder.Entity<Organization>().HasData(organizationList);
+    }
 }
