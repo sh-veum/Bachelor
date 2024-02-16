@@ -17,8 +17,12 @@ export function useAuth() {
     if (response.status === 200) {
       authToken.value = response.data.accessToken
       refreshToken.value = response.data.refreshToken
-      localStorage.setItem('authToken', authToken.value)
-      localStorage.setItem('refreshToken', refreshToken.value)
+      if (authToken.value !== null) {
+        localStorage.setItem('authToken', authToken.value)
+      }
+      if (refreshToken.value !== null) {
+        localStorage.setItem('refreshToken', refreshToken.value)
+      }
       await fetchUserInfo()
     }
   }
