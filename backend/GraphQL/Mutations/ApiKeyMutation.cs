@@ -1,30 +1,28 @@
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.EntityFrameworkCore;
 using Netbackend.Models.Dto.Keys;
-using NetBackend.Constants;
 using NetBackend.Models.Keys;
-using NetBackend.Models.User;
 using NetBackend.Services.Interfaces;
+using NetBackend.Types;
 
 namespace NetBackend.GraphQL.Mutations;
 
 public class ApiKeyMutation
 {
+    private readonly ILogger<ApiKeyMutation> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ApiKeyMutation(IHttpContextAccessor httpContextAccessor)
+    public ApiKeyMutation(IHttpContextAccessor httpContextAccessor, ILogger<ApiKeyMutation> logger)
     {
         _httpContextAccessor = httpContextAccessor;
+        _logger = logger;
     }
 
     public async Task<AccessKeyDto?> CreateGraphQLAccessKey(
-        [Service] IKeyService keyService,
-        [Service] IApiService apiService,
-        [Service] IUserService userService,
-        string keyName,
-        List<string> allowedQueries)
+            [Service] IKeyService keyService,
+            [Service] IApiService apiService,
+            [Service] IUserService userService,
+            string keyName,
+            List<AccessKeyPermissionInput> permissions)
     {
-        // Get user to store access key
         var httpContext = _httpContextAccessor.HttpContext ?? throw new Exception("HttpContext is null.");
 
         var (user, error) = await userService.GetUserAsync(httpContext);
@@ -33,16 +31,22 @@ public class ApiKeyMutation
             throw new Exception("User not found.");
         }
 
-        var graphQLApiKey = await apiService.CreateGraphQLApiKey(user, keyName, allowedQueries);
+        var accessKeyPermissions = permissions.Select(p => new AccessKeyPermission
+        {
+            QueryName = p.QueryName,
+            AllowedFields = p.AllowedFields
+        }).ToList();
+        _logger.LogInformation("accessKeyPermissions: {accessKeyPermissions}", accessKeyPermissions);
+
+        var graphQLApiKey = await apiService.CreateGraphQLApiKey(user, keyName, accessKeyPermissions);
+        _logger.LogInformation("graphQLApiKey: {graphQLApiKey}", graphQLApiKey);
 
         // Encrypt and store access key
-        var accessKey = await keyService.EncryptAndStoreAccessKey(graphQLApiKey, user);
+        var encryptedKey = await keyService.EncryptAndStoreAccessKey(graphQLApiKey, user);
 
-        var accesKeyDto = new AccessKeyDto
+        return new AccessKeyDto
         {
-            EncryptedKey = accessKey ?? ""
+            EncryptedKey = encryptedKey ?? throw new Exception("Failed to generate encrypted key.")
         };
-
-        return accesKeyDto;
     }
 }

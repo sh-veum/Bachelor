@@ -8,5 +8,5 @@ public interface IApiService
     object GetDtoStructure(Type dtoType);
     string GetFriendlyTypeName(Type type);
     Task<ApiKey> CreateRESTApiKey(UserModel user, string keyName, List<string> endpoints);
-    Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<string> allowedQueries);
+    Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<AccessKeyPermission> permissions);
 }

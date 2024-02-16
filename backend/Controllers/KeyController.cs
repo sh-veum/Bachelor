@@ -8,6 +8,8 @@ using NetBackend.Services;
 using NetBackend.Constants;
 using NetBackend.Models.Keys;
 using NetBackend.Services.Interfaces;
+using NetBackend.Models.Dto.Keys;
+using Microsoft.EntityFrameworkCore;
 
 namespace NetBackend.Controllers;
 
@@ -19,13 +21,15 @@ public class KeyController : ControllerBase
     private readonly UserManager<UserModel> _userManager;
     private readonly IKeyService _keyService;
     private readonly IApiService _apiService;
+    private readonly IDbContextService _dbContextService;
 
-    public KeyController(ILogger<UserController> logger, UserManager<UserModel> userManager, IKeyService keyService, IApiService apiService)
+    public KeyController(ILogger<UserController> logger, UserManager<UserModel> userManager, IKeyService keyService, IApiService apiService, IDbContextService dbContextService)
     {
         _logger = logger;
         _userManager = userManager;
         _keyService = keyService;
         _apiService = apiService;
+        _dbContextService = dbContextService;
     }
 
     [HttpPost("create-accesskey")]
@@ -34,11 +38,7 @@ public class KeyController : ControllerBase
     {
         try
         {
-            var user = await _userManager.GetUserAsync(HttpContext.User);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
+            var user = await ValidateUser();
 
             // Create Api Key
             if (model.AccessibleEndpoints == null)
@@ -71,67 +71,73 @@ public class KeyController : ControllerBase
         }
     }
 
-    [HttpPost("decrypt-accesskey")]
+    [HttpPost("decrypt-rest-accesskey")]
     [Authorize(Roles = RoleConstants.AdminRole)]
     public async Task<IActionResult> DecryptAccessKey([FromBody] AccessKeyDto model)
     {
         try
         {
-            var user = await _userManager.GetUserAsync(HttpContext.User);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
+            var user = await ValidateUser();
+            var apiKey = await DecryptAndValidateApiKey(model.EncryptedKey, user.Id);
 
-            var (apiKey, errorResult) = await _keyService.DecryptAccessKeyUserCheck(model.EncryptedKey, user.Id);
-            if (errorResult != null)
-            {
-                return errorResult;
-            }
-
-            if (apiKey == null)
-            {
-                return NotFound("API key not found.");
-            }
-
-            // Calculate ExpiresIn to reflect the remaining time until expiration
-            var currentTime = DateTime.UtcNow;
-            var creationTime = apiKey.CreatedAt;
-            var expirationTime = creationTime.AddMinutes(apiKey.ExpiresIn);
-            var expiresInMinutes = (expirationTime - currentTime).TotalMinutes;
-
-            // Make expiresInMinutes 0 if it's 0 or a negative number
-            expiresInMinutes = expiresInMinutes > 0 ? expiresInMinutes : 0;
-
-            IApiKeyDto? apiKeyDto = null;
+            var expiresInMinutes = CalculateExpiresInMinutes(apiKey);
 
             if (apiKey is ApiKey api)
             {
-                if (api != null)
+                var apiKeyDto = new ApiKeyDto
                 {
-                    apiKeyDto = new ApiKeyDto
-                    {
-                        Id = api.Id,
-                        KeyName = api.KeyName ?? "",
-                        CreatedBy = api.User.Email ?? "",
-                        ExpiresIn = expiresInMinutes < 0 ? 0 : (int)expiresInMinutes,
-                        AccessibleEndpoints = api.AccessibleEndpoints
-                    };
-                }
-            }
-            else if (apiKey is GraphQLApiKey graphQLApiKey)
-            {
-                apiKeyDto = new GraphQLApiKeyDto
-                {
-                    Id = graphQLApiKey.Id,
-                    KeyName = graphQLApiKey.KeyName ?? "",
-                    CreatedBy = graphQLApiKey.User.Email ?? "",
-                    ExpiresIn = expiresInMinutes < 0 ? 0 : (int)expiresInMinutes,
-                    AllowedQueries = graphQLApiKey.AllowedQueries
+                    Id = api.Id,
+                    KeyName = api.KeyName ?? "",
+                    CreatedBy = api.User.Email ?? "",
+                    ExpiresIn = expiresInMinutes,
+                    AccessibleEndpoints = api.AccessibleEndpoints
                 };
+
+                return Ok(apiKeyDto);
             }
 
-            return Ok(apiKeyDto);
+            return NotFound("API key type mismatch.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while decrypting access key.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("decrypt-graphql-accesskey")]
+    [Authorize(Roles = RoleConstants.AdminRole)]
+    public async Task<IActionResult> DecryptGraphQlAccessKey([FromBody] AccessKeyDto model)
+    {
+        try
+        {
+            var user = await ValidateUser();
+
+            var apiKey = await DecryptAndValidateApiKey(model.EncryptedKey, user.Id);
+
+            var expiresInMinutes = CalculateExpiresInMinutes(apiKey);
+
+            var permissions = await GetAccessKeyPermission(apiKey.Id);
+
+            if (apiKey is GraphQLApiKey api)
+            {
+                var graphQLApiKeyDto = new GraphQLApiKeyDto
+                {
+                    Id = api.Id,
+                    KeyName = api.KeyName ?? "",
+                    CreatedBy = api.User.Email ?? "",
+                    ExpiresIn = expiresInMinutes,
+                    GraphQLAccessKeyPermissionDto = permissions.Select(p => new GraphQLAccessKeyPermissionDto
+                    {
+                        QueryName = p.QueryName,
+                        AllowedFields = p.AllowedFields ?? []
+                    }).ToList() ?? []
+                };
+
+                return Ok(graphQLApiKeyDto);
+            }
+
+            return NotFound("API key type mismatch.");
         }
         catch (Exception ex)
         {
@@ -147,11 +153,7 @@ public class KeyController : ControllerBase
     {
         try
         {
-            var user = await _userManager.GetUserAsync(HttpContext.User);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
+            var user = await ValidateUser();
 
             var result = await _keyService.RemoveAccessKey(model.EncryptedKey);
             if (result == null)
@@ -194,7 +196,7 @@ public class KeyController : ControllerBase
                     })
                     .ToList<object>();
 
-                if (!validEndpoints.Any())
+                if (validEndpoints.Count == 0)
                 {
                     return NotFound("No valid endpoints found for the provided access key.");
                 }
@@ -207,5 +209,49 @@ public class KeyController : ControllerBase
             _logger.LogError(ex, "Error occurred while retrieving endpoint information.");
             return BadRequest(ex.Message);
         }
+    }
+
+    private async Task<UserModel> ValidateUser()
+    {
+        var user = await _userManager.GetUserAsync(HttpContext.User);
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("User is not authorized.");
+        }
+        return user;
+    }
+
+    private async Task<IApiKey> DecryptAndValidateApiKey(string encryptedKey, string userId)
+    {
+        var (apiKey, errorResult) = await _keyService.DecryptAccessKeyUserCheck(encryptedKey, userId);
+        if (errorResult != null)
+        {
+            throw new InvalidOperationException("Error validating API key.");
+        }
+
+        if (apiKey == null)
+        {
+            throw new KeyNotFoundException("API key not found.");
+        }
+
+        return apiKey;
+    }
+
+    private async Task<List<AccessKeyPermission>> GetAccessKeyPermission(int graphQLApiKeyId)
+    {
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        var accessKeyPermissions = await mainDbContext.Set<AccessKeyPermission>()
+            .Where(p => p.GraphQLApiKeyId == graphQLApiKeyId)
+            .ToListAsync();
+
+        return accessKeyPermissions;
+    }
+
+    private static int CalculateExpiresInMinutes(IApiKey apiKey)
+    {
+        var currentTime = DateTime.UtcNow;
+        var expiresInMinutes = (apiKey.CreatedAt.AddMinutes(apiKey.ExpiresIn) - currentTime).TotalMinutes;
+        return expiresInMinutes > 0 ? (int)expiresInMinutes : 0;
     }
 }

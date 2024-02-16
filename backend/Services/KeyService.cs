@@ -1,16 +1,19 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Services;
 using NetBackend.Constants;
+using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
 using NetBackend.Models.User;
 using NetBackend.Services.Interfaces;
+using NetBackend.Tools;
 
 namespace NetBackend.Services;
 
-public class KeyService : IKeyService
+public partial class KeyService : IKeyService
 {
     private readonly ILogger<KeyService> _logger;
     private readonly ICryptoService _cryptologyService;
@@ -116,7 +119,7 @@ public class KeyService : IKeyService
         return (apiKey, null);
     }
 
-    public async Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessAccessKey(string encryptedKey, string? query = null)
+    public async Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessAccessKey(string encryptedKey)
     {
         var (apiKey, errorResult) = await DecryptAccessKey(encryptedKey);
         if (errorResult != null) return (null, errorResult);
@@ -142,9 +145,59 @@ public class KeyService : IKeyService
                 return (null, new UnauthorizedResult());
             }
         }
-        else if (apiKey is GraphQLApiKey gqlApi)
+
+        if (apiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
+
+        var mainDbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
+
+        var selectedContext = await _databaseContextService.GetDatabaseContextByName(databaseName);
+
+        // Compute hash of the encrypted key and check if it exists in the database
+        var keyHash = ComputeSha256Hash(encryptedKey);
+        var accessKey = await selectedContext.Set<AccessKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
+        if (accessKey == null)
         {
-            if (!string.IsNullOrEmpty(query) && gqlApi.AllowedQueries != null && !gqlApi.AllowedQueries.Contains(query))
+            return (null, new UnauthorizedResult());
+        }
+
+        return (selectedContext, null);
+    }
+
+    public async Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessGraphQLAccessKey(string encryptedKey)
+    {
+        var (apiKey, errorResult) = await DecryptAccessKey(encryptedKey);
+        if (errorResult != null) return (null, errorResult);
+
+        if (apiKey == null)
+        {
+            return (null, new BadRequestObjectResult("API key not found."));
+        }
+
+        var expirationDate = apiKey.CreatedAt.AddDays(apiKey.ExpiresIn);
+        if (DateTime.UtcNow > expirationDate)
+        {
+            return (null, new UnauthorizedResult());
+        }
+
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null)
+        {
+            return (null, new BadRequestObjectResult("HttpContext is null."));
+        }
+
+        // Retrieve the stored GraphQL query from HttpContext
+        var graphqlQuery = httpContext.Items["GraphQLQuery"] as string;
+        if (string.IsNullOrEmpty(graphqlQuery))
+        {
+            return (null, new UnauthorizedResult()); // No query to authorize
+        }
+
+        if (apiKey is GraphQLApiKey api)
+        {
+            var permission = await GetAccessKeyPermission(apiKey.Id);
+            var isAuthorized = CheckQueryAuthorization(graphqlQuery, permission);
+            if (!isAuthorized)
             {
                 return (null, new UnauthorizedResult());
             }
@@ -229,5 +282,84 @@ public class KeyService : IKeyService
         }
         return builder.ToString();
     }
+
+    private bool CheckQueryAuthorization(string graphqlQuery, List<AccessKeyPermission> permissions)
+    {
+        var parsedQuery = ParseQuery(graphqlQuery);
+
+        _logger.LogInformation("Starting authorization check for GraphQL query.");
+
+        foreach (var operation in parsedQuery)
+        {
+            var operationName = operation.Key.ToLowerInvariant();
+            var requestedFields = operation.Value.Select(f => f.ToLowerInvariant()).ToList();
+
+            _logger.LogInformation($"Checking operation: {operation.Key} with fields: {string.Join(", ", operation.Value)}");
+
+            var permission = permissions.FirstOrDefault(p => p.QueryName.Equals(operationName, StringComparison.OrdinalIgnoreCase));
+
+            if (permission == null)
+            {
+                _logger.LogWarning($"Unauthorized operation: {operation.Key}. No matching permission found.");
+                return false;
+            }
+
+            var allowedFields = permission.AllowedFields.Select(f => f.ToLowerInvariant()).ToList();
+
+            _logger.LogInformation($"Allowed fields for operation '{operation.Key}': {string.Join(", ", allowedFields)}");
+
+            foreach (var field in requestedFields)
+            {
+                if (!allowedFields.Contains(field))
+                {
+                    _logger.LogWarning($"Unauthorized field: {field} in operation: {operation.Key}. Field is not in the allowed list.");
+                    return false;
+                }
+            }
+        }
+
+        _logger.LogInformation("GraphQL query authorization check passed.");
+
+        return true; // All requested operations and fields are allowed
+    }
+
+    private async Task<List<AccessKeyPermission>> GetAccessKeyPermission(int graphQLApiKeyId)
+    {
+        var mainDbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        var accessKeyPermissions = await mainDbContext.Set<AccessKeyPermission>()
+            .Where(p => p.GraphQLApiKeyId == graphQLApiKeyId)
+            .ToListAsync();
+
+        return accessKeyPermissions;
+    }
+
+    private Dictionary<string, List<string>> ParseQuery(string query)
+    {
+        _logger.LogInformation($"Received GraphQL query for parsing: {query}");
+        var operations = new Dictionary<string, List<string>>();
+        var operationMatches = MyRegex().Matches(query);
+
+        foreach (Match match in operationMatches)
+        {
+            var operationName = match.Groups[1].Value.Trim();
+            var fields = match.Groups[2].Value
+                .Split(new[] { '\n', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(f => f.Trim())
+                .Where(f => !string.IsNullOrEmpty(f))
+                .ToList();
+
+            if (!operations.ContainsKey(operationName))
+            {
+                operations.Add(operationName, fields);
+            }
+        }
+        _logger.LogInformation($"Parsed operations: {string.Join(", ", operations.Keys)}");
+
+        return operations;
+    }
+
+    [GeneratedRegex(@"(\w+)(?:\([^)]*\))?\s*{\s*([^}]+)\s*}", RegexOptions.IgnoreCase | RegexOptions.Multiline, "nb-NO")]
+    private static partial Regex MyRegex();
 }
 
