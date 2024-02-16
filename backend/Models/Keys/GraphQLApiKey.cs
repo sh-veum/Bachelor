@@ -2,5 +2,5 @@ namespace NetBackend.Models.Keys;
 
 public class GraphQLApiKey : IApiKey
 {
-    public List<string>? AllowedQueries { get; set; }
+    public required List<AccessKeyPermission> AccessKeyPermissions { get; set; }
 }

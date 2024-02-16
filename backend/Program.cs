@@ -6,9 +6,11 @@ using NetBackend.Constants;
 using NetBackend.Data.DbContexts;
 using NetBackend.GraphQL;
 using NetBackend.GraphQL.Mutations;
+using NetBackend.Middleware;
 using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Services.Interfaces;
+using NetBackend.Types;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -103,9 +105,12 @@ builder.Services.AddCors(options =>
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<Query>()
-    .AddMutationType<ApiKeyMutation>();
+    .AddMutationType<ApiKeyMutation>()
+    .AddType<AccessKeyPermissionInputType>();
 
 var app = builder.Build();
+
+app.UseMiddleware<GraphQLRequestLoggingMiddleware>();
 
 app.MapIdentityApi<UserModel>();
 

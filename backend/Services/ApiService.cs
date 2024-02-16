@@ -1,22 +1,28 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http.HttpResults;
 using NetBackend.Constants;
 using NetBackend.Models.Keys;
 using NetBackend.Models.User;
 using NetBackend.Services.Interfaces;
+using Newtonsoft.Json;
 
 namespace NetBackend.Services;
 
 public class ApiService : IApiService
 {
-    private readonly ILogger<KeyService> _logger;
+    private readonly ILogger<ApiService> _logger;
     private readonly IDbContextService _databaseContextService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public ApiService(
-        ILogger<KeyService> logger,
-        IDbContextService databaseContextService)
+        ILogger<ApiService> logger,
+        IDbContextService databaseContextService,
+        IHttpContextAccessor httpContextAccessor)
     {
         _logger = logger;
         _databaseContextService = databaseContextService;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public object GetDtoStructure(Type dtoType)
@@ -77,9 +83,8 @@ public class ApiService : IApiService
         return apiKey;
     }
 
-
     // GraphQL
-    public async Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<string> allowedQueries)
+    public async Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<AccessKeyPermission> permissions)
     {
         var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
@@ -88,7 +93,7 @@ public class ApiService : IApiService
             KeyName = keyName,
             UserId = user.Id,
             User = user,
-            AllowedQueries = allowedQueries,
+            AccessKeyPermissions = permissions,
             CreatedAt = DateTime.UtcNow,
             ExpiresIn = KeyConstants.ExpiresIn
         };
@@ -99,3 +104,4 @@ public class ApiService : IApiService
         return graphQLApiKey;
     }
 }
+

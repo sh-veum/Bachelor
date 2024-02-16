@@ -34,7 +34,7 @@ public class Query
             }
             else
             {
-                var keyResult = await keyService.ProcessAccessKey(encryptedKey, GraphQLConstants.GetSpeciesQuery);
+                var keyResult = await keyService.ProcessGraphQLAccessKey(encryptedKey);
                 if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
 
                 dbContext = keyResult.dbContext as BaseDbContext;
@@ -65,7 +65,7 @@ public class Query
             }
             else
             {
-                var keyResult = await keyService.ProcessAccessKey(encryptedKey, GraphQLConstants.GetOrganizationsQuery);
+                var keyResult = await keyService.ProcessGraphQLAccessKey(encryptedKey);
                 if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
 
                 dbContext = keyResult.dbContext as BaseDbContext;

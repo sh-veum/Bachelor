@@ -10,6 +10,7 @@ public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
 {
     public DbSet<ApiKey> ApiKeys { get; set; }
     public DbSet<GraphQLApiKey> GraphQLApiKeys { get; set; }
+    public DbSet<AccessKeyPermission> AccessKeyPermissions { get; set; }
 
     public MainDbContext(DbContextOptions<MainDbContext> options) : base(options)
     {
@@ -28,5 +29,10 @@ public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
             .HasMany(u => u.GraphQLApiKey)
             .WithOne(k => k.User)
             .HasForeignKey(k => k.UserId);
+
+        modelBuilder.Entity<GraphQLApiKey>()
+            .HasMany(u => u.AccessKeyPermissions)
+            .WithOne(k => k.GraphQLApiKey)
+            .HasForeignKey(k => k.GraphQLApiKeyId);
     }
 }
