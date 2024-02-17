@@ -10,6 +10,7 @@ using NetBackend.Models.Keys;
 using NetBackend.Services.Interfaces;
 using NetBackend.Models.Dto.Keys;
 using Microsoft.EntityFrameworkCore;
+using NetBackend.Tools;
 
 namespace NetBackend.Controllers;
 
@@ -22,14 +23,16 @@ public class KeyController : ControllerBase
     private readonly IKeyService _keyService;
     private readonly IApiService _apiService;
     private readonly IDbContextService _dbContextService;
+    private readonly IUserService _userService;
 
-    public KeyController(ILogger<UserController> logger, UserManager<UserModel> userManager, IKeyService keyService, IApiService apiService, IDbContextService dbContextService)
+    public KeyController(ILogger<UserController> logger, UserManager<UserModel> userManager, IKeyService keyService, IApiService apiService, IDbContextService dbContextService, IUserService userService)
     {
         _logger = logger;
         _userManager = userManager;
         _keyService = keyService;
         _apiService = apiService;
         _dbContextService = dbContextService;
+        _userService = userService;
     }
 
     [HttpPost("create-accesskey")]
@@ -38,7 +41,8 @@ public class KeyController : ControllerBase
     {
         try
         {
-            var user = await ValidateUser();
+            var userResult = await _userService.GetUserAsync(HttpContext);
+            var user = userResult.user;
 
             // Create Api Key
             if (model.AccessibleEndpoints == null)
@@ -77,7 +81,9 @@ public class KeyController : ControllerBase
     {
         try
         {
-            var user = await ValidateUser();
+            var userResult = await _userService.GetUserAsync(HttpContext);
+            var user = userResult.user;
+
             var apiKey = await DecryptAndValidateApiKey(model.EncryptedKey, user.Id);
 
             var expiresInMinutes = CalculateExpiresInMinutes(apiKey);
@@ -111,7 +117,8 @@ public class KeyController : ControllerBase
     {
         try
         {
-            var user = await ValidateUser();
+            var userResult = await _userService.GetUserAsync(HttpContext);
+            var user = userResult.user;
 
             var apiKey = await DecryptAndValidateApiKey(model.EncryptedKey, user.Id);
 
@@ -153,7 +160,8 @@ public class KeyController : ControllerBase
     {
         try
         {
-            var user = await ValidateUser();
+            var userResult = await _userService.GetUserAsync(HttpContext);
+            var user = userResult.user;
 
             var result = await _keyService.RemoveAccessKey(model.EncryptedKey);
             if (result == null)
@@ -192,7 +200,7 @@ public class KeyController : ControllerBase
                     {
                         endpoint.Path,
                         endpoint.Method,
-                        ExpectedBody = endpoint.ExpectedBodyType != null ? _apiService.GetDtoStructure(endpoint.ExpectedBodyType) : null
+                        ExpectedBody = endpoint.ExpectedBodyType != null ? DtoTools.GetDtoStructure(endpoint.ExpectedBodyType) : null
                     })
                     .ToList<object>();
 
@@ -209,16 +217,6 @@ public class KeyController : ControllerBase
             _logger.LogError(ex, "Error occurred while retrieving endpoint information.");
             return BadRequest(ex.Message);
         }
-    }
-
-    private async Task<UserModel> ValidateUser()
-    {
-        var user = await _userManager.GetUserAsync(HttpContext.User);
-        if (user == null)
-        {
-            throw new UnauthorizedAccessException("User is not authorized.");
-        }
-        return user;
     }
 
     private async Task<IApiKey> DecryptAndValidateApiKey(string encryptedKey, string userId)

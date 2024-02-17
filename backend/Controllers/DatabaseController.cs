@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using NetBackend.Constants;
 using NetBackend.Services;
 using NetBackend.Services.Interfaces;
+using NetBackend.Tools;
 
 namespace NetBackend.Controllers;
 
@@ -41,7 +42,7 @@ public class DatabaseController : ControllerBase
             {
                 endpoint.Path,
                 endpoint.Method,
-                ExpectedBody = endpoint.ExpectedBodyType != null ? _apiService.GetDtoStructure(endpoint.ExpectedBodyType) : null
+                ExpectedBody = endpoint.ExpectedBodyType != null ? DtoTools.GetDtoStructure(endpoint.ExpectedBodyType) : null
             })
             .ToList();
 

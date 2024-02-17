@@ -56,7 +56,12 @@ public static class ModelSeedData
         var speciesList = new List<Species>();
         for (int i = 1; i <= speciesCount; i++)
         {
-            speciesList.Add(new Species { Id = i + 100, Name = $"{identifierName}: Species {i}" });
+            speciesList.Add(new Species
+            {
+                Id = i + 100,
+                Name = $"{identifierName}: Species {i}",
+                SuperSecretNumber = i
+            });
         }
         modelBuilder.Entity<Species>().HasData(speciesList);
 

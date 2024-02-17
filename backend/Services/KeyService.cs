@@ -1,11 +1,6 @@
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Netbackend.Services;
 using NetBackend.Constants;
-using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
 using NetBackend.Models.User;
 using NetBackend.Services.Interfaces;
@@ -40,7 +35,7 @@ public partial class KeyService : IKeyService
 
         var accessKey = new AccessKey
         {
-            KeyHash = ComputeSha256Hash(encryptedKey)
+            KeyHash = ComputeHash.ComputeSha256Hash(encryptedKey)
         };
 
         dbContext.Set<AccessKey>().Add(accessKey);
@@ -117,7 +112,7 @@ public partial class KeyService : IKeyService
         var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
 
         // Compute hash of the encrypted key and check if it exists in the database
-        var keyHash = ComputeSha256Hash(encryptedKey);
+        var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
         var accessKey = await selectedContext.Set<AccessKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
         if (accessKey == null)
         {
@@ -174,7 +169,7 @@ public partial class KeyService : IKeyService
         var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
 
         // Compute hash of the encrypted key and check if it exists in the database
-        var keyHash = ComputeSha256Hash(encryptedKey);
+        var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
         var accessKey = await selectedContext.Set<AccessKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
         if (accessKey == null)
         {
@@ -200,22 +195,6 @@ public partial class KeyService : IKeyService
         }
 
         return new OkResult();
-    }
-
-    private static string ComputeSha256Hash(string rawData)
-    {
-        if (string.IsNullOrEmpty(rawData))
-        {
-            throw new ArgumentException("Raw data cannot be null or empty.", nameof(rawData));
-        }
-        byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
-
-        StringBuilder builder = new StringBuilder();
-        foreach (var b in bytes)
-        {
-            builder.Append(b.ToString("x2"));
-        }
-        return builder.ToString();
     }
 
     private static async Task<(IApiKey?, IActionResult?)> FetchApiKeyAsync(string typePart, int id, DbContext dbContext)
@@ -253,7 +232,7 @@ public partial class KeyService : IKeyService
 
     private bool CheckQueryAuthorization(string graphqlQuery, List<AccessKeyPermission> permissions)
     {
-        var parsedQuery = ParseQuery(graphqlQuery);
+        var parsedQuery = GraphQLQueryParser.ParseQuery(graphqlQuery);
 
         _logger.LogInformation("Starting authorization check for GraphQL query.");
 
@@ -301,33 +280,5 @@ public partial class KeyService : IKeyService
 
         return accessKeyPermissions;
     }
-
-    private Dictionary<string, List<string>> ParseQuery(string query)
-    {
-        _logger.LogInformation($"Received GraphQL query for parsing: {query}");
-        var operations = new Dictionary<string, List<string>>();
-        var operationMatches = MyRegex().Matches(query);
-
-        foreach (Match match in operationMatches)
-        {
-            var operationName = match.Groups[1].Value.Trim();
-            var fields = match.Groups[2].Value
-                .Split(new[] { '\n', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(f => f.Trim())
-                .Where(f => !string.IsNullOrEmpty(f))
-                .ToList();
-
-            if (!operations.ContainsKey(operationName))
-            {
-                operations.Add(operationName, fields);
-            }
-        }
-        _logger.LogInformation($"Parsed operations: {string.Join(", ", operations.Keys)}");
-
-        return operations;
-    }
-
-    [GeneratedRegex(@"(\w+)(?:\([^)]*\))?\s*{\s*([^}]+)\s*}", RegexOptions.IgnoreCase | RegexOptions.Multiline, "nb-NO")]
-    private static partial Regex MyRegex();
 }
 
