@@ -99,7 +99,11 @@ public class AquaCultureListsController : ControllerBase
 
             // Fetch all species
             var allSpecies = await dbContext.Set<Species>()
-                .Select(s => new SpeciesDto { Name = s.Name }) // Map to SpeciesDto
+                .Select(s => new SpeciesDto
+                {
+                    Name = s.Name,
+                    SuperSecretNumber = s.SuperSecretNumber
+                })
                 .ToListAsync();
             return Ok(allSpecies);
         }
