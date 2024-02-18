@@ -30,6 +30,7 @@ public class AquaCultureListsController : ControllerBase
     }
 
     [HttpPost("fishhealth/licenseelist")]
+    [ProducesResponseType(typeof(OrganizationDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLicenseeList([FromBody] AccessKeyDto? model)
     {
         try
@@ -71,6 +72,7 @@ public class AquaCultureListsController : ControllerBase
     }
 
     [HttpPost("fishhealth/species")]
+    [ProducesResponseType(typeof(SpeciesDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllSpecies([FromBody] AccessKeyDto? model)
     {
         try

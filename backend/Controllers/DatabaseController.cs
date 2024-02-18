@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NetBackend.Constants;
+using NetBackend.Models.Dto;
 using NetBackend.Services;
 using NetBackend.Services.Interfaces;
 using NetBackend.Tools;
@@ -23,6 +24,7 @@ public class DatabaseController : ControllerBase
     }
 
     [HttpGet("get-database-names")]
+    [ProducesResponseType(typeof(DatabaseNameDto), StatusCodes.Status200OK)]
     public ActionResult GetDatabaseNames()
     {
         var databaseNames = typeof(DatabaseConstants)
@@ -35,6 +37,7 @@ public class DatabaseController : ControllerBase
     }
 
     [HttpGet("get-default-endpoints")]
+    [ProducesResponseType(typeof(ApiEndpointSchema), StatusCodes.Status200OK)]
     public ActionResult GetDefaultApiEndpoints()
     {
         var endpointsInfo = ApiConstants.DefaultApiEndpoints

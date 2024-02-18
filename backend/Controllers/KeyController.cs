@@ -11,6 +11,7 @@ using NetBackend.Services.Interfaces;
 using NetBackend.Models.Dto.Keys;
 using Microsoft.EntityFrameworkCore;
 using NetBackend.Tools;
+using NetBackend.Models.Dto;
 
 namespace NetBackend.Controllers;
 
@@ -37,6 +38,7 @@ public class KeyController : ControllerBase
 
     [HttpPost("create-accesskey")]
     [Authorize]
+    [ProducesResponseType(typeof(AccessKeyDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateAccessKey([FromBody] CreateAccessKeyDto model)
     {
         try
@@ -77,6 +79,7 @@ public class KeyController : ControllerBase
 
     [HttpPost("decrypt-rest-accesskey")]
     [Authorize(Roles = RoleConstants.AdminRole)]
+    [ProducesResponseType(typeof(ApiKeyDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> DecryptAccessKey([FromBody] AccessKeyDto model)
     {
         try
@@ -86,7 +89,7 @@ public class KeyController : ControllerBase
 
             var apiKey = await DecryptAndValidateApiKey(model.EncryptedKey, user.Id);
 
-            var expiresInMinutes = CalculateExpiresInMinutes(apiKey);
+            var expiresInDays = CalculateExpiresInDays(apiKey);
 
             if (apiKey is ApiKey api)
             {
@@ -95,7 +98,7 @@ public class KeyController : ControllerBase
                     Id = api.Id,
                     KeyName = api.KeyName ?? "",
                     CreatedBy = api.User.Email ?? "",
-                    ExpiresIn = expiresInMinutes,
+                    ExpiresIn = expiresInDays,
                     AccessibleEndpoints = api.AccessibleEndpoints
                 };
 
@@ -113,6 +116,7 @@ public class KeyController : ControllerBase
 
     [HttpPost("decrypt-graphql-accesskey")]
     [Authorize(Roles = RoleConstants.AdminRole)]
+    [ProducesResponseType(typeof(GraphQLApiKeyDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> DecryptGraphQlAccessKey([FromBody] AccessKeyDto model)
     {
         try
@@ -122,7 +126,7 @@ public class KeyController : ControllerBase
 
             var apiKey = await DecryptAndValidateApiKey(model.EncryptedKey, user.Id);
 
-            var expiresInMinutes = CalculateExpiresInMinutes(apiKey);
+            var expiresInDays = CalculateExpiresInDays(apiKey);
 
             var permissions = await GetAccessKeyPermission(apiKey.Id);
 
@@ -133,7 +137,7 @@ public class KeyController : ControllerBase
                     Id = api.Id,
                     KeyName = api.KeyName ?? "",
                     CreatedBy = api.User.Email ?? "",
-                    ExpiresIn = expiresInMinutes,
+                    ExpiresIn = expiresInDays,
                     GraphQLAccessKeyPermissionDto = permissions.Select(p => new GraphQLAccessKeyPermissionDto
                     {
                         QueryName = p.QueryName,
@@ -156,6 +160,7 @@ public class KeyController : ControllerBase
 
     [HttpPost("delete-accesskey")]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> DeleteAccessKey([FromBody] AccessKeyDto model)
     {
         try
@@ -179,6 +184,7 @@ public class KeyController : ControllerBase
     }
 
     [HttpPost("accesskey-endpoints")]
+    [ProducesResponseType(typeof(List<ApiEndpointSchema>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEndpointInfo([FromBody] AccessKeyDto accessKeyDto)
     {
         try
@@ -246,10 +252,10 @@ public class KeyController : ControllerBase
         return accessKeyPermissions;
     }
 
-    private static int CalculateExpiresInMinutes(IApiKey apiKey)
+    private static int CalculateExpiresInDays(IApiKey apiKey)
     {
         var currentTime = DateTime.UtcNow;
-        var expiresInMinutes = (apiKey.CreatedAt.AddMinutes(apiKey.ExpiresIn) - currentTime).TotalMinutes;
-        return expiresInMinutes > 0 ? (int)expiresInMinutes : 0;
+        var expiresInDays = (apiKey.CreatedAt.AddDays(apiKey.ExpiresIn) - currentTime).TotalDays;
+        return expiresInDays > 0 ? (int)expiresInDays : 0;
     }
 }

@@ -15,6 +15,6 @@ public class CustomerTwoDbContext : BaseDbContext
 
         // Seed dummy data
         // ModelSeedData.SeedAltTwo(modelBuilder);
-        ModelSeedData.SeedAltThree(modelBuilder, 10000, 10000, "CustomerTwo");
+        ModelSeedData.SeedAltThree(modelBuilder, 100, 100, "CustomerTwo");
     }
 }

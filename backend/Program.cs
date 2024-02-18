@@ -140,9 +140,9 @@ using (var scope = app.Services.CreateScope())
 
         await ApplicationDbInitializer.SeedRoles(roleManager);
         // Admin user
-        await ApplicationDbInitializer.EnsureUser(userManager, roleManager, SecretConstants.AdminEmail, SecretConstants.AdminPassword, RoleConstants.AdminRole);
+        await ApplicationDbInitializer.EnsureUser(userManager, roleManager, SecretConstants.AdminEmail, SecretConstants.AdminPassword, RoleConstants.AdminRole, DatabaseConstants.CustomerOneDbName);
         // Test user
-        await ApplicationDbInitializer.EnsureUser(userManager, roleManager, SecretConstants.TestEmail, SecretConstants.TestPassword, RoleConstants.CustomerRole);
+        await ApplicationDbInitializer.EnsureUser(userManager, roleManager, SecretConstants.TestEmail, SecretConstants.TestPassword, RoleConstants.CustomerRole, DatabaseConstants.CustomerTwoDbName);
     }
     catch (Exception ex)
     {

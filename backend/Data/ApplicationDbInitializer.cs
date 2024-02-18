@@ -17,7 +17,7 @@ public static class ApplicationDbInitializer
         }
     }
 
-    public static async Task EnsureUser(UserManager<UserModel> userManager, RoleManager<IdentityRole> roleManager, string userEmail, string userPassword, string roleName)
+    public static async Task EnsureUser(UserManager<UserModel> userManager, RoleManager<IdentityRole> roleManager, string userEmail, string userPassword, string roleName, string databaseName)
     {
         var user = await userManager.FindByEmailAsync(userEmail);
         if (user == null)
@@ -33,7 +33,7 @@ public static class ApplicationDbInitializer
 
         if (user.DatabaseName == null)
         {
-            user.DatabaseName = "Customer1";
+            user.DatabaseName = databaseName;
             await userManager.UpdateAsync(user);
         }
 

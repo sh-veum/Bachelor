@@ -27,7 +27,8 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("userinfo")]
-    public async Task<ActionResult> GetUserInfo()
+    [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUserInfo()
     {
         try
         {
@@ -58,6 +59,7 @@ public class UserController : ControllerBase
 
     [HttpPost("update-database-name")]
     [Authorize(Roles = RoleConstants.AdminRole)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateUserDatabaseName([FromBody] UserDatabaseNameDto model)
     {
         try
@@ -93,7 +95,8 @@ public class UserController : ControllerBase
 
     [HttpGet("get-all-users")]
     [Authorize(Roles = RoleConstants.AdminRole)]
-    public async Task<ActionResult<List<UserInfoDto>>> GetAllUsers()
+    [ProducesResponseType(typeof(List<UserInfoDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllUsers()
     {
         try
         {
@@ -127,11 +130,12 @@ public class UserController : ControllerBase
 
     [HttpGet("roles")]
     [Authorize(Roles = RoleConstants.AdminRole)]
-    public async Task<ActionResult> GetAllRoles()
+    [ProducesResponseType(typeof(List<IdentityRole>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllRoles()
     {
         try
         {
-            var roles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
+            var roles = await _roleManager.Roles.ToListAsync();
             return Ok(roles);
         }
         catch (Exception ex)
@@ -143,7 +147,8 @@ public class UserController : ControllerBase
 
     [HttpPost("change-role")]
     [Authorize(Roles = RoleConstants.AdminRole)]
-    public async Task<ActionResult> ChangeUserRole([FromBody] UserRoleDto model)
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ChangeUserRole([FromBody] UserRoleDto model)
     {
         try
         {
