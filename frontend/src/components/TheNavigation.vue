@@ -44,6 +44,11 @@ const { isAdmin } = useAuth()
           Admin Page
         </NavigationMenuLink>
       </NavigationMenuItem>
+      <NavigationMenuItem>
+        <NavigationMenuLink href="/graphql" :class="navigationMenuTriggerStyle()">
+          GraphQL
+        </NavigationMenuLink>
+      </NavigationMenuItem>
     </NavigationMenuList>
   </NavigationMenu>
 </template>

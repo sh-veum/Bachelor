@@ -48,6 +48,11 @@ const router = createRouter({
           next()
         }
       }
+    },
+    {
+      path: '/graphql',
+      name: 'GraphQL',
+      component: () => import('../views/GraphQLView.vue')
     }
   ]
 })
