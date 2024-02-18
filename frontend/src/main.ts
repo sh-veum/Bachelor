@@ -1,7 +1,7 @@
 // import './assets/main.css'
 import './assets/index.css'
 
-import { createApp, provide, h } from 'vue'
+import { createApp } from 'vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client/core'
 import App from './App.vue'

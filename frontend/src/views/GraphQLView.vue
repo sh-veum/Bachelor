@@ -4,52 +4,134 @@ import { useLazyQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { TextArea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 
 const encryptedKey = ref('')
+const responseData = ref('')
+// Fields selected by the user
+const selectedSpeciesFields = ref(['id', 'name'])
+const selectedOrganizationFields = ref(['id', 'name'])
+// Fields to be used in the query
+const querySpeciesFields = ref([...selectedSpeciesFields.value])
+const queryOrganizationFields = ref([...selectedOrganizationFields.value])
 
-// Define the GraphQL query
-const FETCH_SPECIES_QUERY = gql`
-  query getSpecies($encryptedKey: String!) {
-    species(encryptedKey: $encryptedKey) {
-      id
-      name
+const speciesOptions = [
+  { id: 'id', label: 'ID' },
+  { id: 'name', label: 'Name' }
+]
+
+const organizationOptions = [
+  { id: 'id', label: 'ID' },
+  { id: 'orgNo', label: 'OrgNo' },
+  { id: 'name', label: 'Name' },
+  { id: 'address', label: 'Address' },
+  { id: 'postalCode', label: 'PostalCode' },
+  { id: 'city', label: 'City' }
+]
+
+// Computed property to dynamically construct the species query
+const speciesQuery = computed(() => {
+  const fields = querySpeciesFields.value.join('\n      ')
+  return gql`
+    query getSpecies($encryptedKey: String!) {
+      species(encryptedKey: $encryptedKey) {
+        ${fields}
+      }
     }
-  }
-`
+  `
+})
 
-const FETCH_ORGANIZATIONS_QUERY = gql`
-  query getOrganizations($encryptedKey: String!) {
-    organizations(encryptedKey: $encryptedKey) {
-      orgNo
-      name
+// Computed property to dynamically construct the organizations query
+const organizationsQuery = computed(() => {
+  const fields = queryOrganizationFields.value.join('\n      ')
+  return gql`
+    query getOrganizations($encryptedKey: String!) {
+      organizations(encryptedKey: $encryptedKey) {
+        ${fields}
+      }
     }
-  }
-`
+  `
+})
 
-// Setup the lazy query with a function to dynamically pass variables
-const { result: speciesResult, load: loadSpecies } = useLazyQuery(FETCH_SPECIES_QUERY, () => ({
+// Setup the lazy queries with dynamic query and variables
+const { load: loadSpecies, onResult: onResultSpecies } = useLazyQuery(speciesQuery, () => ({
   encryptedKey: encryptedKey.value
 }))
 
-const { result: organizationsResult, load: loadOrganizations } = useLazyQuery(
-  FETCH_ORGANIZATIONS_QUERY,
+const { load: loadOrganizations, onResult: onResultOrganizations } = useLazyQuery(
+  organizationsQuery,
   () => ({
     encryptedKey: encryptedKey.value
   })
 )
 
-const speciesList = computed(() => speciesResult.value?.species ?? [])
-const organizationsList = computed(() => organizationsResult.value?.organizations ?? [])
+onResultSpecies((result) => {
+  if (result.data && result.data.species) {
+    responseData.value = JSON.stringify({ data: { species: result.data.species } }, null, 2)
+  } else {
+    responseData.value = 'Species data is not available'
+  }
+})
 
-// Function to trigger the query
+onResultOrganizations((result) => {
+  if (result.data && result.data.organizations) {
+    responseData.value = JSON.stringify(
+      { data: { organizations: result.data.organizations } },
+      null,
+      2
+    )
+  } else {
+    responseData.value = 'Organizations data is not available'
+  }
+})
+
+// Fetch functions with field updates
 const fetchSpecies = () => {
-  if (encryptedKey.value) {
-    loadSpecies()
+  if (selectedSpeciesFields.value.length === 0) {
+    // No species fields selected, so set the response data accordingly
+    responseData.value = JSON.stringify(
+      { data: { message: 'Species data is not available' } },
+      null,
+      2
+    )
+    return
+  }
+  querySpeciesFields.value = [...selectedSpeciesFields.value]
+  loadSpecies()
+}
+
+const fetchOrganizations = () => {
+  if (selectedOrganizationFields.value.length === 0) {
+    // No organization fields selected, so set the response data accordingly
+    responseData.value = JSON.stringify(
+      { data: { message: 'Organizations data is not available' } },
+      null,
+      2
+    )
+    return
+  }
+  queryOrganizationFields.value = [...selectedOrganizationFields.value]
+  loadOrganizations()
+}
+
+// Function to toggle species field selection
+const toggleSpeciesField = (fieldId: string) => {
+  const index = selectedSpeciesFields.value.indexOf(fieldId)
+  if (index >= 0) {
+    selectedSpeciesFields.value.splice(index, 1)
+  } else {
+    selectedSpeciesFields.value.push(fieldId)
   }
 }
-const fetchOrganizations = () => {
-  if (encryptedKey.value) {
-    loadOrganizations()
+
+// Function to toggle organization field selection
+const toggleOrganizationField = (fieldId: string) => {
+  const index = selectedOrganizationFields.value.indexOf(fieldId)
+  if (index >= 0) {
+    selectedOrganizationFields.value.splice(index, 1)
+  } else {
+    selectedOrganizationFields.value.push(fieldId)
   }
 }
 </script>
@@ -57,23 +139,42 @@ const fetchOrganizations = () => {
 <template>
   <div class="ml-6 w-[800px] border-black border-2 p-4">
     <Input v-model="encryptedKey" placeholder="Place encryptedKey here" class="mb-4" />
-    <Button @click="fetchSpecies" class="bg-blue-500 hover:bg-blue-700">Get Species</Button>
-    <Button @click="fetchOrganizations" class="bg-green-500 hover:bg-green-700 ml-4"
-      >Get Organizations</Button
-    >
-    <!-- <div v-if="speciesLoading || organizationsLoading">Loading...</div>
-    <div v-if="speciesError || organizationsError">
-      {{ speciesError?.message || organizationsError?.message }}
-    </div> -->
-    <ul class="my-4">
-      <li v-for="(species, index) of speciesList" :key="index" class="list-disc ml-6">
-        {{ species.id }} - {{ species.name }}
-      </li>
-    </ul>
-    <ul class="my-4">
-      <li v-for="(organizations, index) of organizationsList" :key="index" class="list-disc ml-6">
-        {{ organizations.orgNo }} - {{ organizations.name }}
-      </li>
-    </ul>
+    <div>
+      <p class="text-xl">Select Species fields:</p>
+      <div
+        v-for="option in speciesOptions"
+        :key="option.id"
+        class="flex items-center space-x-3 space-y-0"
+      >
+        <Checkbox
+          :checked="selectedSpeciesFields.includes(option.id)"
+          @update:checked="() => toggleSpeciesField(option.id)"
+        />
+        <p class="font-normal">{{ option.label }}</p>
+      </div>
+      <Button @click="fetchSpecies" class="bg-blue-500 hover:bg-blue-700 mt-2">Get Species</Button>
+    </div>
+    <div class="mt-4">
+      <p class="text-xl">Select Organizations fields:</p>
+      <div
+        v-for="option in organizationOptions"
+        :key="option.id"
+        class="flex items-center space-x-3 space-y-0"
+      >
+        <Checkbox
+          :checked="selectedOrganizationFields.includes(option.id)"
+          @update:checked="() => toggleOrganizationField(option.id)"
+        />
+        <p class="font-normal">{{ option.label }}</p>
+      </div>
+      <Button @click="fetchOrganizations" class="bg-green-500 hover:bg-green-700 mt-2"
+        >Get Organizations</Button
+      >
+    </div>
+    <TextArea
+      v-model="responseData"
+      class="mt-2 h-[250px] w-full"
+      placeholder="GraphQL response will appear here..."
+    />
   </div>
 </template>
