@@ -1,7 +1,9 @@
 // import './assets/main.css'
 import './assets/index.css'
 
-import { createApp } from 'vue'
+import { createApp, provide, h } from 'vue'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client/core'
 import App from './App.vue'
 import router from './router'
 import axios from 'axios'
@@ -20,8 +22,23 @@ axios.interceptors.request.use(
   }
 )
 
+// HTTP connection to the API
+const httpLink = createHttpLink({
+  uri: 'http://localhost:8088/graphql/'
+})
+
+// Cache implementation
+const cache = new InMemoryCache()
+
+// Create the apollo client
+const apolloClient = new ApolloClient({
+  link: httpLink,
+  cache
+})
+
 const app = createApp(App)
 
 app.use(router)
+app.provide(DefaultApolloClient, apolloClient)
 
 app.mount('#app')

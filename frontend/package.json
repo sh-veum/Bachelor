@@ -14,11 +14,15 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@apollo/client": "^3.9.5",
     "@vee-validate/zod": "^4.12.5",
+    "@vue/apollo-composable": "^4.0.1",
     "@vueuse/core": "^10.7.2",
     "axios": "^1.6.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "graphql": "^16.8.1",
+    "graphql-tag": "^2.12.6",
     "lucide-vue-next": "^0.321.0",
     "radix-vue": "^1.4.3",
     "tailwind-merge": "^2.2.1",
