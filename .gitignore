@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 
 # container
 .containers/
+
+# Apollo
+apollo.config.js
