@@ -55,6 +55,13 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          foreground: "hsl(var(--surface-foreground))",
+        },
+        shadow: {
+          DEFAULT: "hsl(var(--shadow))",
+        },
       },
       borderRadius: {
       	xl: "calc(var(--radius) + 4px)",
@@ -86,6 +93,30 @@ module.exports = {
         "collapsible-down": "collapsible-down 0.2s ease-in-out",
         "collapsible-up": "collapsible-up 0.2s ease-in-out",
       },
+      spacing: {
+        '22': '5.5rem',
+        '26': '6.5rem',
+      },
+      maxWidth: {
+        '8xl': '90rem',
+      },
+      fontFamily: {
+        sans: ["Inter", "sans-serif"],
+      },
+      typography: (theme) => ({
+        DEFAULT: {
+          css: {
+            color: theme('colors.gray.700'),
+            a: {
+              color: theme('colors.primary.DEFAULT'),
+              '&:hover': {
+                color: theme('colors.primary.light'),
+              },
+            },
+          },
+        },
+      }),
+      
     },
   },
   plugins: [animate],
