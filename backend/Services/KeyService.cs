@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetBackend.Constants;
@@ -146,6 +147,9 @@ public partial class KeyService : IKeyService
 
         // Retrieve the stored GraphQL query from HttpContext
         var graphqlQuery = httpContext.Items["GraphQLQuery"] as string;
+
+        _logger.LogInformation($"Retrieved GraphQL query from HttpContext: {graphqlQuery}");
+
         if (string.IsNullOrEmpty(graphqlQuery))
         {
             return (null, new UnauthorizedResult()); // No query to authorize
@@ -233,6 +237,12 @@ public partial class KeyService : IKeyService
     private bool CheckQueryAuthorization(string graphqlQuery, List<AccessKeyPermission> permissions)
     {
         var parsedQuery = GraphQLQueryParser.ParseQuery(graphqlQuery);
+
+        if (parsedQuery.Count == 0)
+        {
+            _logger.LogWarning("Parsed query is empty. Authorization check failed.");
+            return false;
+        }
 
         _logger.LogInformation("Starting authorization check for GraphQL query.");
 
