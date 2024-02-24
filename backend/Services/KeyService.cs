@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetBackend.Constants;
@@ -147,8 +146,6 @@ public partial class KeyService : IKeyService
 
         // Retrieve the stored GraphQL query from HttpContext
         var graphqlQuery = httpContext.Items["GraphQLQuery"] as string;
-
-        _logger.LogInformation($"Retrieved GraphQL query from HttpContext: {graphqlQuery}");
 
         if (string.IsNullOrEmpty(graphqlQuery))
         {

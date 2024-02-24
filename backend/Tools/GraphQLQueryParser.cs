@@ -16,20 +16,18 @@ public partial class GraphQLQueryParser
         // Determine the query type based on its starting character
         if (query.TrimStart().StartsWith("{"))
         {
-            // Use the existing parser for queries that start with "{"
+            // Use the existing parser for queries that start with "{" (postman, etc.)
             return ParseImplicitQuery(query);
         }
         else
         {
-            // Use a new parser for queries that start with an operation name
+            // Use a new parser for queries that start with an operation name (Apollo, etc.)
             return ParseNamedQuery(query);
         }
     }
 
     private static Dictionary<string, List<string>> ParseImplicitQuery(string query)
     {
-        // This method contains the existing parsing logic for queries starting with "{"
-        // The implementation here remains unchanged and is assumed to work as provided in your original code snippet
         return MyRegex().Matches(query)
             .Cast<Match>()
             .GroupBy(match => match.Groups[1].Value.Trim())
@@ -44,13 +42,12 @@ public partial class GraphQLQueryParser
     private static Dictionary<string, List<string>> ParseNamedQuery(string query)
     {
         var operations = new Dictionary<string, List<string>>();
-        // Define a regex pattern to parse queries that start with an operation name
         var pattern = @"\b(\w+)\s*\(([^)]*)\)\s*{\s*(\w+)\s*\(([^)]*)\)\s*{\s*([^}]+?)\s*}\s*}";
         var matches = Regex.Matches(query, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
         foreach (Match match in matches)
         {
-            var operationName = match.Groups[3].Value.Trim(); // Assuming this captures the inner operation name correctly
+            var operationName = match.Groups[3].Value.Trim();
             var fieldsBlock = match.Groups[5].Value;
 
             var fields = ExtractFields(fieldsBlock).Where(field => !field.Equals("__typename", StringComparison.OrdinalIgnoreCase)).ToList();

@@ -42,3 +42,5 @@ app.use(router)
 app.provide(DefaultApolloClient, apolloClient)
 
 app.mount('#app')
+
+export { apolloClient }

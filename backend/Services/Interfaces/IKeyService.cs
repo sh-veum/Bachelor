@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
 using NetBackend.Models.User;
 

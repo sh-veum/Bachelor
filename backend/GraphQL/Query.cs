@@ -1,10 +1,10 @@
-using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetBackend.Constants;
 using NetBackend.Data;
 using NetBackend.Models;
 using NetBackend.Services.Interfaces;
+using NetBackend.Tools;
 
 namespace NetBackend.GraphQL;
 
@@ -47,7 +47,6 @@ public class Query
             _logger.LogError(ex, "Error getting species");
             return null;
         }
-
     }
 
     public async Task<IQueryable<Organization>?> GetOrganizations([Service] IKeyService keyService, [Service] IUserService userService, [Service(ServiceKind.Synchronized)] IDbContextService dbContextService, string? encryptedKey = null)
@@ -80,6 +79,25 @@ public class Query
         }
     }
 
+    public List<ClassInfo> GetClassStructures()
+    {
+        var classInfos = new List<ClassInfo>();
+
+        foreach (var className in GraphQLConstants.AvailableQueryTables)
+        {
+            switch (className)
+            {
+                case nameof(Species):
+                    classInfos.Add(ReflectionHelper.GetClassInfo<Species>());
+                    break;
+                case nameof(Organization):
+                    classInfos.Add(ReflectionHelper.GetClassInfo<Organization>());
+                    break;
+            }
+        }
+
+        return classInfos;
+    }
     private async Task<(DbContext? DbContext, IActionResult? Error)> GetContextFromUser(IUserService userService, IDbContextService dbContextService)
     {
         try
@@ -98,16 +116,5 @@ public class Query
             _logger.LogError(ex, "Error context from user");
             return (null, new StatusCodeResult(StatusCodes.Status500InternalServerError));
         }
-    }
-
-    public List<string?> GetAvailableGraphQLQueries()
-    {
-        var constants = typeof(GraphQLConstants)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-            .Where(fi => fi.IsLiteral && !fi.IsInitOnly)
-            .Select(fi => fi.GetValue(null) as string)
-            .ToList();
-
-        return constants;
     }
 }
