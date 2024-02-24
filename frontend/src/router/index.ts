@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import KeysView from '../views/KeysView.vue'
 import { useAuth } from '@/lib/useAuth'
 
 const router = createRouter({
@@ -7,8 +7,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView
+      name: 'keys',
+      component: KeysView
     },
     {
       path: '/theme-edit',

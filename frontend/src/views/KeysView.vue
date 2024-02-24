@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import ThemeCollapsible from '@/components/ThemeCollapsible.vue'
 import { Button } from '@/components/ui/button'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
@@ -40,20 +39,21 @@ import {
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import ThemeCollapsible from '@/components/ThemeCollapsible.vue'
 
 const themes = [
   { value: 'AquaCultureLists', label: 'Aquaculture Lists' },
   { value: 'CodSpawningGround', label: 'Cod Spawning Ground' },
   { value: 'DiseaseHistory', label: 'Disease History' },
-  { value: 'Export Restrictions', label: 'Export Restrictions' }
+  { value: 'ExportRestrictions', label: 'Export Restrictions' }
 ]
 
 const keys = [
-  { name: 'Key 1', themes: ['Theme 1', 'Theme 2', 'Theme 3'] },
+  { name: 'Key 1', themes: ['Theme 1', 'Theme 2', 'A theme in key 1'] },
   { name: 'Key 2', themes: ['Theme 1'] },
   {
     name: 'Key 3 has a very long name for sure',
-    themes: ['Theme 1', 'Theme 2', 'Theme 3']
+    themes: ['Theme 1', 'A theme in key 3', 'Theme 3']
   }
 ]
 
@@ -191,7 +191,7 @@ const onSubmit = handleSubmit((values) => {
       <TableRow v-for="key in keys">
         <TableCell>{{ key.name }}</TableCell>
         <TableCell>
-          <ThemeCollapsible v-if="key.themes.length > 1" :msg="'wtf'" />
+          <ThemeCollapsible v-if="key.themes.length > 1" :apiKey="key" />
           <div v-else class="py-3 font-mono text-sm">
             {{ key.themes[0] }}
           </div>

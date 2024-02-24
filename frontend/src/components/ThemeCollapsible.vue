@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, defineProps } from 'vue'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
 import { ChevronsUpDown } from 'lucide-vue-next'
@@ -7,14 +7,11 @@ import { ChevronsDown } from 'lucide-vue-next'
 import { ChevronsUp } from 'lucide-vue-next'
 
 defineProps<{
-  msg: string
-  // key: { name: string; themes: string[] }
+  apiKey: {
+    name: string
+    themes: string[]
+  }
 }>()
-
-const key = {
-  name: 'Key 1',
-  themes: ['Theme 1', 'Theme 2 with a long name cuz i need to test how it looks bro', 'Theme 3']
-}
 
 const isOpen = ref(false)
 </script>
@@ -22,7 +19,7 @@ const isOpen = ref(false)
 <template>
   <Collapsible v-model:open="isOpen" class="space-y-2">
     <div class="flex items-center space-x-4">
-      <h4 class="text-sm py-3">{{ key.themes.length }} themes</h4>
+      <h4 class="text-sm py-3">{{ apiKey.themes.length }} themes</h4>
       <CollapsibleTrigger as-child>
         <Button variant="ghost" size="sm" class="w-9 p-0">
           <ChevronsDown v-if="isOpen == false" class="h-4 w-4" />
@@ -32,7 +29,7 @@ const isOpen = ref(false)
       </CollapsibleTrigger>
     </div>
     <CollapsibleContent class="space-y-2">
-      <div v-for="theme in key.themes" class="py-3 font-mono text-sm">
+      <div v-for="theme in apiKey.themes" class="py-3 font-mono text-sm">
         {{ theme }}
       </div>
     </CollapsibleContent>

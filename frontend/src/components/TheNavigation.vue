@@ -16,7 +16,7 @@ const { isAdmin } = useAuth()
     <NavigationMenuList>
       <NavigationMenuItem>
         <NavigationMenuLink href="/" :class="navigationMenuTriggerStyle()">
-          Home
+          Keys
         </NavigationMenuLink>
       </NavigationMenuItem>
       <NavigationMenuItem>
