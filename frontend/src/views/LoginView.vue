@@ -19,26 +19,35 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div class="pl-5">
-    <form @submit.prevent="handleLogin">
-      <Input v-model="email" type="email" placeholder="Email" />
-      <Input v-model="password" type="password" placeholder="Password" />
-      <Button type="submit">Login</Button>
-    </form>
-    <form @submit.prevent="handleLogout">
-      <Button type="submit">Logout</Button>
-    </form>
-    <div v-if="isLoggedIn">
-      <p class="text-green-500 font-bold">Logged in</p>
+  <section>
+    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
+      <div class="w-full max-w-md bg-slate-100 rounded-lg shadow dark:border dark:border-gray-700 mb-60">
+        <form @submit.prevent="handleLogin" class="py-2 px-5">
+          <div class="py-2">
+            <Input v-model="email" type="email" placeholder="Email" />
+          </div>
+          <div class="py-2">
+            <Input v-model="password" type="password" placeholder="Password" />
+          </div>
+          <Button type="submit" class="w-full mt-4 bg-cyan-900">Login</Button>
+        </form>
+        <form @submit.prevent="handleLogout" class="py-2 px-5">
+          <Button type="submit" class="w-full bg-cyan-900">Logout</Button>
+        </form>
+        <div v-if="isLoggedIn" class="px-5">
+          <p class="text-green-500 font-bold">Logged in</p>
+        </div>
+        <div v-else class="px-5">
+          <p class="text-red-500 font-bold">No user logged in</p>
+        </div>
+        <div v-if="isAdmin" class="px-5">
+          <p class="text-green-500 font-bold">Is admin</p>
+        </div>
+        <div v-else class="px-5 pb-2">
+          <p class="text-red-500 font-bold">Is not admin</p>
+        </div>
+      </div>
     </div>
-    <div v-else>
-      <p class="text-red-500 font-bold">No user logged in</p>
-    </div>
-    <div v-if="isAdmin">
-      <p class="text-green-500 font-bold">Is admin</p>
-    </div>
-    <div v-else>
-      <p class="text-red-500 font-bold">Is not admin</p>
-    </div>
-  </div>
+  </section>
+  
 </template>
