@@ -19,7 +19,7 @@ const handleSubmit = async () => {
 <template>
   <section>
     <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-      <div class="w-full max-w-md bg-slate-100 rounded-lg shadow dark:border dark:border-gray-700 mb-60">
+      <div class="w-full max-w-md bg-zinc-50 rounded-lg shadow dark:border dark:border-gray-700 mb-60 pb-2">
         <form @submit.prevent="handleSubmit" class="py-2 px-5">
           <div class="py-2">
             <Input v-model="email" type="email" placeholder="Email" />

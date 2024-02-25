@@ -12,40 +12,40 @@ const { isAdmin } = useAuth()
 </script>
 
 <template>
-  <NavigationMenu>
+  <NavigationMenu class="bg-zinc-50 dark:bg-gray-900 sticky top-0 left-0 right-0 z-20 border-b border-gray-200 dark:border-gray-600">
     <NavigationMenuList>
-      <NavigationMenuItem>
-        <NavigationMenuLink href="/" :class="navigationMenuTriggerStyle()">
+      <NavigationMenuItem >
+        <NavigationMenuLink href="/" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
           Keys
         </NavigationMenuLink>
       </NavigationMenuItem>
       <NavigationMenuItem>
-        <NavigationMenuLink href="/theme-edit" :class="navigationMenuTriggerStyle()">
+        <NavigationMenuLink href="/theme-edit" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
           Theme edit
         </NavigationMenuLink>
       </NavigationMenuItem>
       <NavigationMenuItem>
-        <NavigationMenuLink href="/customer" :class="navigationMenuTriggerStyle()">
+        <NavigationMenuLink href="/customer" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
           Customer page
         </NavigationMenuLink>
       </NavigationMenuItem>
       <NavigationMenuItem>
-        <NavigationMenuLink href="/login" :class="navigationMenuTriggerStyle()">
+        <NavigationMenuLink href="/login" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
           Login
         </NavigationMenuLink>
       </NavigationMenuItem>
       <NavigationMenuItem>
-        <NavigationMenuLink href="/register" :class="navigationMenuTriggerStyle()">
+        <NavigationMenuLink href="/register" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
           Register
         </NavigationMenuLink>
       </NavigationMenuItem>
       <NavigationMenuItem v-if="isAdmin">
-        <NavigationMenuLink href="/admin" :class="navigationMenuTriggerStyle()">
+        <NavigationMenuLink href="/admin" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
           Admin Page
         </NavigationMenuLink>
       </NavigationMenuItem>
       <NavigationMenuItem>
-        <NavigationMenuLink href="/graphql" :class="navigationMenuTriggerStyle()">
+        <NavigationMenuLink href="/graphql" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
           GraphQL
         </NavigationMenuLink>
       </NavigationMenuItem>
