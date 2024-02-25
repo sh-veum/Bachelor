@@ -2,7 +2,7 @@
 import { ref, defineProps } from 'vue'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
-import { ChevronsUpDown } from 'lucide-vue-next'
+import { ChevronsUpDown, Pencil, SquarePen, Trash, Trash2 } from 'lucide-vue-next'
 import { ChevronsDown } from 'lucide-vue-next'
 import { ChevronsUp } from 'lucide-vue-next'
 import { MoreHorizontal } from 'lucide-vue-next'
@@ -15,6 +15,14 @@ defineProps<{
 }>()
 
 const isOpen = ref(true)
+
+const handleDelete = () => {
+  console.log('deleted theme')
+}
+
+const handleEdit = () => {
+  console.log('editing theme')
+}
 </script>
 
 <template>
@@ -29,10 +37,14 @@ const isOpen = ref(true)
             <span class="sr-only">Toggle</span>
           </Button>
         </CollapsibleTrigger>
-        <Button variant="ghost" size="sm" class="w-9 p-0">
-          <MoreHorizontal class="h-4 w-4" />
+        <Button variant="ghost" size="sm" class="w-9 p-0" @click="handleEdit">
+          <Pencil class="h-4 w-4" />
         </Button>
-        <span class="sr-only">More options</span>
+        <span class="sr-only">Pencil</span>
+        <Button variant="ghost" size="sm" class="w-9 p-0" @click="handleDelete">
+          <Trash2 class="h-4 w-4 text-destructive" />
+        </Button>
+        <span class="sr-only">Trash</span>
       </div>
     </div>
     <CollapsibleContent class="space-y-2">

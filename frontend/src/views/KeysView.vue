@@ -78,11 +78,11 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <div class="flex">
+  <div class="flex justify-between">
     <h1 class="text-3xl font-semibold mb-8 px-2">Your API keys</h1>
     <Dialog>
       <DialogTrigger as-child>
-        <Button class="ml-auto mr-4"> Create new key </Button>
+        <Button class="mr-4"> Create new key </Button>
       </DialogTrigger>
       <DialogContent class="sm:max-w-[425px]">
         <DialogHeader>
