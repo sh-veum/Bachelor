@@ -17,17 +17,25 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="pl-5">
-    <form @submit.prevent="handleSubmit">
-      <Input v-model="email" type="email" placeholder="Email" />
-      <Input v-model="password" type="password" placeholder="Password" />
-      <Button type="submit">Register</Button>
-    </form>
-    <div v-if="attemptedRegister && isRegistered">
-      <p class="text-green-500 font-bold">Registerd user: {{ email }}</p>
+  <section>
+    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
+      <div class="w-full max-w-md bg-slate-100 rounded-lg shadow dark:border dark:border-gray-700 mb-60">
+        <form @submit.prevent="handleSubmit" class="py-2 px-5">
+          <div class="py-2">
+            <Input v-model="email" type="email" placeholder="Email" />
+          </div>
+          <div class="py-2">
+            <Input v-model="password" type="password" placeholder="Password" />
+          </div>
+          <Button type="submit" class="w-full mt-4 bg-cyan-900">Register</Button>
+        </form>
+        <div v-if="attemptedRegister && isRegistered" class="px-5">
+          <p class="text-green-500 font-bold">Registered user: {{ email }}</p>
+        </div>
+        <div v-if="attemptedRegister && !isRegistered" class="px-5 pb-2">
+          <p class="text-red-500 font-bold">Failed registration</p>
+        </div>
+      </div>
     </div>
-    <div v-if="attemptedRegister && !isRegistered">
-      <p class="text-red-500 font-bold">Failed registration</p>
-    </div>
-  </div>
+  </section>
 </template>
