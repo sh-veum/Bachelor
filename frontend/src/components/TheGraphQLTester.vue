@@ -90,11 +90,14 @@ function resolveTypeName(type: any): string {
       class="mt-2 h-[250px] w-full"
       placeholder="GraphQL response will appear here..."
     />
-    <Button @click="getAvailableQueries" class="bg-purple-500 hover:bg-purple-700 mt-2"
-      >Fetch Available Queries</Button
-    >
-    <Button @click="getObjects" class="bg-purple-500 hover:bg-purple-700 mt-2"
-      >Fetch Objects</Button
-    >
+    <div class="flex gap-2">
+      <Button @click="getAvailableQueries" class="bg-purple-500 hover:bg-purple-700 mt-2"
+        >Fetch Available Queries</Button
+      >
+      <Button @click="getObjects" class="bg-purple-500 hover:bg-purple-700 mt-2 px-2"
+        >Fetch Objects</Button
+      >
+    </div>
   </div>
 </template>
+
