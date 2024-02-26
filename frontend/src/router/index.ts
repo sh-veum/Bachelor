@@ -51,8 +51,13 @@ const router = createRouter({
     },
     {
       path: '/graphql',
-      name: 'GraphQL',
-      component: () => import('../views/GraphQLView.vue')
+      name: 'GraphQL Key Test',
+      component: () => import('../views/GraphQLTestView.vue')
+    },
+    {
+      path: '/graphql/create-key',
+      name: 'GraphQL Create Key',
+      component: () => import('../views/GraphQLCreateKeyView.vue')
     }
   ]
 })
