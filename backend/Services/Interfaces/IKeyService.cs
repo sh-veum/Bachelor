@@ -13,4 +13,6 @@ public interface IKeyService
     Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessAccessKey(string encryptedKey);
     Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessGraphQLAccessKey(string encryptedKey);
     Task<IActionResult> RemoveAccessKey(string encryptedKey);
+    Task<List<Theme>> GetAccessKeyThemes(int apiKeyID);
+    Task<List<AccessKeyPermission>> GetAccessKeyPermissions(int graphQLApiKeyId);
 }

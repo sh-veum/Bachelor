@@ -34,5 +34,10 @@ public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
             .HasMany(u => u.AccessKeyPermissions)
             .WithOne(k => k.GraphQLApiKey)
             .HasForeignKey(k => k.GraphQLApiKeyId);
+
+        modelBuilder.Entity<ApiKey>()
+            .HasMany(u => u.Themes)
+            .WithOne(k => k.ApiKey)
+            .HasForeignKey(k => k.ApiKeyID);
     }
 }

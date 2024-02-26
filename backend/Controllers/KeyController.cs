@@ -39,7 +39,7 @@ public class KeyController : ControllerBase
     [HttpPost("create-accesskey")]
     [Authorize]
     [ProducesResponseType(typeof(AccessKeyDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> CreateAccessKey([FromBody] CreateAccessKeyDto model)
+    public async Task<IActionResult> CreateAccessKey([FromBody] CreateAccessKeyDto createAccessKeyDto)
     {
         try
         {
@@ -47,12 +47,12 @@ public class KeyController : ControllerBase
             var user = userResult.user;
 
             // Create Api Key
-            if (model.AccessibleEndpoints == null)
+            if (createAccessKeyDto.Themes == null)
             {
                 return BadRequest("Endpoints are be null.");
             }
 
-            var apiKey = await _apiService.CreateRESTApiKey(user, model.KeyName, model.AccessibleEndpoints);
+            var apiKey = await _apiService.CreateRESTApiKey(user, createAccessKeyDto.KeyName, createAccessKeyDto.Themes);
 
             if (apiKey == null)
             {
@@ -80,16 +80,18 @@ public class KeyController : ControllerBase
     [HttpPost("decrypt-rest-accesskey")]
     [Authorize(Roles = RoleConstants.AdminRole)]
     [ProducesResponseType(typeof(ApiKeyDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> DecryptAccessKey([FromBody] AccessKeyDto model)
+    public async Task<IActionResult> DecryptAccessKey([FromBody] AccessKeyDto accessKeyDto)
     {
         try
         {
             var userResult = await _userService.GetUserAsync(HttpContext);
             var user = userResult.user;
 
-            var apiKey = await DecryptAndValidateApiKey(model.EncryptedKey, user.Id);
+            var apiKey = await DecryptAndValidateApiKey(accessKeyDto.EncryptedKey, user.Id);
 
             var expiresInDays = CalculateExpiresInDays(apiKey);
+
+            var themes = await _keyService.GetAccessKeyThemes(apiKey.Id);
 
             if (apiKey is ApiKey api)
             {
@@ -99,7 +101,11 @@ public class KeyController : ControllerBase
                     KeyName = api.KeyName ?? "",
                     CreatedBy = api.User.Email ?? "",
                     ExpiresIn = expiresInDays,
-                    AccessibleEndpoints = api.AccessibleEndpoints
+                    Themes = themes.Select(t => new ThemeDto
+                    {
+                        ThemeName = t.ThemeName,
+                        AccessibleEndpoints = t.AccessibleEndpoints ?? []
+                    }).ToList() ?? []
                 };
 
                 return Ok(apiKeyDto);
@@ -114,21 +120,22 @@ public class KeyController : ControllerBase
         }
     }
 
+
     [HttpPost("decrypt-graphql-accesskey")]
     [Authorize(Roles = RoleConstants.AdminRole)]
     [ProducesResponseType(typeof(GraphQLApiKeyDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> DecryptGraphQlAccessKey([FromBody] AccessKeyDto model)
+    public async Task<IActionResult> DecryptGraphQlAccessKey([FromBody] AccessKeyDto accessKeyDto)
     {
         try
         {
             var userResult = await _userService.GetUserAsync(HttpContext);
             var user = userResult.user;
 
-            var apiKey = await DecryptAndValidateApiKey(model.EncryptedKey, user.Id);
+            var apiKey = await DecryptAndValidateApiKey(accessKeyDto.EncryptedKey, user.Id);
 
             var expiresInDays = CalculateExpiresInDays(apiKey);
 
-            var permissions = await GetAccessKeyPermission(apiKey.Id);
+            var permissions = await _keyService.GetAccessKeyPermissions(apiKey.Id);
 
             if (apiKey is GraphQLApiKey api)
             {
@@ -161,14 +168,14 @@ public class KeyController : ControllerBase
     [HttpPost("delete-accesskey")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> DeleteAccessKey([FromBody] AccessKeyDto model)
+    public async Task<IActionResult> DeleteAccessKey([FromBody] AccessKeyDto accessKeyDto)
     {
         try
         {
             var userResult = await _userService.GetUserAsync(HttpContext);
             var user = userResult.user;
 
-            var result = await _keyService.RemoveAccessKey(model.EncryptedKey);
+            var result = await _keyService.RemoveAccessKey(accessKeyDto.EncryptedKey);
             if (result == null)
             {
                 return BadRequest("Failed to delete API key.");
@@ -183,7 +190,7 @@ public class KeyController : ControllerBase
         }
     }
 
-    [HttpPost("accesskey-endpoints")]
+    [HttpPost("accesskey-themes")]
     [ProducesResponseType(typeof(List<ApiEndpointSchema>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEndpointInfo([FromBody] AccessKeyDto accessKeyDto)
     {
@@ -195,13 +202,13 @@ public class KeyController : ControllerBase
                 return errorResult;
             }
 
-            var validEndpoints = new List<object>();
-
             if (apiKey is ApiKey api)
             {
-                // Assuming apiKey.AccessibleEndpoints contains paths
-                validEndpoints = ApiConstants.DefaultApiEndpoints
-                    .Where(endpoint => api?.AccessibleEndpoints?.Contains(endpoint.Path) ?? false)
+                var themes = await _keyService.GetAccessKeyThemes(apiKey.Id);
+                var allAccessibleEndpoints = themes.SelectMany(t => t.AccessibleEndpoints).ToList();
+                ;
+                var validEndpoints = ApiConstants.DefaultApiEndpoints
+                    .Where(endpoint => allAccessibleEndpoints.Contains(endpoint.Path))
                     .Select(endpoint => new
                     {
                         endpoint.Path,
@@ -214,9 +221,11 @@ public class KeyController : ControllerBase
                 {
                     return NotFound("No valid endpoints found for the provided access key.");
                 }
+
+                return Ok(validEndpoints);
             }
 
-            return Ok(validEndpoints);
+            return NotFound("API key type mismatch.");
         }
         catch (Exception ex)
         {
@@ -224,6 +233,7 @@ public class KeyController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
+
 
     private async Task<IApiKey> DecryptAndValidateApiKey(string encryptedKey, string userId)
     {
@@ -239,17 +249,6 @@ public class KeyController : ControllerBase
         }
 
         return apiKey;
-    }
-
-    private async Task<List<AccessKeyPermission>> GetAccessKeyPermission(int graphQLApiKeyId)
-    {
-        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-
-        var accessKeyPermissions = await mainDbContext.Set<AccessKeyPermission>()
-            .Where(p => p.GraphQLApiKeyId == graphQLApiKeyId)
-            .ToListAsync();
-
-        return accessKeyPermissions;
     }
 
     private static int CalculateExpiresInDays(IApiKey apiKey)

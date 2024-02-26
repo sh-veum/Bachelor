@@ -202,9 +202,6 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<List<string>>("AccessibleEndpoints")
-                        .HasColumnType("text[]");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -249,6 +246,30 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.HasIndex("UserId");
 
                     b.ToTable("GraphQLApiKey");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Keys.Theme", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<List<string>>("AccessibleEndpoints")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<int>("ApiKeyID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ThemeName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApiKeyID");
+
+                    b.ToTable("Theme");
                 });
 
             modelBuilder.Entity("NetBackend.Models.Organization", b =>
@@ -1948,6 +1969,22 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .HasForeignKey("UserId");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Keys.Theme", b =>
+                {
+                    b.HasOne("NetBackend.Models.Keys.ApiKey", "ApiKey")
+                        .WithMany("Themes")
+                        .HasForeignKey("ApiKeyID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApiKey");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
+                {
+                    b.Navigation("Themes");
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>

@@ -1,4 +1,5 @@
 using NetBackend.Constants;
+using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
 using NetBackend.Models.User;
 using NetBackend.Services.Interfaces;
@@ -19,27 +20,42 @@ public class ApiService : IApiService
         _databaseContextService = databaseContextService;
     }
 
-    public async Task<ApiKey> CreateRESTApiKey(UserModel user, string keyName, List<string> endpoints)
+    public async Task<ApiKey> CreateRESTApiKey(UserModel user, string keyName, List<ThemeDto> themeDtos)
     {
         var dbContext = await _databaseContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
-        // Create a new ApiKey instance
+        // Create a new ApiKey instance without directly setting AccessibleEndpoints
         var apiKey = new ApiKey
         {
             UserId = user.Id,
             KeyName = keyName,
-            AccessibleEndpoints = endpoints,
             User = user,
             CreatedAt = DateTime.UtcNow,
-            ExpiresIn = KeyConstants.ExpiresIn
+            ExpiresIn = KeyConstants.ExpiresIn,
+            Themes = new List<Theme>()
         };
 
-        // Add the new ApiKey to the DbContext
+        // Process each ThemeDto to create Theme entities
+        foreach (var themeDto in themeDtos)
+        {
+            var theme = new Theme
+            {
+                AccessibleEndpoints = themeDto.AccessibleEndpoints,
+                ThemeName = themeDto.ThemeName,
+                ApiKeyID = apiKey.Id,
+                ApiKey = apiKey
+            };
+
+            apiKey.Themes.Add(theme);
+        }
+
+        // Add the new ApiKey (with Themes) to the DbContext
         dbContext.Set<ApiKey>().Add(apiKey);
         await dbContext.SaveChangesAsync();
 
         return apiKey;
     }
+
 
     // GraphQL
     public async Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<AccessKeyPermission> permissions)

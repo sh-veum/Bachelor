@@ -19,16 +19,4 @@ public static class ApiConstants
             ExpectedBodyType = typeof(SpeciesDto)
         }
     ];
-
-    public static readonly List<GraphQLAccessKeyPermissionDto> DefaultGraphQLAccessKeyPermissions =
-    [
-        new() {
-            QueryName = "species",
-            AllowedFields = ["id", "name"]
-        },
-        new() {
-            QueryName = "organization",
-            AllowedFields = ["id", "name"]
-        }
-    ];
 }

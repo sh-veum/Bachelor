@@ -79,7 +79,7 @@ public class Query
         }
     }
 
-    public List<ClassInfo> GetClassStructures()
+    public List<ClassInfo> GetAvailableClassTables()
     {
         var classInfos = new List<ClassInfo>();
 
@@ -95,9 +95,9 @@ public class Query
                     break;
             }
         }
-
         return classInfos;
     }
+
     private async Task<(DbContext? DbContext, IActionResult? Error)> GetContextFromUser(IUserService userService, IDbContextService dbContextService)
     {
         try

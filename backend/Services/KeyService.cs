@@ -96,9 +96,11 @@ public partial class KeyService : IKeyService
         var httpContext = _httpContextAccessor.HttpContext;
         if (apiKey is ApiKey api)
         {
+            // Aggregate all accessible endpoints from themes
+            var allAccessibleEndpoints = GetAccessKeyThemes(apiKey.Id).Result.SelectMany(t => t.AccessibleEndpoints).ToList();
+
             if (!string.IsNullOrEmpty(httpContext?.Request.Path.Value) &&
-                api.AccessibleEndpoints != null &&
-                !api.AccessibleEndpoints.Contains(httpContext.Request.Path.Value))
+                !allAccessibleEndpoints.Contains(httpContext.Request.Path.Value))
             {
                 return (null, new UnauthorizedResult());
             }
@@ -198,6 +200,28 @@ public partial class KeyService : IKeyService
         return new OkResult();
     }
 
+    public async Task<List<Theme>> GetAccessKeyThemes(int apiKeyID)
+    {
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        var themes = await mainDbContext.Set<Theme>()
+            .Where(p => p.ApiKeyID == apiKeyID)
+            .ToListAsync();
+
+        return themes;
+    }
+
+    public async Task<List<AccessKeyPermission>> GetAccessKeyPermissions(int graphQLApiKeyId)
+    {
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        var accessKeyPermissions = await mainDbContext.Set<AccessKeyPermission>()
+            .Where(p => p.GraphQLApiKeyId == graphQLApiKeyId)
+            .ToListAsync();
+
+        return accessKeyPermissions;
+    }
+
     private static async Task<(IApiKey?, IActionResult?)> FetchApiKeyAsync(string typePart, int id, DbContext dbContext)
     {
         if (dbContext == null)
@@ -288,4 +312,3 @@ public partial class KeyService : IKeyService
         return accessKeyPermissions;
     }
 }
-

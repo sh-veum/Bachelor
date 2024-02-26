@@ -1,7 +1,7 @@
-namespace NetBackend.Models.Keys.Dto;
+namespace NetBackend.Models.Dto.Keys;
 
 public class CreateAccessKeyDto
 {
     public required string KeyName { get; set; }
-    public List<string>? AccessibleEndpoints { get; set; }
+    public List<ThemeDto>? Themes { get; set; }
 }
