@@ -7,6 +7,7 @@ import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client/core
 import App from './App.vue'
 import router from './router'
 import axios from 'axios'
+import { useAuth } from './lib/useAuth'
 
 // Axios interceptor to add the bearer token to every request
 axios.interceptors.request.use(
@@ -38,9 +39,11 @@ const apolloClient = new ApolloClient({
 
 const app = createApp(App)
 
-app.use(router)
-app.provide(DefaultApolloClient, apolloClient)
-
-app.mount('#app')
+const { refreshTokenFunc } = useAuth()
+refreshTokenFunc().then(() => {
+  app.use(router)
+  app.provide(DefaultApolloClient, apolloClient)
+  app.mount('#app')
+})
 
 export { apolloClient }

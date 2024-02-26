@@ -27,11 +27,14 @@ export function useAuth() {
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
     authToken.value = null
-    localStorage.removeItem('authToken')
+    refreshToken.value = null
     userRole.value = null
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('refreshToken')
     localStorage.removeItem('userRole')
+    localStorage.removeItem('hasRefreshedTokens')
   }
 
   const register = async (email: string, password: string) => {
@@ -56,11 +59,48 @@ export function useAuth() {
         }
       } catch (error) {
         console.error('Error fetching user info', error)
-        userRole.value = null
-        localStorage.removeItem('userRole')
+        await logout()
       }
     }
   }
 
-  return { login, logout, register, fetchUserInfo, isLoggedIn, isRegistered, isAdmin }
+  const refreshTokenFunc = async () => {
+    const hasRefreshed = localStorage.getItem('hasRefreshedTokens')
+
+    if (!hasRefreshed) {
+      const localRefreshToken = localStorage.getItem('refreshToken')
+      if (localRefreshToken) {
+        try {
+          const response = await axios.post('http://localhost:8088/refresh', {
+            refreshToken: localRefreshToken
+          })
+          if (response.status === 200) {
+            authToken.value = response.data.accessToken
+            refreshToken.value = response.data.refreshToken
+
+            localStorage.setItem('authToken', authToken.value ?? '')
+            localStorage.setItem('refreshToken', refreshToken.value ?? '')
+
+            localStorage.setItem('hasRefreshedTokens', 'true')
+
+            await fetchUserInfo()
+          }
+        } catch (error) {
+          console.error('Error refreshing token', error)
+          await logout()
+        }
+      }
+    }
+  }
+
+  return {
+    login,
+    logout,
+    register,
+    fetchUserInfo,
+    isLoggedIn,
+    isRegistered,
+    isAdmin,
+    refreshTokenFunc
+  }
 }
