@@ -39,8 +39,8 @@ const apolloClient = new ApolloClient({
 
 const app = createApp(App)
 
-const { refreshTokenFunc } = useAuth()
-refreshTokenFunc().then(() => {
+const { refreshUserCredentials } = useAuth()
+refreshUserCredentials().then(() => {
   app.use(router)
   app.provide(DefaultApolloClient, apolloClient)
   app.mount('#app')

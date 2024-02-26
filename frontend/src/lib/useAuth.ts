@@ -64,7 +64,7 @@ export function useAuth() {
     }
   }
 
-  const refreshTokenFunc = async () => {
+  const refreshUserCredentials = async () => {
     const hasRefreshed = localStorage.getItem('hasRefreshedTokens')
 
     if (!hasRefreshed) {
@@ -101,6 +101,6 @@ export function useAuth() {
     isLoggedIn,
     isRegistered,
     isAdmin,
-    refreshTokenFunc
+    refreshUserCredentials
   }
 }
