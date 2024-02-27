@@ -4,12 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Netbackend.Models.Dto.Keys;
 using NetBackend.Models.Keys.Dto;
 using NetBackend.Models.User;
-using NetBackend.Services;
 using NetBackend.Constants;
 using NetBackend.Models.Keys;
 using NetBackend.Services.Interfaces;
 using NetBackend.Models.Dto.Keys;
-using Microsoft.EntityFrameworkCore;
 using NetBackend.Tools;
 using NetBackend.Models.Dto;
 
@@ -190,7 +188,7 @@ public class KeyController : ControllerBase
         }
     }
 
-    [HttpPost("accesskey-themes")]
+    [HttpPost("accesskey-rest-endpoints")]
     [ProducesResponseType(typeof(List<ApiEndpointSchema>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEndpointInfo([FromBody] AccessKeyDto accessKeyDto)
     {
@@ -206,7 +204,7 @@ public class KeyController : ControllerBase
             {
                 var themes = await _keyService.GetAccessKeyThemes(apiKey.Id);
                 var allAccessibleEndpoints = themes.SelectMany(t => t.AccessibleEndpoints).ToList();
-                ;
+
                 var validEndpoints = ApiConstants.DefaultApiEndpoints
                     .Where(endpoint => allAccessibleEndpoints.Contains(endpoint.Path))
                     .Select(endpoint => new
@@ -234,6 +232,52 @@ public class KeyController : ControllerBase
         }
     }
 
+    [HttpPost("accesskey-themes")]
+    [ProducesResponseType(typeof(List<ApiThemeDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetThemeInfo([FromBody] AccessKeyDto accessKeyDto)
+    {
+        try
+        {
+            var (apiKey, errorResult) = await _keyService.DecryptAccessKey(accessKeyDto.EncryptedKey);
+            if (errorResult != null)
+            {
+                return errorResult;
+            }
+
+            if (apiKey is ApiKey api)
+            {
+                var themes = await _keyService.GetAccessKeyThemes(apiKey.Id);
+
+                // Check if there are no themes
+                if (themes.Count == 0)
+                {
+                    return NotFound("No valid themes found for the provided access key.");
+                }
+
+                var validThemes = themes.Select(theme => new
+                {
+                    Name = theme.ThemeName,
+                    Endpoints = ApiConstants.DefaultApiEndpoints
+                        .Where(endpoint => theme.AccessibleEndpoints.Contains(endpoint.Path))
+                        .Select(endpoint => new
+                        {
+                            endpoint.Path,
+                            endpoint.Method,
+                            ExpectedBody = endpoint.ExpectedBodyType != null ? DtoTools.GetDtoStructure(endpoint.ExpectedBodyType) : null
+                        }).ToList<object>()
+                }).ToList();
+
+                return Ok(validThemes);
+            }
+
+            return NotFound("API key type mismatch.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while retrieving theme information.");
+            return BadRequest(ex.Message);
+        }
+    }
 
     private async Task<IApiKey> DecryptAndValidateApiKey(string encryptedKey, string userId)
     {

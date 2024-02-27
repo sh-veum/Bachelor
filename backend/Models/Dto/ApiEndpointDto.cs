@@ -7,6 +7,13 @@ public class ApiEndpointDto
     public Type? ExpectedBodyType { get; set; }
 }
 
+public class ApiThemeDto
+{
+    public required string Name { get; set; }
+    public required List<ApiEndpointSchema> Endpoints { get; set; }
+}
+
+
 public class ApiEndpointSchema
 {
     public required string Path { get; set; }
