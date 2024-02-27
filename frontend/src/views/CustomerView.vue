@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, defineEmits } from 'vue'
-import TheApiOverview from '@/components/TheApiOverview.vue'
+import TheRestApiOverview from '@/components/TheRestApiOverview.vue'
 import { Input } from '@/components/ui/input'
 
 const accessKey = ref('')
@@ -13,6 +13,6 @@ emits('check-accesskey', accessKey.value)
 <template>
   <div class="ml-6 w-[800px]">
     <Input v-model="accessKey" placeholder="place accesskey here" />
-    <TheApiOverview :accessKey="accessKey" />
+    <TheRestApiOverview :accessKey="accessKey" />
   </div>
 </template>
