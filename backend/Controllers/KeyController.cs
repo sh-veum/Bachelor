@@ -133,7 +133,7 @@ public class KeyController : ControllerBase
 
             var expiresInDays = CalculateExpiresInDays(apiKey);
 
-            var permissions = await _keyService.GetAccessKeyPermissions(apiKey.Id);
+            var permissions = await _keyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
 
             if (apiKey is GraphQLApiKey api)
             {
@@ -188,6 +188,7 @@ public class KeyController : ControllerBase
         }
     }
 
+    // TODO: Remove since themes are used instead
     [HttpPost("accesskey-rest-endpoints")]
     [ProducesResponseType(typeof(List<ApiEndpointSchema>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEndpointInfo([FromBody] AccessKeyDto accessKeyDto)
@@ -248,7 +249,6 @@ public class KeyController : ControllerBase
             {
                 var themes = await _keyService.GetAccessKeyThemes(apiKey.Id);
 
-                // Check if there are no themes
                 if (themes.Count == 0)
                 {
                     return NotFound("No valid themes found for the provided access key.");
@@ -275,6 +275,43 @@ public class KeyController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while retrieving theme information.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("accesskey-graphql-permissions")]
+    [ProducesResponseType(typeof(List<GraphQLAccessKeyPermissionDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetGraphQLPermissions([FromBody] AccessKeyDto accessKeyDto)
+    {
+        try
+        {
+            var (apiKey, errorResult) = await _keyService.DecryptAccessKey(accessKeyDto.EncryptedKey);
+            if (errorResult != null)
+            {
+                return errorResult;
+            }
+
+            if (apiKey is GraphQLApiKey api)
+            {
+                var permissions = await _keyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
+
+                var validPermissions = permissions
+                    .Where(p => GraphQLConstants.AvailableQueryTables
+                    .Any(aqt => string.Equals(aqt, p.QueryName, StringComparison.OrdinalIgnoreCase)))
+                    .Select(permission => new GraphQLAccessKeyPermissionDto
+                    {
+                        QueryName = permission.QueryName,
+                        AllowedFields = permission.AllowedFields ?? []
+                    }).ToList();
+
+                return Ok(validPermissions);
+            }
+
+            return NotFound("API key type mismatch.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while retrieving GraphQL permissions.");
             return BadRequest(ex.Message);
         }
     }

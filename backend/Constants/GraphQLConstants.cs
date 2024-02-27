@@ -5,6 +5,6 @@ public static class GraphQLConstants
     public static readonly string[] AvailableQueryTables =
     [
         "Species",
-        "Organization"
+        "Organizations"
     ];
 }

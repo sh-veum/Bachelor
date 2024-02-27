@@ -156,7 +156,7 @@ public partial class KeyService : IKeyService
 
         if (apiKey is GraphQLApiKey api)
         {
-            var permission = await GetAccessKeyPermission(apiKey.Id);
+            var permission = await GetGraphQLAccessKeyPermissions(apiKey.Id);
             var isAuthorized = CheckQueryAuthorization(graphqlQuery, permission);
             if (!isAuthorized)
             {
@@ -211,7 +211,7 @@ public partial class KeyService : IKeyService
         return themes;
     }
 
-    public async Task<List<AccessKeyPermission>> GetAccessKeyPermissions(int graphQLApiKeyId)
+    public async Task<List<AccessKeyPermission>> GetGraphQLAccessKeyPermissions(int graphQLApiKeyId)
     {
         var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
@@ -299,16 +299,5 @@ public partial class KeyService : IKeyService
         _logger.LogInformation("GraphQL query authorization check passed.");
 
         return true; // All requested operations and fields are allowed
-    }
-
-    private async Task<List<AccessKeyPermission>> GetAccessKeyPermission(int graphQLApiKeyId)
-    {
-        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-
-        var accessKeyPermissions = await mainDbContext.Set<AccessKeyPermission>()
-            .Where(p => p.GraphQLApiKeyId == graphQLApiKeyId)
-            .ToListAsync();
-
-        return accessKeyPermissions;
     }
 }
