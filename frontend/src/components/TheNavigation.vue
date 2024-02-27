@@ -13,7 +13,9 @@ const { isLoggedIn } = useAuth()
 </script>
 
 <template>
-  <NavigationMenu class="bg-zinc-50 dark:bg-gray-900 sticky top-0 left-0 right-0 z-20 border-b border-gray-200 dark:border-gray-600">
+  <NavigationMenu
+    class="bg-zinc-50 dark:bg-gray-900 sticky top-0 left-0 right-0 z-20 border-b border-gray-200 dark:border-gray-600"
+  >
     <div class="flex justify-between w-full">
       <!-- Left-aligned items -->
       <NavigationMenuList class="flex">
@@ -41,7 +43,11 @@ const { isLoggedIn } = useAuth()
           </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem v-if="isAdmin">
-          <NavigationMenuLink href="/admin" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
+          <NavigationMenuLink
+            href="/admin"
+            :class="navigationMenuTriggerStyle()"
+            class="bg-zinc-50"
+          >
             Admin Page
           </NavigationMenuLink>
         </NavigationMenuItem>
@@ -65,19 +71,28 @@ const { isLoggedIn } = useAuth()
         </NavigationMenuItem>
       </NavigationMenuList>
       <!-- right side -->
-      <div class="flex">
+      <!-- TODO: Should probably be moved inside the NavigationMenuList, but couldnt  -->
+      <!-- figure out why justify-between didnt separate them when inside NavigationMenuList -->
+      <div class="flex list-none">
         <NavigationMenuItem>
-          <NavigationMenuLink href="/login" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
+          <NavigationMenuLink
+            href="/login"
+            :class="navigationMenuTriggerStyle()"
+            class="bg-zinc-50"
+          >
             Login
           </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuLink href="/register" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
+          <NavigationMenuLink
+            href="/register"
+            :class="navigationMenuTriggerStyle()"
+            class="bg-zinc-50"
+          >
             Register
           </NavigationMenuLink>
         </NavigationMenuItem>
       </div>
     </div>
-    
   </NavigationMenu>
 </template>
