@@ -51,7 +51,7 @@ const fetchData = async () => {
     databases.value = databasesResponse.data
 
     const rolesResponse = await axios.get('http://localhost:8088/api/user/roles')
-    roles.value = rolesResponse.data
+    roles.value = rolesResponse.data.map((role: any) => role.name)
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }
@@ -65,6 +65,9 @@ const editUser = (user: EditableUser) => {
 
 const saveChanges = async (user: EditableUser) => {
   try {
+    console.log('Saving changes for user:', user)
+    console.log('newRole:', user.newRole)
+    console.log('role:', user.role)
     if (user.newRole !== user.role) {
       await axios.post('http://localhost:8088/api/user/change-role', {
         email: user.email,
