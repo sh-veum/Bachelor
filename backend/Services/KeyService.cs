@@ -257,6 +257,7 @@ public partial class KeyService : IKeyService
 
     private bool CheckQueryAuthorization(string graphqlQuery, List<AccessKeyPermission> permissions)
     {
+        _logger.LogInformation("graphqlQuery {graphqlQuery}", graphqlQuery);
         var parsedQuery = GraphQLQueryParser.ParseQuery(graphqlQuery);
 
         if (parsedQuery.Count == 0)

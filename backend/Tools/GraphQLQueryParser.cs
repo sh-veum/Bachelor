@@ -19,6 +19,11 @@ public partial class GraphQLQueryParser
             // Use the existing parser for queries that start with "{" (postman, etc.)
             return ParseImplicitQuery(query);
         }
+        else if (query.TrimStart().StartsWith("query CombinedQuery"))
+        {
+            // For combined Apollo queries
+            return ParseCombinedQuery(query);
+        }
         else
         {
             // Use a new parser for queries that start with an operation name (Apollo, etc.)
@@ -43,14 +48,21 @@ public partial class GraphQLQueryParser
     {
         var operations = new Dictionary<string, List<string>>();
         var pattern = @"\b(\w+)\s*\(([^)]*)\)\s*{\s*(\w+)\s*\(([^)]*)\)\s*{\s*([^}]+?)\s*}\s*}";
-        var matches = Regex.Matches(query, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        var fieldPattern = @"\b(\w+)\b";
 
-        foreach (Match match in matches)
+        var operationMatches = Regex.Matches(query, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+        foreach (Match match in operationMatches)
         {
             var operationName = match.Groups[3].Value.Trim();
             var fieldsBlock = match.Groups[5].Value;
 
-            var fields = ExtractFields(fieldsBlock).Where(field => !field.Equals("__typename", StringComparison.OrdinalIgnoreCase)).ToList();
+            var fieldMatches = Regex.Matches(fieldsBlock, fieldPattern);
+            var fields = fieldMatches.Cast<Match>()
+                                     .Select(match => match.Groups[1].Value)
+                                     .Where(field => !field.Equals("__typename", StringComparison.OrdinalIgnoreCase))
+                                     .Distinct()
+                                     .ToList();
 
             if (!operations.ContainsKey(operationName))
             {
@@ -58,7 +70,40 @@ public partial class GraphQLQueryParser
             }
             else
             {
-                operations[operationName] = operations[operationName].Union(fields).Distinct().ToList();
+                operations[operationName].AddRange(fields.Where(f => !operations[operationName].Contains(f)));
+            }
+        }
+
+        return operations;
+    }
+
+    private static Dictionary<string, List<string>> ParseCombinedQuery(string query)
+    {
+        var operations = new Dictionary<string, List<string>>();
+        var operationPattern = @"(\w+)\s*\(\s*encryptedKey\s*:\s*""[^""]*""\s*\)\s*{\s*([^}]+?)\s*}";
+        var fieldPattern = @"\b(\w+)\b";
+
+        var operationMatches = Regex.Matches(query, operationPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+        foreach (Match operationMatch in operationMatches)
+        {
+            var operationName = operationMatch.Groups[1].Value.Trim();
+            var fieldsBlock = operationMatch.Groups[2].Value;
+
+            var fieldMatches = Regex.Matches(fieldsBlock, fieldPattern);
+            var fields = fieldMatches.Cast<Match>()
+                                     .Select(match => match.Groups[1].Value)
+                                     .Where(field => !field.Equals("__typename", StringComparison.OrdinalIgnoreCase))
+                                     .Distinct()
+                                     .ToList();
+
+            if (!operations.ContainsKey(operationName))
+            {
+                operations.Add(operationName, fields);
+            }
+            else
+            {
+                operations[operationName].AddRange(fields.Where(f => !operations[operationName].Contains(f)));
             }
         }
 
