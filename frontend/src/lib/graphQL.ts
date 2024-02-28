@@ -1,20 +1,13 @@
-// Import necessary functions and types from Apollo Client
 import { gql, type ApolloQueryResult } from '@apollo/client/core'
-import { apolloClient } from '../main' // Assumed path to your Apollo Client instance
-
-// Define TypeScript interfaces for the query response to ensure type safety
-interface Property {
-  name: string
-  propertyType: string
-}
-
-interface ClassTable {
-  name: string
-  properties: Property[]
-}
+import { apolloClient } from '../main'
+import type { ClassTable, Query } from '@/components/interfaces/GraphQLSchema'
 
 interface AvailableClassTablesResponse {
   availableClassTables: ClassTable[]
+}
+
+interface AvailableQueriesResponse {
+  availableQueries: Query[]
 }
 
 const GET_AVAILABLE_CLASS_TABLES = gql`
@@ -41,8 +34,6 @@ export async function fetchAvailableClassTables(): Promise<AvailableClassTablesR
       query: GET_AVAILABLE_CLASS_TABLES
     })
 
-    console.log(response.data)
-
     return response.data
   } catch (error) {
     console.error('Error fetching available class tables:', error)
@@ -50,15 +41,21 @@ export async function fetchAvailableClassTables(): Promise<AvailableClassTablesR
   }
 }
 
-export async function fetchAvailableQueries(): Promise<string[]> {
+export async function fetchAvailableQueries(): Promise<AvailableQueriesResponse> {
   try {
-    const response: ApolloQueryResult<string[]> = await apolloClient.query({
-      query: GET_AVAILABLE_QUERIES
-    })
+    const response: ApolloQueryResult<{ availableQueries: [string, string][] }> =
+      await apolloClient.query({
+        query: GET_AVAILABLE_QUERIES
+      })
 
-    console.log(response.data)
+    const formattedResponse: AvailableQueriesResponse = {
+      availableQueries: response.data.availableQueries.map(([queryName, queryResponseTable]) => ({
+        queryName,
+        queryResponseTable
+      }))
+    }
 
-    return response.data
+    return formattedResponse
   } catch (error) {
     console.error('Error fetching available queries:', error)
     throw new Error('Failed to fetch available queries')

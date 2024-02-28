@@ -11,7 +11,7 @@ emits('check-accesskey', accessKey.value)
 </script>
 
 <template>
-  <div class="ml-6 w-[800px]">
+  <div class="mx-6 w-[500px]">
     <Input v-model="accessKey" placeholder="place accesskey here" />
     <TheGraphQLKeyTest :accessKey="accessKey" />
   </div>

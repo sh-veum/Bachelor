@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { TextArea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import TheGraphQLTester from '@/components/deprecated/TheGraphQLTester.vue'
+// import TheGraphQLTester from '@/components/deprecated/TheGraphQLTester.vue'
 
 const encryptedKey = ref('')
 const responseData = ref('')
@@ -179,6 +179,6 @@ const toggleOrganizationField = (fieldId: string) => {
       class="mt-2 h-[250px] w-full"
       placeholder="GraphQL response will appear here..."
     />
-    <TheGraphQLTester />
+    <!-- <TheGraphQLTester /> -->
   </div>
 </template>
