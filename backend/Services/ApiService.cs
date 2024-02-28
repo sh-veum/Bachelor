@@ -43,7 +43,9 @@ public class ApiService : IApiService
                 AccessibleEndpoints = themeDto.AccessibleEndpoints,
                 ThemeName = themeDto.ThemeName,
                 ApiKeyID = apiKey.Id,
-                ApiKey = apiKey
+                ApiKey = apiKey,
+                UserId = user.Id,
+                User = user
             };
 
             apiKey.Themes.Add(theme);

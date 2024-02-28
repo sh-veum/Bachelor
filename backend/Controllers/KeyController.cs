@@ -47,7 +47,7 @@ public class KeyController : ControllerBase
             // Create Api Key
             if (createAccessKeyDto.Themes == null)
             {
-                return BadRequest("Endpoints are be null.");
+                return BadRequest("Endpoints are null.");
             }
 
             var apiKey = await _apiService.CreateRESTApiKey(user, createAccessKeyDto.KeyName, createAccessKeyDto.Themes);

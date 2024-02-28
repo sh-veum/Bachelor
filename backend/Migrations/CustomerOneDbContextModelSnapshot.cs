@@ -212,6 +212,7 @@ namespace NetBackend.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -239,6 +240,7 @@ namespace NetBackend.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -265,9 +267,15 @@ namespace NetBackend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApiKeyID");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Theme");
                 });
@@ -1957,7 +1965,9 @@ namespace NetBackend.Migrations
                 {
                     b.HasOne("NetBackend.Models.User.UserModel", "User")
                         .WithMany("ApiKey")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -1966,7 +1976,9 @@ namespace NetBackend.Migrations
                 {
                     b.HasOne("NetBackend.Models.User.UserModel", "User")
                         .WithMany("GraphQLApiKey")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -1979,7 +1991,15 @@ namespace NetBackend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("NetBackend.Models.User.UserModel", "User")
+                        .WithMany("Themes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("ApiKey");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
@@ -1997,6 +2017,8 @@ namespace NetBackend.Migrations
                     b.Navigation("ApiKey");
 
                     b.Navigation("GraphQLApiKey");
+
+                    b.Navigation("Themes");
                 });
 #pragma warning restore 612, 618
         }
