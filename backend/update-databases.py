@@ -24,15 +24,16 @@ def run_operations(migrations_name=None, folder_path='Data/DbContexts/'):
                 context_name = file.replace('.cs', '')
                 delete_database_tables(context_name)
 
-    # Ask if migration is needed
-    perform_migration = input("Do you want to perform a migration? (Y/N): ").lower()
-    if perform_migration == 'y' and migrations_name:
-        # Run migration add command for each file
-        for file in files:
-            context_name = file.replace('.cs', '')
-            add_command = f'dotnet ef migrations add "{migrations_name}" --context {context_name}'
-            print(f"Running: {add_command}")
-            subprocess.run(add_command, shell=True)
+    # Only ask if migration is needed if a migrations_name has been provided
+    if migrations_name:
+        perform_migration = input("Do you want to perform a migration? (Y/N): ").lower()
+        if perform_migration == 'y':
+            # Run migration add command for each file
+            for file in files:
+                context_name = file.replace('.cs', '')
+                add_command = f'dotnet ef migrations add "{migrations_name}" --context {context_name}'
+                print(f"Running: {add_command}")
+                subprocess.run(add_command, shell=True)
 
     # Always run database update command for each file
     for file in files:
@@ -48,7 +49,9 @@ def delete_database_tables(context_name):
     subprocess.run(delete_command, shell=True)
 
 if __name__ == "__main__":
+    migrations_name = None  # Default to None
     # Ask if migration name is provided
     migration_decision = input("Do you want to provide a migration name? (Y/N): ").lower()
-    migrations_name = input("Enter the migrations name: ") if migration_decision == 'y' else None
+    if migration_decision == 'y':
+        migrations_name = input("Enter the migrations name: ")
     run_operations(migrations_name)
