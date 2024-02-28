@@ -296,8 +296,8 @@ public class KeyController : ControllerBase
                 var permissions = await _keyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
 
                 var validPermissions = permissions
-                    .Where(p => GraphQLConstants.AvailableQueryTables
-                    .Any(aqt => string.Equals(aqt, p.QueryName, StringComparison.OrdinalIgnoreCase)))
+                    .Where(p => GraphQLConstants.AvailableQueries
+                    .Any(aqt => string.Equals(aqt[0], p.QueryName, StringComparison.OrdinalIgnoreCase)))
                     .Select(permission => new GraphQLAccessKeyPermissionDto
                     {
                         QueryName = permission.QueryName,

@@ -104,8 +104,7 @@ export const fetchSchema = async (): Promise<SchemaType> => {
   try {
     const { data } = await apolloClient.query({ query: introspectionQuery })
     console.log(data)
-    // Assuming `data` contains the `__schema` field directly as shown in your output
-    return data // Return the data directly
+    return data
   } catch (error) {
     console.error('Error fetching schema:', error)
     throw new Error('Failed to fetch schema data')
