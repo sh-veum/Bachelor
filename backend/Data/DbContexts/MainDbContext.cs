@@ -38,7 +38,8 @@ public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
         modelBuilder.Entity<ApiKey>()
             .HasMany(u => u.Themes)
             .WithOne(k => k.ApiKey)
-            .HasForeignKey(k => k.ApiKeyID);
+            .HasForeignKey(k => k.ApiKeyID)
+            .IsRequired(false);
 
         modelBuilder.Entity<UserModel>()
             .HasMany(u => u.Themes)

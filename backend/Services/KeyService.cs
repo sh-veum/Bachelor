@@ -301,4 +301,25 @@ public partial class KeyService : IKeyService
 
         return true; // All requested operations and fields are allowed
     }
+
+    public async Task<List<Theme>> GetThemesByUserId(string userId)
+    {
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        var themes = await mainDbContext.Set<Theme>()
+            .Where(p => p.UserId == userId)
+            .ToListAsync();
+
+        return themes;
+    }
+
+    public async Task<Theme> CreateTheme(Theme theme)
+    {
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        mainDbContext.Set<Theme>().Add(theme);
+        await mainDbContext.SaveChangesAsync();
+
+        return theme;
+    }
 }

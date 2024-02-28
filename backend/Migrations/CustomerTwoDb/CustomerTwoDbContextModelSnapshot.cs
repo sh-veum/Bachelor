@@ -260,7 +260,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .IsRequired()
                         .HasColumnType("text[]");
 
-                    b.Property<int>("ApiKeyID")
+                    b.Property<int?>("ApiKeyID")
                         .HasColumnType("integer");
 
                     b.Property<string>("ThemeName")
@@ -1987,9 +1987,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 {
                     b.HasOne("NetBackend.Models.Keys.ApiKey", "ApiKey")
                         .WithMany("Themes")
-                        .HasForeignKey("ApiKeyID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ApiKeyID");
 
                     b.HasOne("NetBackend.Models.User.UserModel", "User")
                         .WithMany("Themes")

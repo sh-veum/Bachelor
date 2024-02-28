@@ -338,4 +338,68 @@ public class KeyController : ControllerBase
         var expiresInDays = (apiKey.CreatedAt.AddDays(apiKey.ExpiresIn) - currentTime).TotalDays;
         return expiresInDays > 0 ? (int)expiresInDays : 0;
     }
+
+    [HttpGet("get-themes-by-user")]
+    [ProducesResponseType(typeof(List<ThemeDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetThemesByUser()
+    {
+        try
+        {
+            var userResult = await _userService.GetUserAsync(HttpContext);
+            var user = userResult.user;
+
+            var themes = await _keyService.GetThemesByUserId(user.Id);
+
+            if (themes.Count == 0)
+            {
+                return NotFound("No themes found for the user.");
+            }
+
+            var validThemes = themes.Select(theme => new ThemeDto
+            {
+                ThemeName = theme.ThemeName,
+                AccessibleEndpoints = theme.AccessibleEndpoints
+            }).ToList();
+
+            return Ok(validThemes);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while retrieving themes by user.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("create-theme")]
+    [ProducesResponseType(typeof(ThemeDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CreateTheme([FromBody] ThemeDto themeDto)
+    {
+        try
+        {
+            var userResult = await _userService.GetUserAsync(HttpContext);
+            var user = userResult.user;
+
+            var theme = new Theme
+            {
+                ThemeName = themeDto.ThemeName,
+                AccessibleEndpoints = themeDto.AccessibleEndpoints,
+                UserId = user.Id,
+                User = user
+            };
+
+            var createdTheme = await _keyService.CreateTheme(theme);
+
+            if (createdTheme == null)
+            {
+                return BadRequest("Failed to create theme.");
+            }
+
+            return Ok(themeDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while creating theme.");
+            return BadRequest(ex.Message);
+        }
+    }
 }
