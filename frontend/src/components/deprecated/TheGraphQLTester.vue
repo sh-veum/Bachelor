@@ -1,3 +1,4 @@
+<!-- DEPRECATED -->
 <script setup lang="ts">
 import { ref } from 'vue'
 import { fetchSchema } from '@/lib/fetchSchema'
@@ -100,4 +101,3 @@ function resolveTypeName(type: any): string {
     </div>
   </div>
 </template>
-

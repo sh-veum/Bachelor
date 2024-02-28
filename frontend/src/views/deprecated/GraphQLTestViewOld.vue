@@ -1,3 +1,4 @@
+<!-- DEPRECATED, only here for reference -->
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useLazyQuery } from '@vue/apollo-composable'
@@ -6,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { TextArea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import TheGraphQLTester from '@/components/TheGraphQLTester.vue'
+import TheGraphQLTester from '@/components/deprecated/TheGraphQLTester.vue'
 
 const encryptedKey = ref('')
 const responseData = ref('')

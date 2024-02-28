@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineEmits } from 'vue'
+import { ref } from 'vue'
 import TheGraphQLKeyTest from '@/components/TheGraphQLKeyTest.vue'
 import { Input } from '@/components/ui/input'
 

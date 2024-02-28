@@ -6,7 +6,7 @@ import {
   AccordionTrigger
 } from '@/components/ui/accordion'
 import axios from 'axios'
-import { watch, ref, defineProps } from 'vue'
+import { watch, ref } from 'vue'
 import { TextArea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 

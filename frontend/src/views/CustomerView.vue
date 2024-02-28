@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineEmits } from 'vue'
+import { ref } from 'vue'
 import TheRestApiOverview from '@/components/TheRestApiOverview.vue'
 import { Input } from '@/components/ui/input'
 
