@@ -14,7 +14,7 @@ const { isLoggedIn } = useAuth()
 
 <template>
   <NavigationMenu
-    class="justify-between bg-zinc-50 dark:bg-gray-900 sticky top-0 left-0 right-0 z-20 border-b border-gray-200 dark:border-gray-600"
+    class="justify-between bg-zinc-50 dark:bg-zinc-900 sticky top-0 left-0 right-0 z-20 border-b border-zinc-200 dark:border-zinc-600"
   >
     <!-- Left-aligned items -->
     <NavigationMenuList>
@@ -66,7 +66,7 @@ const { isLoggedIn } = useAuth()
       </NavigationMenuItem>
     </NavigationMenuList>
     <!-- right side -->
-    <NavigationMenuList>
+    <div class="flex list-none">
       <NavigationMenuItem>
         <NavigationMenuLink href="/login" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
           Login
@@ -81,6 +81,6 @@ const { isLoggedIn } = useAuth()
           Register
         </NavigationMenuLink>
       </NavigationMenuItem>
-    </NavigationMenuList>
+    </div>
   </NavigationMenu>
 </template>

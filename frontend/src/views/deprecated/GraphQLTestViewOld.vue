@@ -139,7 +139,7 @@ const toggleOrganizationField = (fieldId: string) => {
 </script>
 
 <template>
-  <div class="ml-6 w-[800px] bg-zinc-50 rounded-lg shadow dark:border dark:border-gray-700 p-4">
+  <div class="ml-6 w-[800px] bg-zinc-50 rounded-lg shadow dark:border dark:border-zinc-700 p-4">
     <h1 class="text-3xl font-bold mb-4">GraphQL Tester</h1>
     <Input v-model="encryptedKey" placeholder="Place encryptedKey here" class="mb-4" />
     <div>
