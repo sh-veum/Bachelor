@@ -485,7 +485,6 @@ $RECYCLE.BIN/
 
 # container
 .containers/
-Migrations/
 
 # Apollo
 apollo.config.js
