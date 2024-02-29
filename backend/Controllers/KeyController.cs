@@ -340,6 +340,7 @@ public class KeyController : ControllerBase
     }
 
     [HttpGet("get-themes-by-user")]
+    [Authorize]
     [ProducesResponseType(typeof(List<ThemeDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetThemesByUser()
     {
@@ -357,6 +358,7 @@ public class KeyController : ControllerBase
 
             var validThemes = themes.Select(theme => new ThemeDto
             {
+                Id = theme.Id,
                 ThemeName = theme.ThemeName,
                 AccessibleEndpoints = theme.AccessibleEndpoints
             }).ToList();
@@ -371,6 +373,7 @@ public class KeyController : ControllerBase
     }
 
     [HttpPost("create-theme")]
+    [Authorize]
     [ProducesResponseType(typeof(ThemeDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateTheme([FromBody] ThemeDto themeDto)
     {
@@ -394,11 +397,75 @@ public class KeyController : ControllerBase
                 return BadRequest("Failed to create theme.");
             }
 
-            return Ok(themeDto);
+            var newThemeDto = new ThemeDto
+            {
+                Id = createdTheme.Id,
+                ThemeName = createdTheme.ThemeName,
+                AccessibleEndpoints = createdTheme.AccessibleEndpoints
+            };
+
+            return Ok(newThemeDto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while creating theme.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPut("update-theme")]
+    [Authorize]
+    [ProducesResponseType(typeof(ThemeDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateTheme([FromBody] ThemeDto themeDto)
+    {
+        try
+        {
+            var userResult = await _userService.GetUserAsync(HttpContext);
+            var user = userResult.user;
+
+            var theme = new Theme
+            {
+                Id = themeDto.Id ?? Guid.Empty,
+                ThemeName = themeDto.ThemeName,
+                AccessibleEndpoints = themeDto.AccessibleEndpoints,
+                UserId = user.Id,
+                User = user
+            };
+
+            var updatedTheme = await _keyService.UpdateTheme(theme);
+
+            if (updatedTheme == null)
+            {
+                return BadRequest("Failed to update theme.");
+            }
+
+            return Ok(themeDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while updating theme.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpDelete("delete-theme")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeleteTheme([FromQuery] Guid id)
+    {
+        try
+        {
+            var result = await _keyService.DeleteTheme(id);
+            if (result == null)
+            {
+                return BadRequest("Failed to delete theme.");
+            }
+
+            return Ok("Theme deleted successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting theme.");
             return BadRequest(ex.Message);
         }
     }

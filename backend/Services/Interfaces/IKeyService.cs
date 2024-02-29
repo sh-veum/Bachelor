@@ -16,5 +16,7 @@ public interface IKeyService
     Task<List<Theme>> GetAccessKeyThemes(int apiKeyID);
     Task<List<Theme>> GetThemesByUserId(string userId);
     Task<Theme> CreateTheme(Theme theme);
+    Task<Theme> UpdateTheme(Theme theme);
+    Task<IActionResult> DeleteTheme(Guid themeId);
     Task<List<AccessKeyPermission>> GetGraphQLAccessKeyPermissions(int graphQLApiKeyId);
 }
