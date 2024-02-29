@@ -18,7 +18,9 @@ const handleSubmit = async () => {
 
 <template>
   <section>
-    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
+    <div
+      class="flex flex-col items-center justify-center px-6 py-8 mx-auto h-screen mt-[-65px] lg:py-0"
+    >
       <div
         class="w-full max-w-md bg-zinc-50 rounded-lg shadow dark:border dark:border-zinc-700 mb-60 pb-2"
       >
