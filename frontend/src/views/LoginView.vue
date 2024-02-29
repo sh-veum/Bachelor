@@ -47,7 +47,7 @@ const handleLogout = async () => {
         <div v-if="isAdmin" class="px-5">
           <p class="text-green-500 font-bold">Is admin</p>
         </div>
-        <div v-else class="px-5 pb-2">
+        <div v-else class="px-5">
           <p class="text-red-500 font-bold">Is not admin</p>
         </div>
       </div>

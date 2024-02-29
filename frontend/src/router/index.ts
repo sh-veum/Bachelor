@@ -1,30 +1,44 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import KeysView from '../views/KeysView.vue'
 import { useAuth } from '@/lib/useAuth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // Redirect to the rest API test view
     {
       path: '/',
-      name: 'keys',
-      component: KeysView
+      redirect: '/rest'
+    },
+    {
+      path: '/rest',
+      name: 'rest API Test',
+      component: () => import('../views/RestTestView.vue')
+    },
+    {
+      path: '/rest/create-key',
+      name: 'rest api create key',
+      component: () => import('../views/KeysView.vue'),
+      beforeEnter: (to, from, next) => {
+        const { isLoggedIn } = useAuth()
+        if (!isLoggedIn.value) {
+          next('/login')
+        } else {
+          next()
+        }
+      }
     },
     {
       path: '/theme-edit',
       name: 'theme-edit',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/ThemeEditView.vue')
-    },
-    {
-      path: '/customer',
-      name: 'customer',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/CustomerView.vue')
+      component: () => import('../views/ThemeEditView.vue'),
+      beforeEnter: (to, from, next) => {
+        const { isLoggedIn } = useAuth()
+        if (!isLoggedIn.value) {
+          next('/login')
+        } else {
+          next()
+        }
+      }
     },
     {
       path: '/login',
@@ -57,7 +71,15 @@ const router = createRouter({
     {
       path: '/graphql/create-key',
       name: 'GraphQL Create Key',
-      component: () => import('../views/GraphQLCreateKeyView.vue')
+      component: () => import('../views/GraphQLCreateKeyView.vue'),
+      beforeEnter: (to, from, next) => {
+        const { isLoggedIn } = useAuth()
+        if (!isLoggedIn.value) {
+          next('/login')
+        } else {
+          next()
+        }
+      }
     }
   ]
 })

@@ -8,9 +8,7 @@ const userRole = ref<string | null>(null)
 export function useAuth() {
   const isLoggedIn = computed(() => authToken.value !== null)
   const isRegistered = ref(false)
-  const isAdmin = computed(
-    () => userRole.value === 'ADMIN' || localStorage.getItem('userRole') === 'ADMIN'
-  )
+  const isAdmin = computed(() => userRole.value === 'ADMIN')
 
   const login = async (email: string, password: string) => {
     const response = await axios.post('http://localhost:8088/login', { email, password })
@@ -68,6 +66,7 @@ export function useAuth() {
     const hasRefreshed = localStorage.getItem('hasRefreshedTokens')
 
     if (!hasRefreshed) {
+      console.log('refreshing user credentials')
       const localRefreshToken = localStorage.getItem('refreshToken')
       if (localRefreshToken) {
         try {
@@ -81,7 +80,7 @@ export function useAuth() {
             localStorage.setItem('authToken', authToken.value ?? '')
             localStorage.setItem('refreshToken', refreshToken.value ?? '')
 
-            localStorage.setItem('hasRefreshedTokens', 'true')
+            // localStorage.setItem('hasRefreshedTokens', 'true')
 
             await fetchUserInfo()
           }
@@ -91,6 +90,10 @@ export function useAuth() {
         }
       }
     }
+
+    // Only refresh on page load
+    // TODO: Get message from backend that token is expired
+    localStorage.setItem('hasRefreshedTokens', 'true')
   }
 
   return {

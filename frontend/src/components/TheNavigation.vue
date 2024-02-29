@@ -9,7 +9,11 @@ import {
 } from './ui/navigation-menu'
 
 const { isAdmin } = useAuth()
-const { isLoggedIn } = useAuth()
+const { isLoggedIn, logout } = useAuth()
+
+const handleLogout = async () => {
+  logout()
+}
 </script>
 
 <template>
@@ -18,39 +22,38 @@ const { isLoggedIn } = useAuth()
   >
     <!-- Left-aligned items -->
     <NavigationMenuList>
+      <NavigationMenuItem>
+        <NavigationMenuLink
+          href="/rest"
+          :class="navigationMenuTriggerStyle()"
+          class="bg-zinc-50 hover:bg-zinc-200"
+        >
+          REST API Test
+        </NavigationMenuLink>
+      </NavigationMenuItem>
       <NavigationMenuItem v-if="isLoggedIn">
-        <NavigationMenuLink href="/" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
-          Keys
+        <NavigationMenuLink
+          href="/rest/create-key"
+          :class="navigationMenuTriggerStyle()"
+          class="bg-zinc-50 hover:bg-zinc-200"
+        >
+          REST API Keys
         </NavigationMenuLink>
       </NavigationMenuItem>
       <NavigationMenuItem v-if="isLoggedIn">
         <NavigationMenuLink
           href="/theme-edit"
           :class="navigationMenuTriggerStyle()"
-          class="bg-zinc-50"
+          class="bg-zinc-50 hover:bg-zinc-200"
         >
           Theme edit
         </NavigationMenuLink>
       </NavigationMenuItem>
       <NavigationMenuItem>
         <NavigationMenuLink
-          href="/customer"
-          :class="navigationMenuTriggerStyle()"
-          class="bg-zinc-50"
-        >
-          REST API Test
-        </NavigationMenuLink>
-      </NavigationMenuItem>
-      <NavigationMenuItem v-if="isAdmin">
-        <NavigationMenuLink href="/admin" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
-          Admin Page
-        </NavigationMenuLink>
-      </NavigationMenuItem>
-      <NavigationMenuItem>
-        <NavigationMenuLink
           href="/graphql"
           :class="navigationMenuTriggerStyle()"
-          class="bg-zinc-50"
+          class="bg-zinc-50 hover:bg-zinc-200"
         >
           GraphQL Test
         </NavigationMenuLink>
@@ -59,7 +62,7 @@ const { isLoggedIn } = useAuth()
         <NavigationMenuLink
           href="/graphql/create-key"
           :class="navigationMenuTriggerStyle()"
-          class="bg-zinc-50"
+          class="bg-zinc-50 hover:bg-zinc-200"
         >
           GraphQL Create Key
         </NavigationMenuLink>
@@ -67,16 +70,39 @@ const { isLoggedIn } = useAuth()
     </NavigationMenuList>
     <!-- right side -->
     <div class="flex list-none">
-      <NavigationMenuItem>
-        <NavigationMenuLink href="/login" :class="navigationMenuTriggerStyle()" class="bg-zinc-50">
+      <NavigationMenuItem v-if="isAdmin">
+        <NavigationMenuLink
+          href="/admin"
+          :class="navigationMenuTriggerStyle()"
+          class="bg-zinc-50 hover:bg-zinc-200"
+        >
+          Admin Page
+        </NavigationMenuLink>
+      </NavigationMenuItem>
+      <NavigationMenuItem v-if="isLoggedIn">
+        <NavigationMenuLink
+          href="#"
+          :class="navigationMenuTriggerStyle()"
+          class="bg-zinc-50 hover:bg-zinc-200"
+          @click.prevent="handleLogout"
+        >
+          Logout
+        </NavigationMenuLink>
+      </NavigationMenuItem>
+      <NavigationMenuItem v-else>
+        <NavigationMenuLink
+          href="/login"
+          :class="navigationMenuTriggerStyle()"
+          class="bg-zinc-50 hover:bg-zinc-200"
+        >
           Login
         </NavigationMenuLink>
       </NavigationMenuItem>
-      <NavigationMenuItem>
+      <NavigationMenuItem v-if="!isLoggedIn">
         <NavigationMenuLink
           href="/register"
           :class="navigationMenuTriggerStyle()"
-          class="bg-zinc-50"
+          class="bg-zinc-50 hover:bg-zinc-200"
         >
           Register
         </NavigationMenuLink>
