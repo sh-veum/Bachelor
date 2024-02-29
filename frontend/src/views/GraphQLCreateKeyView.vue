@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { Button } from '@/components/ui/button'
@@ -8,13 +8,12 @@ import { fetchAvailableClassTables, fetchAvailableQueries } from '@/lib/graphQL'
 import { Checkbox } from '@/components/ui/checkbox'
 import GraphQLTablesSkeleton from '@/components/GraphQLTablesSkeleton.vue'
 import type { ClassTable, Query } from '@/components/interfaces/GraphQLSchema'
-import type { fieldNameFromStoreName } from '@apollo/client/cache'
 
 const keyName = ref('')
 const availableClassTables = ref<ClassTable[]>([])
 const availableQueries = ref<Query[]>([])
 const selectedFields = ref<Record<string, string[]>>({})
-const isOptionsLoading = ref(false)
+const isOptionsLoading = ref(true)
 const keyNameErrorMessage = ref('')
 const fieldsErrorMessage = ref('')
 
@@ -23,7 +22,9 @@ const hasSelectedFields = computed(() => {
 })
 
 const fetchOptions = async () => {
-  isOptionsLoading.value = true
+  // TODO: REMEMBER TO REMOVE THIS DELAY
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
   try {
     const [classTablesResponse, queriesResponse] = await Promise.all([
       fetchAvailableClassTables(),
@@ -48,7 +49,11 @@ const toggleSelectedField = (tableName: string, propertyName: string) => {
   }
 }
 
-onMounted(() => {
+// onMounted(() => {
+//   fetchOptions()
+// })
+
+nextTick(() => {
   fetchOptions()
 })
 
@@ -112,7 +117,7 @@ const createKey = async () => {
         <div
           v-for="property in availableClassTables[index].properties"
           :key="`property-${property.name}`"
-          class="flex items-center space-x-3"
+          class="flex items-center space-x-3 h-6"
         >
           <Checkbox
             :checked="selectedFields[query.queryName]?.includes(property.name)"
