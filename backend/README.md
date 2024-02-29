@@ -24,5 +24,5 @@ dotnet tool install --global dotnet-ef
 run command: 
 
 ```
-py update-databases.py
+python update-databases.py
 ```
