@@ -3,7 +3,7 @@ import './assets/index.css'
 
 import { createApp } from 'vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
-import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client/core'
+import { ApolloClient, ApolloLink, createHttpLink, InMemoryCache } from '@apollo/client/core'
 import App from './App.vue'
 import router from './router'
 import axios from 'axios'
@@ -23,17 +23,28 @@ axios.interceptors.request.use(
   }
 )
 
-// HTTP connection to the API
+// HTTP connection to GraphQL
 const httpLink = createHttpLink({
   uri: 'http://localhost:8088/graphql/'
+})
+
+// Middleware for appending the auth token to the headers of GraphQL apollo requests
+const authLink = new ApolloLink((operation, forward) => {
+  const authToken = localStorage.getItem('authToken')
+  operation.setContext({
+    headers: {
+      Authorization: authToken ? `Bearer ${authToken}` : ''
+    }
+  })
+
+  return forward(operation)
 })
 
 // Cache implementation
 const cache = new InMemoryCache()
 
-// Create the apollo client
 const apolloClient = new ApolloClient({
-  link: httpLink,
+  link: authLink.concat(httpLink), // Chain the links
   cache
 })
 

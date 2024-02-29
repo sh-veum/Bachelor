@@ -83,19 +83,22 @@ public class Query
     {
         var classInfos = new List<ClassInfo>();
 
-        foreach (var className in GraphQLConstants.AvailableQueryTables)
+        foreach (var tableName in GraphQLConstants.AvailableQueryTables)
         {
-            switch (className)
+            var type = Type.GetType($"NetBackend.Models.{tableName}");
+            if (type != null)
             {
-                case nameof(Species):
-                    classInfos.Add(ReflectionHelper.GetClassInfo<Species>());
-                    break;
-                case nameof(Organization):
-                    classInfos.Add(ReflectionHelper.GetClassInfo<Organization>());
-                    break;
+                var classInfo = ReflectionHelper.GetClassInfo(type);
+                classInfos.Add(classInfo);
             }
         }
+
         return classInfos;
+    }
+
+    public List<List<string>> GetAvailableQueries()
+    {
+        return [.. GraphQLConstants.AvailableQueries];
     }
 
     private async Task<(DbContext? DbContext, IActionResult? Error)> GetContextFromUser(IUserService userService, IDbContextService dbContextService)

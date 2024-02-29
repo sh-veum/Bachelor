@@ -19,3 +19,20 @@ export interface SchemaType {
     types: ObjectType[]
   }
 }
+
+export interface PropertyInfo {
+  __typename: string
+  name: string
+  propertyType: string
+}
+
+export interface ClassTable {
+  __typename: string
+  name: string
+  properties: PropertyInfo[]
+}
+
+export interface Query {
+  queryName: string
+  queryResponseTable: string
+}

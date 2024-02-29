@@ -4,9 +4,8 @@ namespace NetBackend.Tools;
 
 public static class ReflectionHelper
 {
-    public static ClassInfo GetClassInfo<T>()
+    public static ClassInfo GetClassInfo(Type type)
     {
-        Type type = typeof(T);
         var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                               .Where(p => !Attribute.IsDefined(p, typeof(GraphQLIgnoreAttribute))) // Exclude properties with the GraphQLIgnore attribute
                               .Select(p => new PropertyInfo

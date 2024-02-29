@@ -20,8 +20,12 @@ const handleLogout = async () => {
 
 <template>
   <section>
-    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-      <div class="w-full max-w-md bg-zinc-50 rounded-lg shadow dark:border dark:border-gray-700 mb-60">
+    <div
+      class="flex flex-col items-center justify-center px-6 py-8 mx-auto h-screen mt-[-65px] lg:py-0"
+    >
+      <div
+        class="w-full max-w-md bg-zinc-50 rounded-lg shadow dark:border dark:border-zinc-700 mb-60 pb-2"
+      >
         <form @submit.prevent="handleLogin" class="py-2 px-5">
           <div class="py-2">
             <Input v-model="email" type="email" placeholder="Email" />
@@ -29,10 +33,10 @@ const handleLogout = async () => {
           <div class="py-2">
             <Input v-model="password" type="password" placeholder="Password" />
           </div>
-          <Button type="submit" class="w-full mt-4 bg-cyan-900">Login</Button>
+          <Button type="submit" class="w-full mt-4">Login</Button>
         </form>
         <form @submit.prevent="handleLogout" class="py-2 px-5">
-          <Button type="submit" class="w-full bg-cyan-900">Logout</Button>
+          <Button type="submit" class="w-full">Logout</Button>
         </form>
         <div v-if="isLoggedIn" class="px-5">
           <p class="text-green-500 font-bold">Logged in</p>
@@ -49,5 +53,4 @@ const handleLogout = async () => {
       </div>
     </div>
   </section>
-  
 </template>
