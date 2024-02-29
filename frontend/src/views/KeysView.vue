@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import * as z from 'zod'
+import axios from 'axios';
 
 import {
   Table,
@@ -40,22 +41,43 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import ThemeCollapsible from '@/components/ThemeCollapsible.vue'
-
-const themes = [
-  { value: 'AquaCultureLists', label: 'Aquaculture Lists' },
-  { value: 'CodSpawningGround', label: 'Cod Spawning Ground' },
-  { value: 'DiseaseHistory', label: 'Disease History' },
-  { value: 'ExportRestrictions', label: 'Export Restrictions' }
-]
-
-const keys = [
-  { name: 'Key 1', themes: ['Theme 1', 'Theme 2', 'A theme in key 1'] },
-  { name: 'Key 2', themes: ['Theme 1'] },
+import { ref } from 'vue';
+// Need to replace with actual themes and endpoints
+const themesPlaceholder = [
   {
-    name: 'Key 3 has a very long name for sure',
-    themes: ['Theme 1', 'A theme in key 3', 'Theme 3']
+    themeName: 'Aquaculture List',
+    accessibleEndpoints: [
+        "/api/aquaculturelist/fishhealth/species",
+        "/api/aquaculturelist/fishhealth/licenseelist"
+    ]
+  },
+  {
+    themeName: 'Cod Spawning Ground',
+    accessibleEndpoints: [
+        "/api/aquaculturelist/fishhealth/species",
+        "/api/aquaculturelist/fishhealth/licenseelist"
+    ]
+  },
+  {
+    themeName: 'Disease History',
+    accessibleEndpoints: [
+        "/api/aquaculturelist/fishhealth/species",
+        "/api/aquaculturelist/fishhealth/licenseelist"
+    ]
+  },
+  {
+    themeName: 'Export Restrictions',
+    accessibleEndpoints: [
+        "/api/aquaculturelist/fishhealth/species",
+        "/api/aquaculturelist/fishhealth/licenseelist"
+    ]
   }
 ]
+
+
+
+const keys = ref([]);
+
 
 const formSchema = toTypedSchema(
   z.object({
@@ -73,8 +95,34 @@ const { handleSubmit, setValues, values } = useForm({
 })
 
 const onSubmit = handleSubmit((values) => {
-  console.log(values)
+  createAccessKey(values.name, values.themes);
 })
+
+const createAccessKey = async (keyName: string, themes: string[]) => {
+  console.log('Creating access key:', keyName, themes)
+  
+  try {
+    const response = await axios.post('http://localhost:8088/api/key/create-accesskey', {
+      keyName: keyName,
+      themes: themesPlaceholder,
+    });
+    console.log('Access key created:',  response.data)
+  } catch (error) {
+    console.error('Error creating access key:', (error as any).response.data);
+    // Handle error
+  }
+}
+
+const deleteAccessKey = async (encryptedKey: string) => {
+  try {
+    await axios.post('http://localhost:8088/api/key/delete-accesskey', { EncryptedKey: encryptedKey });
+    console.log('Access key deleted');
+  } catch (error) {
+    console.error('Error deleting access key:', (error as any).response.data);
+    // Handle error
+  }
+};
+
 </script>
 
 <template>
@@ -91,7 +139,7 @@ const onSubmit = handleSubmit((values) => {
             Choose a name for the key and which themes the key can access.
           </DialogDescription>
         </DialogHeader>
-        <form class="space-y-6" @submit="onSubmit">
+        <form class="space-y-6" @submit.prevent="onSubmit">
           <div class="grid gap-4 py-4">
             <FormField v-slot="{ componentField }" name="name">
               <FormItem>
@@ -122,7 +170,7 @@ const onSubmit = handleSubmit((values) => {
                         {{
                           values.themes?.length
                             ? values.themes.length === 1
-                              ? themes.find((t) => t.value === values.themes?.[0])?.label
+                              ? themesPlaceholder.find((t) => t.themeName === values.themes?.[0])?.label
                               : `${values.themes.length} themes selected`
                             : 'Select themes...'
                         }}
@@ -137,14 +185,14 @@ const onSubmit = handleSubmit((values) => {
                       <CommandList>
                         <CommandGroup>
                           <CommandItem
-                            v-for="theme in themes"
-                            :key="theme.value"
-                            :value="theme.value"
+                            v-for="theme in themesPlaceholder"
+                            :key="theme.themeName"
+                            :value="theme.themeName"
                             @select="
                               () => {
-                                const selectedThemes = values.themes?.includes(theme.value)
-                                  ? values.themes.filter((t) => t !== theme.value)
-                                  : [...(values.themes ?? []), theme.value]
+                                const selectedThemes = values.themes?.includes(theme.themeName)
+                                  ? values.themes.filter((t) => t !== theme.themeName)
+                                  : [...(values.themes ?? []), theme.themeName]
                                 setValues({
                                   themes: selectedThemes
                                 })
@@ -155,11 +203,11 @@ const onSubmit = handleSubmit((values) => {
                               :class="
                                 cn(
                                   'mr-2 h-4 w-4',
-                                  values.themes?.includes(theme.value) ? 'opacity-100' : 'opacity-0'
+                                  values.themes?.includes(theme.themeName) ? 'opacity-100' : 'opacity-0'
                                 )
                               "
                             />
-                            {{ theme.label }}
+                            {{ theme.themeName }}
                           </CommandItem>
                         </CommandGroup>
                       </CommandList>
@@ -188,7 +236,7 @@ const onSubmit = handleSubmit((values) => {
       </TableRow>
     </TableHeader>
     <TableBody>
-      <TableRow v-for="key in keys">
+      <TableRow v-for="(key, index) in keys" :key="index">
         <TableCell>{{ key.name }}</TableCell>
         <TableCell>
           <ThemeCollapsible v-if="key.themes.length > 1" :apiKey="key" />
@@ -197,7 +245,7 @@ const onSubmit = handleSubmit((values) => {
           </div>
         </TableCell>
         <TableCell class="text-center"
-          ><Button variant="destructive" @click=""> Delete </Button></TableCell
+          ><Button variant="destructive" @click="deleteAccessKey(key.encryptedKey)"> Delete </Button></TableCell
         >
       </TableRow>
     </TableBody>
