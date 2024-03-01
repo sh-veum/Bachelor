@@ -36,3 +36,14 @@ export interface Query {
   queryName: string
   queryResponseTable: string
 }
+
+export interface GraphQLKey {
+  keyName: string
+  expiresIn: number
+  permissions: GraphQLPermission[]
+}
+
+export interface GraphQLPermission {
+  queryName: string
+  allowedFields: string[]
+}

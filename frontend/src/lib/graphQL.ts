@@ -2,14 +2,6 @@ import { gql, type ApolloQueryResult } from '@apollo/client/core'
 import { apolloClient } from '../main'
 import type { ClassTable, Query } from '@/components/interfaces/GraphQLSchema'
 
-interface AvailableClassTablesResponse {
-  availableClassTables: ClassTable[]
-}
-
-interface AvailableQueriesResponse {
-  availableQueries: Query[]
-}
-
 const GET_AVAILABLE_CLASS_TABLES = gql`
   query GetAvailableClassTables {
     availableClassTables {
@@ -27,6 +19,38 @@ const GET_AVAILABLE_QUERIES = gql`
     availableQueries
   }
 `
+
+const GET_GRAPHQL_KEYS = gql`
+  query GetGraphQLKeys {
+    graphQLApiKeysByUser {
+      keyName
+      expiresIn
+      graphQLAccessKeyPermissionDto {
+        queryName
+        allowedFields
+      }
+    }
+  }
+`
+
+interface AvailableClassTablesResponse {
+  availableClassTables: ClassTable[]
+}
+
+interface AvailableQueriesResponse {
+  availableQueries: Query[]
+}
+
+interface GraphQLKeysResponse {
+  graphQLApiKeysByUser: {
+    keyName: string
+    expiresIn: number
+    graphQLAccessKeyPermissionDto: {
+      queryName: string
+      allowedFields: string[]
+    }[]
+  }[]
+}
 
 export async function fetchAvailableClassTables(): Promise<AvailableClassTablesResponse> {
   try {
@@ -59,5 +83,31 @@ export async function fetchAvailableQueries(): Promise<AvailableQueriesResponse>
   } catch (error) {
     console.error('Error fetching available queries:', error)
     throw new Error('Failed to fetch available queries')
+  }
+}
+
+export async function fetchGraphQLKeys(): Promise<GraphQLKey[]> {
+  try {
+    const response: ApolloQueryResult<GraphQLKeysResponse> = await apolloClient.query({
+      query: GET_GRAPHQL_KEYS,
+      fetchPolicy: 'network-only' // Ignore cache, force network request
+    })
+
+    const formattedResponse: GraphQLKey[] = response.data.graphQLApiKeysByUser.map((apiKey) => ({
+      keyName: apiKey.keyName,
+      expiresIn: apiKey.expiresIn,
+      permissions: apiKey.graphQLAccessKeyPermissionDto.map(
+        (permission) =>
+          ({
+            queryName: permission.queryName,
+            allowedFields: permission.allowedFields
+          }) as GraphQLPermission
+      )
+    }))
+
+    return formattedResponse
+  } catch (error) {
+    console.error('Error fetching GraphQL keys:', error)
+    throw new Error('Failed to fetch GraphQL keys')
   }
 }

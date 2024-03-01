@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 
 const authToken = ref(localStorage.getItem('authToken'))
 const refreshToken = ref(localStorage.getItem('refreshToken'))
-const userRole = ref<string | null>(null)
+const userRole = ref(localStorage.getItem('userRole'))
 
 export function useAuth() {
   const isLoggedIn = computed(() => authToken.value !== null)

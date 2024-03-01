@@ -153,7 +153,13 @@ const closeKeyCreatedDialog = () => {
       </div>
       <DialogFooter class="p-6 pt-0 sm:justify-start">
         <DialogClose as-child>
-          <Button class="mt-2" @click="createKey" type="submit">Create Key</Button>
+          <Button
+            class="mt-2"
+            @click="createKey"
+            type="submit"
+            v-bind:disabled="!keyName || !hasSelectedFields"
+            >Create Key</Button
+          >
         </DialogClose>
       </DialogFooter>
     </DialogContent>
