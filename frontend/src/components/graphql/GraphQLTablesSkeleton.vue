@@ -15,5 +15,6 @@ import { Skeleton } from '@/components/ui/skeleton'
       <Skeleton class="w-4 h-4 my-2 border-[1px] border-zinc-500 bg-zinc-300 rounded-sm" />
       <Skeleton class="w-[120px] h-4 rounded-full bg-zinc-300" />
     </div>
+    <hr class="my-2" />
   </div>
 </template>

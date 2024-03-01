@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import TheGraphQLKeyTest from '@/components/TheGraphQLKeyTest.vue'
+import TheGraphQLKeyTest from '@/components/graphql/TheGraphQLKeyTest.vue'
 import { Input } from '@/components/ui/input'
 
 const accessKey = ref('')

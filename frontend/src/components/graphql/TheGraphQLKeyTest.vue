@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { TextArea } from '@/components/ui/textarea'
 import { provideApolloClient } from '@vue/apollo-composable'
-import { apolloClient } from '../main'
+import { apolloClient } from '../../main'
 
 interface QueryField {
   id: string
