@@ -348,4 +348,26 @@ public partial class KeyService : IKeyService
 
         return new OkResult();
     }
+
+    public async Task<List<ApiKey>> GetRestApiKeysByUserId(string userId)
+    {
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        var apiKeys = await mainDbContext.Set<ApiKey>()
+            .Where(p => p.UserId == userId)
+            .ToListAsync();
+
+        return apiKeys;
+    }
+
+    public async Task<List<GraphQLApiKey>> GetGraphQLApiKeysByUserId(string userId)
+    {
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        var apiKeys = await mainDbContext.Set<GraphQLApiKey>()
+            .Where(p => p.UserId == userId)
+            .ToListAsync();
+
+        return apiKeys;
+    }
 }

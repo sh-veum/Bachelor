@@ -1,6 +1,4 @@
-using NetBackend.Models.Dto.Keys;
-
-namespace NetBackend.Models.Keys.Dto;
+namespace NetBackend.Models.Dto.Keys;
 
 public class GraphQLApiKeyDto : IApiKeyDto
 {

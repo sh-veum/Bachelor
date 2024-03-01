@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Netbackend.Models.Dto.Keys;
-using NetBackend.Models.Keys.Dto;
 using NetBackend.Models.User;
 using NetBackend.Constants;
 using NetBackend.Models.Keys;
@@ -337,6 +336,69 @@ public class KeyController : ControllerBase
         var currentTime = DateTime.UtcNow;
         var expiresInDays = (apiKey.CreatedAt.AddDays(apiKey.ExpiresIn) - currentTime).TotalDays;
         return expiresInDays > 0 ? (int)expiresInDays : 0;
+    }
+
+    [HttpGet("get-apikeys-by-user")]
+    [Authorize]
+    [ProducesResponseType(typeof(List<IApiKeyDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetApiKeysByUser([FromQuery] string type)
+    {
+        try
+        {
+            var userResult = await _userService.GetUserAsync(HttpContext);
+            var user = userResult.user;
+
+            if (type == "rest")
+            {
+                var apiKeysDto = new List<ApiKeyDto>();
+
+                var apiKeys = await _keyService.GetRestApiKeysByUserId(user.Id);
+
+                apiKeysDto = apiKeys.Select(apiKey => new ApiKeyDto
+                {
+                    Id = apiKey.Id,
+                    KeyName = apiKey.KeyName,
+                    CreatedBy = userResult.user.Email ?? "error fetching user email",
+                    ExpiresIn = apiKey.ExpiresIn
+                }).ToList();
+
+                return Ok(apiKeysDto);
+            }
+            else if (type == "graphql")
+            {
+                var apiKeysDto = new List<GraphQLApiKeyDto>();
+                var apiKeys = await _keyService.GetGraphQLApiKeysByUserId(user.Id);
+
+                foreach (var apiKey in apiKeys)
+                {
+                    var permissions = await _keyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
+                    var graphQLApiKeyDto = new GraphQLApiKeyDto
+                    {
+                        Id = apiKey.Id,
+                        KeyName = apiKey.KeyName,
+                        CreatedBy = userResult.user.Email ?? "error fetching user email",
+                        ExpiresIn = apiKey.ExpiresIn,
+                        GraphQLAccessKeyPermissionDto = permissions.Select(p => new GraphQLAccessKeyPermissionDto
+                        {
+                            QueryName = p.QueryName,
+                            AllowedFields = p.AllowedFields ?? []
+                        }).ToList()
+                    };
+                    apiKeysDto.Add(graphQLApiKeyDto);
+                }
+
+                return Ok(apiKeysDto);
+            }
+            else
+            {
+                return BadRequest("Invalid type. Choose rest or graphql.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while retrieving API keys by user.");
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpGet("get-themes-by-user")]
