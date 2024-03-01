@@ -29,6 +29,14 @@ const fetchData = async () => {
   }
 }
 
+const disableKey = () => {
+  alert('Not yet implemented')
+}
+
+const deleteKey = () => {
+  alert('Not yet implemented')
+}
+
 onMounted(fetchData)
 </script>
 
@@ -68,10 +76,10 @@ onMounted(fetchData)
             <p>{{ graphQLKey.expiresIn }} days</p>
           </TableCell>
           <TableCell>
-            <Button class="bg-zinc-600">Disable</Button>
+            <Button class="bg-zinc-600" @click="disableKey">Disable</Button>
           </TableCell>
           <TableCell>
-            <Button variant="destructive">Delete key</Button>
+            <Button variant="destructive" @click="deleteKey">Delete key</Button>
           </TableCell>
         </TableRow>
       </TableBody>
