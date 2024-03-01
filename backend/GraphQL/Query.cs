@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using NetBackend.Constants;
 using NetBackend.Data;
 using NetBackend.Models;
+using NetBackend.Models.Dto.Keys;
 using NetBackend.Services.Interfaces;
 using NetBackend.Tools;
 
@@ -19,7 +20,11 @@ public class Query
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<IQueryable<Species>?> GetSpecies([Service] IKeyService keyService, [Service] IUserService userService, [Service(ServiceKind.Synchronized)] IDbContextService dbContextService, string? encryptedKey = null)
+    public async Task<IQueryable<Species>?> GetSpecies(
+        [Service] IKeyService keyService,
+        [Service] IUserService userService,
+        [Service(ServiceKind.Synchronized)] IDbContextService dbContextService,
+        string? encryptedKey = null)
     {
         try
         {
@@ -100,6 +105,79 @@ public class Query
     {
         return [.. GraphQLConstants.AvailableQueries];
     }
+
+    // NOTE:
+    // Need to split it up into two since the GraphQL schema cant detect the return type of the method since it returns IApiKeyDto
+    // NOTE:
+    // cant fetch GetRestApiKeysByUser and GetGraphQLApiKeysByUser unless (ServiceKind.Synchronized) is added to the IKeyService
+    public async Task<List<ApiKeyDto>> GetRestApiKeysByUser(
+        [Service(ServiceKind.Synchronized)] IKeyService keyService,
+        [Service] IUserService userService,
+        [Service] IHttpContextAccessor httpContextAccessor)
+    {
+        var httpContext = httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(httpContextAccessor), "HttpContextAccessor's HttpContext is null.");
+        var userResult = await userService.GetUserAsync(httpContext);
+        var user = userResult.user;
+
+        var apiKeys = await keyService.GetRestApiKeysByUserId(user.Id);
+
+        var apiKeysDto = new List<ApiKeyDto>();
+
+        foreach (var apiKey in apiKeys)
+        {
+            var themes = await keyService.GetApiKeyThemes(apiKey.Id);
+            var apiKeyDto = new ApiKeyDto
+            {
+                Id = apiKey.Id,
+                KeyName = apiKey.KeyName,
+                CreatedBy = userResult.user.Email ?? "error fetching user email",
+                ExpiresIn = apiKey.ExpiresIn,
+                Themes = themes.Select(t => new ThemeDto
+                {
+                    Id = t.Id,
+                    ThemeName = t.ThemeName,
+                    AccessibleEndpoints = t.AccessibleEndpoints
+                }).ToList()
+            };
+            apiKeysDto.Add(apiKeyDto);
+        }
+
+        return apiKeysDto;
+    }
+
+    public async Task<List<GraphQLApiKeyDto>> GetGraphQLApiKeysByUser(
+    [Service(ServiceKind.Synchronized)] IKeyService keyService,
+    [Service] IUserService userService,
+    [Service] IHttpContextAccessor httpContextAccessor)
+    {
+        var httpContext = httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(httpContextAccessor), "HttpContextAccessor's HttpContext is null.");
+        var userResult = await userService.GetUserAsync(httpContext);
+        var user = userResult.user;
+
+        var apiKeys = await keyService.GetGraphQLApiKeysByUserId(user.Id);
+        var apiKeysDto = new List<GraphQLApiKeyDto>();
+
+        foreach (var apiKey in apiKeys)
+        {
+            var permissions = await keyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
+            var apiKeyDto = new GraphQLApiKeyDto
+            {
+                Id = apiKey.Id,
+                KeyName = apiKey.KeyName,
+                CreatedBy = user.Email ?? "error fetching user email",
+                ExpiresIn = apiKey.ExpiresIn,
+                GraphQLAccessKeyPermissionDto = permissions.Select(p => new GraphQLAccessKeyPermissionDto
+                {
+                    QueryName = p.QueryName,
+                    AllowedFields = p.AllowedFields ?? []
+                }).ToList()
+            };
+            apiKeysDto.Add(apiKeyDto);
+        }
+
+        return apiKeysDto;
+    }
+
 
     private async Task<(DbContext? DbContext, IActionResult? Error)> GetContextFromUser(IUserService userService, IDbContextService dbContextService)
     {

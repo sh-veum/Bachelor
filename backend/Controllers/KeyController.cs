@@ -88,7 +88,7 @@ public class KeyController : ControllerBase
 
             var expiresInDays = CalculateExpiresInDays(apiKey);
 
-            var themes = await _keyService.GetAccessKeyThemes(apiKey.Id);
+            var themes = await _keyService.GetApiKeyThemes(apiKey.Id);
 
             if (apiKey is ApiKey api)
             {
@@ -202,7 +202,7 @@ public class KeyController : ControllerBase
 
             if (apiKey is ApiKey api)
             {
-                var themes = await _keyService.GetAccessKeyThemes(apiKey.Id);
+                var themes = await _keyService.GetApiKeyThemes(apiKey.Id);
                 var allAccessibleEndpoints = themes.SelectMany(t => t.AccessibleEndpoints).ToList();
 
                 var validEndpoints = ApiConstants.DefaultApiEndpoints
@@ -246,7 +246,7 @@ public class KeyController : ControllerBase
 
             if (apiKey is ApiKey api)
             {
-                var themes = await _keyService.GetAccessKeyThemes(apiKey.Id);
+                var themes = await _keyService.GetApiKeyThemes(apiKey.Id);
 
                 if (themes.Count == 0)
                 {
@@ -354,13 +354,24 @@ public class KeyController : ControllerBase
 
                 var apiKeys = await _keyService.GetRestApiKeysByUserId(user.Id);
 
-                apiKeysDto = apiKeys.Select(apiKey => new ApiKeyDto
+                foreach (var apiKey in apiKeys)
                 {
-                    Id = apiKey.Id,
-                    KeyName = apiKey.KeyName,
-                    CreatedBy = userResult.user.Email ?? "error fetching user email",
-                    ExpiresIn = apiKey.ExpiresIn
-                }).ToList();
+                    var themes = await _keyService.GetApiKeyThemes(apiKey.Id);
+                    var apiKeyDto = new ApiKeyDto
+                    {
+                        Id = apiKey.Id,
+                        KeyName = apiKey.KeyName,
+                        CreatedBy = userResult.user.Email ?? "error fetching user email",
+                        ExpiresIn = apiKey.ExpiresIn,
+                        Themes = themes.Select(t => new ThemeDto
+                        {
+                            Id = t.Id,
+                            ThemeName = t.ThemeName,
+                            AccessibleEndpoints = t.AccessibleEndpoints
+                        }).ToList()
+                    };
+                    apiKeysDto.Add(apiKeyDto);
+                }
 
                 return Ok(apiKeysDto);
             }

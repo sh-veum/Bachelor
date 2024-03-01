@@ -13,7 +13,7 @@ public interface IKeyService
     Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessAccessKey(string encryptedKey);
     Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessGraphQLAccessKey(string encryptedKey);
     Task<IActionResult> RemoveAccessKey(string encryptedKey);
-    Task<List<Theme>> GetAccessKeyThemes(int apiKeyID);
+    Task<List<Theme>> GetApiKeyThemes(int apiKeyID);
     Task<List<Theme>> GetThemesByUserId(string userId);
     Task<Theme> CreateTheme(Theme theme);
     Task<Theme> UpdateTheme(Theme theme);

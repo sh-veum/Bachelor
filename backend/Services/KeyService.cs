@@ -97,7 +97,7 @@ public partial class KeyService : IKeyService
         if (apiKey is ApiKey api)
         {
             // Aggregate all accessible endpoints from themes
-            var allAccessibleEndpoints = GetAccessKeyThemes(apiKey.Id).Result.SelectMany(t => t.AccessibleEndpoints).ToList();
+            var allAccessibleEndpoints = GetApiKeyThemes(apiKey.Id).Result.SelectMany(t => t.AccessibleEndpoints).ToList();
 
             if (!string.IsNullOrEmpty(httpContext?.Request.Path.Value) &&
                 !allAccessibleEndpoints.Contains(httpContext.Request.Path.Value))
@@ -200,7 +200,7 @@ public partial class KeyService : IKeyService
         return new OkResult();
     }
 
-    public async Task<List<Theme>> GetAccessKeyThemes(int apiKeyID)
+    public async Task<List<Theme>> GetApiKeyThemes(int apiKeyID)
     {
         var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
