@@ -28,41 +28,33 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
-// const themes = [
-//   { value: 'AquaCultureLists', label: 'Aquaculture Lists' },
-//   { value: 'CodSpawningGround', label: 'Cod Spawning Ground' },
-//   { value: 'DiseaseHistory', label: 'Disease History' },
-//   { value: 'Export Restrictions', label: 'Export Restrictions' }
+// const endpoints = [
+//   '/v1/geodata/fishhealth/licenseelist',
+//   '/v1/geodata/fishhealth/species',
+//   '/v1/geodata/codspawningground/{id}',
+//   '/v1/geodata/fishhealth/locality/diseasezonehistory/{localityNo}/{year}/{week}',
+//   '/v1/geodata/fishhealth/exportrestrictions/{year}/{week}',
+//   '/v1/geodata/fishhealth/exportrestrictions/{localityNo}/{year}/{week}'
 // ]
 
-// const themes = [
-//   {
-//     name: 'AquaCultureLists',
-//     endpoints: ['/v1/geodata/fishhealth/licenseelist', '/v1/geodata/fishhealth/species']
-//   },
-//   { name: 'CodSpawningGround', endpoints: ['/v1/geodata/codspawningground/{id}'] },
-//   {
-//     name: 'DiseaseHistory',
-//     endpoints: ['/v1/geodata/fishhealth/locality/diseasezonehistory/{localityNo}/{year}/{week}']
-//   },
-//   {
-//     name: 'Export Restrictions',
-//     endpoints: [
-//       '/v1/geodata/fishhealth/exportrestrictions/{year}/{week}',
-//       '/v1/geodata/fishhealth/exportrestrictions/{localityNo}/{year}/{week}'
-//     ]
-//   }
-// ]
+const endpoints = ref<string[]>([])
 
-const endpoints = [
-  '/v1/geodata/fishhealth/licenseelist',
-  '/v1/geodata/fishhealth/species',
-  '/v1/geodata/codspawningground/{id}',
-  '/v1/geodata/fishhealth/locality/diseasezonehistory/{localityNo}/{year}/{week}',
-  '/v1/geodata/fishhealth/exportrestrictions/{year}/{week}',
-  '/v1/geodata/fishhealth/exportrestrictions/{localityNo}/{year}/{week}'
-]
+const fetchData = async () => {
+  try {
+    //TODO: find a way to make the url more dynamic?
+    const endpointsResponse = await axios.get(
+      'http://localhost:8088/api/database/get-default-endpoints'
+    )
+    endpoints.value = endpointsResponse.data.map((endpoint: any) => endpoint.path)
+  } catch (error) {
+    console.error('Failed to fetch data:', error)
+  }
+}
+
+onMounted(fetchData)
 
 const formSchema = toTypedSchema(
   z.object({
@@ -79,8 +71,19 @@ const { handleSubmit, setValues, values } = useForm({
   validationSchema: formSchema
 })
 
+const createTheme = async (values: { name: string; endpoints: string[] }) => {
+  try {
+    await axios.post('http://localhost:8088/api/key/create-theme', {
+      themeName: values.name,
+      accessibleEndpoints: values.endpoints
+    })
+  } catch (error) {
+    console.error('Failed to create theme:', error)
+  }
+}
+
 const onSubmit = handleSubmit((values) => {
-  console.log(values)
+  createTheme(values)
 })
 </script>
 

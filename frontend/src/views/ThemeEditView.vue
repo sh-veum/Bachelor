@@ -3,31 +3,36 @@ import CreateThemeDialog from '@/components/theme-view/CreateThemeDialog.vue'
 import ThemeComponent from '@/components/theme-view/ThemeComponent.vue'
 import { Button } from '@/components/ui/button'
 
-// const themes = [
-//   { value: 'AquaCultureLists', label: 'Aquaculture Lists' },
-//   { value: 'CodSpawningGround', label: 'Cod Spawning Ground' },
-//   { value: 'DiseaseHistory', label: 'Disease History' },
-//   { value: 'Export Restrictions', label: 'Export Restrictions' }
-// ]
+import { ref, onMounted, watch } from 'vue'
+import axios from 'axios'
 
-const themes = [
-  {
-    name: 'AquaCultureLists',
-    endpoints: ['/v1/geodata/fishhealth/licenseelist', '/v1/geodata/fishhealth/species']
-  },
-  { name: 'CodSpawningGround', endpoints: ['/v1/geodata/codspawningground/{id}'] },
-  {
-    name: 'DiseaseHistory',
-    endpoints: ['/v1/geodata/fishhealth/locality/diseasezonehistory/{localityNo}/{year}/{week}']
-  },
-  {
-    name: 'Export Restrictions',
-    endpoints: [
-      '/v1/geodata/fishhealth/exportrestrictions/{year}/{week}',
-      '/v1/geodata/fishhealth/exportrestrictions/{localityNo}/{year}/{week}'
-    ]
+//TODO: move interface and fetching to a separate file and resuse them in the other components
+interface Theme {
+  id: string
+  themeName: string
+  accessibleEndpoints: string[]
+}
+
+const themes = ref<Theme[]>([])
+
+const fetchData = async () => {
+  try {
+    //TODO: find a way to make the url more dynamic?
+    const themesResponse = await axios.get('http://localhost:8088/api/key/get-themes-by-user')
+    themes.value = themesResponse.data
+  } catch (error) {
+    console.error('Failed to fetch data:', error)
   }
-]
+}
+
+const updateThemes = () => {
+  fetchData()
+}
+
+onMounted(fetchData)
+
+//TODO: should maybe update the themes directly in the frontend instead of refetching them?
+watch(themes, updateThemes)
 </script>
 
 <template>
