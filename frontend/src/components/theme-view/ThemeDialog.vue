@@ -28,7 +28,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 
 // const endpoints = [
@@ -39,6 +39,15 @@ import axios from 'axios'
 //   '/v1/geodata/fishhealth/exportrestrictions/{year}/{week}',
 //   '/v1/geodata/fishhealth/exportrestrictions/{localityNo}/{year}/{week}'
 // ]
+
+// TODO: use a shared interface for theme
+const props = defineProps<{
+  theme?: {
+    id: string
+    themeName: string
+    accessibleEndpoints: string[]
+  }
+}>()
 
 const endpoints = ref<string[]>([])
 
@@ -53,8 +62,6 @@ const fetchData = async () => {
     console.error('Failed to fetch data:', error)
   }
 }
-
-onMounted(fetchData)
 
 const formSchema = toTypedSchema(
   z.object({
@@ -82,9 +89,35 @@ const createTheme = async (values: { name: string; endpoints: string[] }) => {
   }
 }
 
+const editTheme = async (id: string, values: { name: string; endpoints: string[] }) => {
+  try {
+    //TODO: change backend to be able to use `http://localhost:8088/api/key/update-theme?id=${id}`?
+    await axios.put('http://localhost:8088/api/key/update-theme', {
+      id,
+      themeName: values.name,
+      accessibleEndpoints: values.endpoints
+    })
+  } catch (error) {
+    console.error('Failed to edit theme:', error)
+  }
+}
+
 const onSubmit = handleSubmit((values) => {
-  createTheme(values)
+  if (props.theme) {
+    editTheme(props.theme.id, values)
+  } else {
+    createTheme(values)
+  }
 })
+
+watch(props, () =>
+  setValues({
+    name: props.theme?.themeName ?? '',
+    endpoints: props.theme?.accessibleEndpoints ?? []
+  })
+)
+
+onMounted(fetchData)
 </script>
 
 <template>
@@ -94,7 +127,7 @@ const onSubmit = handleSubmit((values) => {
     </DialogTrigger>
     <DialogContent class="sm:max-w-[425px]">
       <DialogHeader>
-        <DialogTitle>Create new theme</DialogTitle>
+        <DialogTitle>{{ theme ? 'Edit' : 'Create new' }} theme</DialogTitle>
         <DialogDescription>
           Choose a name for the theme and which endpoints are included in the theme.
         </DialogDescription>
@@ -179,7 +212,7 @@ const onSubmit = handleSubmit((values) => {
           </FormField>
         </div>
         <DialogFooter>
-          <Button type="submit"> Create </Button>
+          <Button type="submit">{{ theme ? 'Save' : 'Create' }}</Button>
         </DialogFooter>
       </form>
     </DialogContent>

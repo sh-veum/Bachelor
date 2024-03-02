@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CreateThemeDialog from '@/components/theme-view/CreateThemeDialog.vue'
+import ThemeDialog from '@/components/theme-view/ThemeDialog.vue'
 import ThemeComponent from '@/components/theme-view/ThemeComponent.vue'
 import { Button } from '@/components/ui/button'
 
@@ -14,10 +14,12 @@ interface Theme {
 }
 
 const themes = ref<Theme[]>([])
+const editingTheme = ref<Theme | undefined>(undefined)
+const isOpen = ref(false)
 
 const fetchData = async () => {
   try {
-    //TODO: find a way to make the url more dynamic?
+    //TODO: should the url be more dynamic?
     const themesResponse = await axios.get('http://localhost:8088/api/key/get-themes-by-user')
     themes.value = themesResponse.data
   } catch (error) {
@@ -25,26 +27,28 @@ const fetchData = async () => {
   }
 }
 
-const updateThemes = () => {
-  fetchData()
-}
-
 onMounted(fetchData)
 
 //TODO: should maybe update the themes directly in the frontend instead of refetching them?
-watch(themes, updateThemes)
+watch(themes, fetchData)
+
+const handleEdit = (theme: Theme) => {
+  editingTheme.value = theme
+  isOpen.value = true
+}
 </script>
 
 <template>
-  <CreateThemeDialog>
+  <!-- TODO: put v-model:open in the ThemeDialog Component so that we can close on submit -->
+  <ThemeDialog :theme="editingTheme" v-model:open="isOpen">
     <div class="flex">
       <Button class="ml-auto mr-4">Create Theme</Button>
     </div>
-  </CreateThemeDialog>
+  </ThemeDialog>
 
   <div class="flex justify-center">
     <div class="flex-row w-1/2">
-      <ThemeComponent v-for="theme in themes" :theme="theme" class="py-4" />
+      <ThemeComponent v-for="theme in themes" :theme="theme" @edit="handleEdit" class="py-4" />
     </div>
   </div>
 </template>

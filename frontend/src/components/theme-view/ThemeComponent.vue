@@ -7,6 +7,7 @@ import { ChevronsDown } from 'lucide-vue-next'
 import { ChevronsUp } from 'lucide-vue-next'
 import { MoreHorizontal } from 'lucide-vue-next'
 import axios from 'axios'
+import Separator from '../ui/separator/Separator.vue'
 
 //TODO: use a shared interface for theme
 const props = defineProps<{
@@ -31,33 +32,21 @@ const deleteTheme = async (theme: {
   }
 }
 
-const updateTheme = async (theme: {
-  id: string
-  themeName: string
-  accessibleEndpoints: string[]
-}) => {
-  try {
-    await axios.put('http://localhost:8088/api/key/update-theme', {
-      data: theme
-    })
-  } catch (error) {
-    console.error('Failed to update theme:', error)
-  }
-}
-
 const handleDelete = () => {
   deleteTheme(props.theme)
 }
 
+const emit = defineEmits(['edit'])
+
 const handleEdit = () => {
-  console.log('editing theme')
+  emit('edit', props.theme)
 }
 </script>
 
 <template>
   <Collapsible v-model:open="isOpen" class="space-y-2">
     <div class="flex items-center justify-between space-x-4 px-4">
-      <h4 class="text-sm py-3 font-semibold">{{ theme.themeName }}</h4>
+      <h4 class="text-l py-3 font-semibold">{{ theme.themeName }}</h4>
       <div>
         <CollapsibleTrigger as-child>
           <Button variant="ghost" size="sm" class="w-9 p-0">
@@ -76,6 +65,7 @@ const handleEdit = () => {
         <span class="sr-only">Trash</span>
       </div>
     </div>
+    <!-- <Separator /> -->
     <CollapsibleContent class="space-y-2">
       <div
         v-for="endpoint in theme.accessibleEndpoints"
