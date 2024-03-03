@@ -102,7 +102,8 @@ public class KeyController : ControllerBase
                     {
                         ThemeName = t.ThemeName,
                         AccessibleEndpoints = t.AccessibleEndpoints ?? []
-                    }).ToList() ?? []
+                    }).ToList() ?? [],
+                    IsEnabled = api.IsEnabled
                 };
 
                 return Ok(apiKeyDto);
@@ -146,7 +147,8 @@ public class KeyController : ControllerBase
                     {
                         QueryName = p.QueryName,
                         AllowedFields = p.AllowedFields ?? []
-                    }).ToList() ?? []
+                    }).ToList() ?? [],
+                    IsEnabled = api.IsEnabled
                 };
 
                 return Ok(graphQLApiKeyDto);
@@ -368,7 +370,8 @@ public class KeyController : ControllerBase
                             Id = t.Id,
                             ThemeName = t.ThemeName,
                             AccessibleEndpoints = t.AccessibleEndpoints
-                        }).ToList()
+                        }).ToList(),
+                        IsEnabled = apiKey.IsEnabled
                     };
                     apiKeysDto.Add(apiKeyDto);
                 }
@@ -393,7 +396,8 @@ public class KeyController : ControllerBase
                         {
                             QueryName = p.QueryName,
                             AllowedFields = p.AllowedFields ?? []
-                        }).ToList()
+                        }).ToList(),
+                        IsEnabled = apiKey.IsEnabled
                     };
                     apiKeysDto.Add(graphQLApiKeyDto);
                 }
@@ -539,6 +543,34 @@ public class KeyController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while deleting theme.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPatch("toggle-apikey")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ToggleApiKey([FromBody] ToggleApiKeyStatusDto toggleApiKeyStatusDto)
+    {
+        try
+        {
+            string keyType = toggleApiKeyStatusDto.KeyType.ToUpper();
+            if (keyType == "REST")
+            {
+                return await _keyService.ToggleApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
+            }
+            else if (keyType == "GRAPHQL")
+            {
+                return await _keyService.ToggleGraphQLApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
+            }
+            else
+            {
+                return BadRequest("Invalid key type specified. Use 'REST' or 'GraphQL'.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while disabling the API key.");
             return BadRequest(ex.Message);
         }
     }
