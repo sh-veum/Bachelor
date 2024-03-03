@@ -21,4 +21,6 @@ public interface IKeyService
     Task<List<AccessKeyPermission>> GetGraphQLAccessKeyPermissions(int graphQLApiKeyId);
     Task<List<ApiKey>> GetRestApiKeysByUserId(string userId);
     Task<List<GraphQLApiKey>> GetGraphQLApiKeysByUserId(string userId);
+    Task<IActionResult> ToggleApiKey(int apiKeyId, bool isEnabled);
+    Task<IActionResult> ToggleGraphQLApiKey(int graphQLApiKeyId, bool isEnabled);
 }

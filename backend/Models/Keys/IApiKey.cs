@@ -10,4 +10,5 @@ public class IApiKey
     public required UserModel User { get; set; }
     public DateTime CreatedAt { get; set; }
     public int ExpiresIn { get; set; }
+    public required bool IsEnabled { get; set; }
 }

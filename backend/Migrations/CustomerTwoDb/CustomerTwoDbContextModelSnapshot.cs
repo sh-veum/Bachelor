@@ -208,7 +208,11 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.Property<int>("ExpiresIn")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("KeyName")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
@@ -236,7 +240,11 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.Property<int>("ExpiresIn")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("KeyName")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")

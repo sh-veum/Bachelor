@@ -32,7 +32,8 @@ public class ApiService : IApiService
             User = user,
             CreatedAt = DateTime.UtcNow,
             ExpiresIn = KeyConstants.ExpiresIn,
-            Themes = new List<Theme>()
+            Themes = new List<Theme>(),
+            IsEnabled = true
         };
 
         // Process each ThemeDto to create Theme entities
@@ -71,7 +72,8 @@ public class ApiService : IApiService
             User = user,
             AccessKeyPermissions = permissions,
             CreatedAt = DateTime.UtcNow,
-            ExpiresIn = KeyConstants.ExpiresIn
+            ExpiresIn = KeyConstants.ExpiresIn,
+            IsEnabled = true
         };
 
         dbContext.Set<GraphQLApiKey>().Add(graphQLApiKey);

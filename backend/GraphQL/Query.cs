@@ -137,7 +137,8 @@ public class Query
                     Id = t.Id,
                     ThemeName = t.ThemeName,
                     AccessibleEndpoints = t.AccessibleEndpoints
-                }).ToList()
+                }).ToList(),
+                IsEnabled = apiKey.IsEnabled
             };
             apiKeysDto.Add(apiKeyDto);
         }
@@ -170,7 +171,8 @@ public class Query
                 {
                     QueryName = p.QueryName,
                     AllowedFields = p.AllowedFields ?? []
-                }).ToList()
+                }).ToList(),
+                IsEnabled = apiKey.IsEnabled
             };
             apiKeysDto.Add(apiKeyDto);
         }

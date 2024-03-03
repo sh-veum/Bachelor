@@ -24,11 +24,8 @@ def run_operations(migrations_name=None, folder_path='Data/DbContexts/'):
                 context_name = file.replace('.cs', '')
                 delete_database_tables(context_name)
 
-    # Only ask if migration is needed if a migrations_name has been provided
+    # Perform a migration if migrations_name has been provided
     if migrations_name:
-        perform_migration = input("Do you want to perform a migration? (Y/N): ").lower()
-        if perform_migration == 'y':
-            # Run migration add command for each file
             for file in files:
                 context_name = file.replace('.cs', '')
                 add_command = f'dotnet ef migrations add "{migrations_name}" --context {context_name}'

@@ -87,10 +87,12 @@ public partial class KeyService : IKeyService
             return (null, new BadRequestObjectResult("API key not found."));
         }
 
+        if (!apiKey.IsEnabled) return (null, new BadRequestObjectResult("API key is disabled."));
+
         var expirationDate = apiKey.CreatedAt.AddDays(apiKey.ExpiresIn);
         if (DateTime.UtcNow > expirationDate)
         {
-            return (null, new UnauthorizedResult());
+            return (null, new BadRequestObjectResult("API key has expired."));
         }
 
         var httpContext = _httpContextAccessor.HttpContext;
@@ -369,5 +371,27 @@ public partial class KeyService : IKeyService
             .ToListAsync();
 
         return apiKeys;
+    }
+
+    public Task<IActionResult> ToggleApiKey(int apiKeyId, bool isEnabled) => ToggleApiKeyEnabledStatus<ApiKey>(apiKeyId, isEnabled);
+
+    public Task<IActionResult> ToggleGraphQLApiKey(int graphQLApiKeyId, bool isEnabled) => ToggleApiKeyEnabledStatus<GraphQLApiKey>(graphQLApiKeyId, isEnabled);
+
+    private async Task<IActionResult> ToggleApiKeyEnabledStatus<T>(int keyId, bool isEnabled) where T : IApiKey
+    {
+        var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        var apiKey = await dbContext.Set<T>().FirstOrDefaultAsync(a => a.Id == keyId);
+
+        if (apiKey == null)
+        {
+            return new NotFoundObjectResult(typeof(T) == typeof(ApiKey) ? "API key not found." : "GraphQLAPI key not found.");
+        }
+
+        apiKey.IsEnabled = isEnabled;
+        await dbContext.SaveChangesAsync();
+
+        _logger.LogInformation("{KeyType} with ID {KeyId} has been {Action}.", typeof(T).Name, keyId, isEnabled ? "enabled" : "disabled");
+
+        return new OkResult();
     }
 }
