@@ -136,6 +136,8 @@ public partial class KeyService : IKeyService
             return (null, new BadRequestObjectResult("API key not found."));
         }
 
+        if (!apiKey.IsEnabled) return (null, new BadRequestObjectResult("API key is disabled."));
+
         var expirationDate = apiKey.CreatedAt.AddDays(apiKey.ExpiresIn);
         if (DateTime.UtcNow > expirationDate)
         {
