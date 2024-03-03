@@ -38,8 +38,10 @@ export interface Query {
 }
 
 export interface GraphQLKey {
+  id: number
   keyName: string
   expiresIn: number
+  isEnabled: boolean
   permissions: GraphQLPermission[]
 }
 

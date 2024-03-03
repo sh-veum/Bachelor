@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Netbackend.Models.Dto.Keys;
 using NetBackend.Models.Dto.Keys;
@@ -19,7 +18,6 @@ public class ApiKeyMutation
         _logger = logger;
     }
 
-    [Authorize]
     public async Task<AccessKeyDto?> CreateGraphQLAccessKey(
             [Service] IKeyService keyService,
             [Service] IApiService apiService,
@@ -54,7 +52,6 @@ public class ApiKeyMutation
         };
     }
 
-    [Authorize]
     public async Task<ToggleApiKeyResponseDto> ToggleApiKey(
         [Service] IKeyService keyService,
         ToggleApiKeyStatusDto toggleApiKeyStatusDto)

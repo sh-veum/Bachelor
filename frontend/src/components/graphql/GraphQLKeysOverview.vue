@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import type { GraphQLKey } from '../interfaces/GraphQLSchema'
-import { fetchGraphQLKeys } from '@/lib/graphQL'
+import { fetchGraphQLKeys, toggleApiKey } from '@/lib/graphQL'
 
 const graphQLKeys = ref<GraphQLKey[]>([])
 
@@ -29,11 +29,24 @@ const fetchData = async () => {
   }
 }
 
-const disableKey = () => {
-  alert('Not yet implemented')
+const toggleKeyEnabledStatus = async (id: number, isEnabled: boolean) => {
+  try {
+    const response = await toggleApiKey(id, isEnabled, 'graphql')
+    if (response.toggleApiKey.isSuccess) {
+      const keyIndex = graphQLKeys.value.findIndex((key) => key.id === id)
+      if (keyIndex !== -1) {
+        graphQLKeys.value[keyIndex].isEnabled = isEnabled
+        console.log(response.toggleApiKey.message) // Log success message
+      }
+    } else {
+      console.error('Failed to toggle key enabled status:', response.toggleApiKey.message)
+    }
+  } catch (error) {
+    console.error('Error toggling key enabled status:', error)
+  }
 }
 
-const deleteKey = () => {
+const deleteKey = async () => {
   alert('Not yet implemented')
 }
 
@@ -76,7 +89,20 @@ onMounted(fetchData)
             <p>{{ graphQLKey.expiresIn }} days</p>
           </TableCell>
           <TableCell>
-            <Button class="bg-zinc-600" @click="disableKey">Disable</Button>
+            <Button
+              class="bg-zinc-600"
+              v-if="graphQLKey.isEnabled"
+              @click="toggleKeyEnabledStatus(graphQLKey.id, false)"
+            >
+              Disable
+            </Button>
+            <Button
+              class="bg-green-600"
+              v-else
+              @click="toggleKeyEnabledStatus(graphQLKey.id, true)"
+            >
+              Enable
+            </Button>
           </TableCell>
           <TableCell>
             <Button variant="destructive" @click="deleteKey">Delete key</Button>
