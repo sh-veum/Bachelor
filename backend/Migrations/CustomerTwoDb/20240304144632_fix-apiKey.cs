@@ -10,24 +10,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NetBackend.Migrations.CustomerTwoDb
 {
     /// <inheritdoc />
-    public partial class inittest : Migration
+    public partial class fixapiKey : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "AccessKeys",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    KeyHash = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AccessKeys", x => x.Id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -91,7 +78,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
                     SuperSecretNumber = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -124,12 +111,12 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 name: "ApiKey",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    KeyName = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<string>(type: "text", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    KeyName = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExpiresIn = table.Column<int>(type: "integer", nullable: false)
+                    ExpiresIn = table.Column<int>(type: "integer", nullable: false),
+                    IsEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -138,7 +125,8 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         name: "FK_ApiKey_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -230,12 +218,12 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 name: "GraphQLApiKey",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    KeyName = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<string>(type: "text", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    KeyName = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExpiresIn = table.Column<int>(type: "integer", nullable: false)
+                    ExpiresIn = table.Column<int>(type: "integer", nullable: false),
+                    IsEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -244,7 +232,8 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         name: "FK_GraphQLApiKey_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -254,7 +243,8 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ThemeName = table.Column<string>(type: "text", nullable: false),
                     AccessibleEndpoints = table.Column<List<string>>(type: "text[]", nullable: false),
-                    ApiKeyID = table.Column<int>(type: "integer", nullable: false)
+                    ApiKeyID = table.Column<Guid>(type: "uuid", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -263,8 +253,37 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         name: "FK_Theme_ApiKey_ApiKeyID",
                         column: x => x.ApiKeyID,
                         principalTable: "ApiKey",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Theme_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AccessKey",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    KeyHash = table.Column<string>(type: "text", nullable: true),
+                    ApiKeyId = table.Column<Guid>(type: "uuid", nullable: true),
+                    GraphQLApiKeyId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccessKey", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AccessKey_ApiKey_ApiKeyId",
+                        column: x => x.ApiKeyId,
+                        principalTable: "ApiKey",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_AccessKey_GraphQLApiKey_GraphQLApiKeyId",
+                        column: x => x.GraphQLApiKeyId,
+                        principalTable: "GraphQLApiKey",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -274,7 +293,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     QueryName = table.Column<string>(type: "text", nullable: false),
                     AllowedFields = table.Column<List<string>>(type: "text[]", nullable: true),
-                    GraphQLApiKeyId = table.Column<int>(type: "integer", nullable: false)
+                    GraphQLApiKeyId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -283,8 +302,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         name: "FK_AccessKeyPermission_GraphQLApiKey_GraphQLApiKeyId",
                         column: x => x.GraphQLApiKeyId,
                         principalTable: "GraphQLApiKey",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.InsertData(
@@ -502,6 +520,18 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_AccessKey_ApiKeyId",
+                table: "AccessKey",
+                column: "ApiKeyId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AccessKey_GraphQLApiKeyId",
+                table: "AccessKey",
+                column: "GraphQLApiKeyId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AccessKeyPermission_GraphQLApiKeyId",
                 table: "AccessKeyPermission",
                 column: "GraphQLApiKeyId");
@@ -557,16 +587,21 @@ namespace NetBackend.Migrations.CustomerTwoDb
                 name: "IX_Theme_ApiKeyID",
                 table: "Theme",
                 column: "ApiKeyID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Theme_UserId",
+                table: "Theme",
+                column: "UserId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "AccessKeyPermission");
+                name: "AccessKey");
 
             migrationBuilder.DropTable(
-                name: "AccessKeys");
+                name: "AccessKeyPermission");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");

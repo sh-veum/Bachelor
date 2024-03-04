@@ -13,14 +13,14 @@ public interface IKeyService
     Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessAccessKey(string encryptedKey);
     Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessGraphQLAccessKey(string encryptedKey);
     Task<IActionResult> RemoveAccessKey(string encryptedKey);
-    Task<List<Theme>> GetApiKeyThemes(int apiKeyID);
+    Task<List<Theme>> GetApiKeyThemes(Guid apiKeyID);
     Task<List<Theme>> GetThemesByUserId(string userId);
     Task<Theme> CreateTheme(Theme theme);
     Task<Theme> UpdateTheme(Theme theme);
     Task<IActionResult> DeleteTheme(Guid themeId);
-    Task<List<AccessKeyPermission>> GetGraphQLAccessKeyPermissions(int graphQLApiKeyId);
+    Task<List<AccessKeyPermission>> GetGraphQLAccessKeyPermissions(Guid graphQLApiKeyId);
     Task<List<ApiKey>> GetRestApiKeysByUserId(string userId);
     Task<List<GraphQLApiKey>> GetGraphQLApiKeysByUserId(string userId);
-    Task<IActionResult> ToggleApiKey(int apiKeyId, bool isEnabled);
-    Task<IActionResult> ToggleGraphQLApiKey(int graphQLApiKeyId, bool isEnabled);
+    Task<IActionResult> ToggleApiKey(Guid apiKeyId, bool isEnabled);
+    Task<IActionResult> ToggleGraphQLApiKey(Guid graphQLApiKeyId, bool isEnabled);
 }

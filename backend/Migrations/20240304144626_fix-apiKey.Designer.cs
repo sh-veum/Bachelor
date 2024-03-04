@@ -10,11 +10,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NetBackend.Migrations.CustomerTwoDb
+namespace NetBackend.Migrations
 {
-    [DbContext(typeof(CustomerTwoDbContext))]
-    [Migration("20240303124043_enable-disable-keys")]
-    partial class enabledisablekeys
+    [DbContext(typeof(CustomerOneDbContext))]
+    [Migration("20240304144626_fix-apiKey")]
+    partial class fixapiKey
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -160,18 +160,28 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
             modelBuilder.Entity("NetBackend.Models.Keys.AccessKey", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("uuid");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<Guid?>("ApiKeyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("GraphQLApiKeyId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("KeyHash")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("AccessKeys");
+                    b.HasIndex("ApiKeyId")
+                        .IsUnique();
+
+                    b.HasIndex("GraphQLApiKeyId")
+                        .IsUnique();
+
+                    b.ToTable("AccessKey");
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.AccessKeyPermission", b =>
@@ -183,8 +193,8 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.Property<List<string>>("AllowedFields")
                         .HasColumnType("text[]");
 
-                    b.Property<int>("GraphQLApiKeyId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("GraphQLApiKeyId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("QueryName")
                         .IsRequired()
@@ -199,11 +209,9 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
             modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -231,11 +239,9 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -271,8 +277,8 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .IsRequired()
                         .HasColumnType("text[]");
 
-                    b.Property<int?>("ApiKeyID")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("ApiKeyID")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ThemeName")
                         .IsRequired()
@@ -324,7 +330,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 101,
                             Address = "Address 1",
                             City = "City 1",
-                            Name = "CustomerTwo: Organization 1",
+                            Name = "CustomerOne: Organization 1",
                             OrgNo = 101,
                             PostalCode = "PostalCode 1"
                         },
@@ -333,7 +339,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 102,
                             Address = "Address 2",
                             City = "City 2",
-                            Name = "CustomerTwo: Organization 2",
+                            Name = "CustomerOne: Organization 2",
                             OrgNo = 102,
                             PostalCode = "PostalCode 2"
                         },
@@ -342,7 +348,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 103,
                             Address = "Address 3",
                             City = "City 3",
-                            Name = "CustomerTwo: Organization 3",
+                            Name = "CustomerOne: Organization 3",
                             OrgNo = 103,
                             PostalCode = "PostalCode 3"
                         },
@@ -351,7 +357,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 104,
                             Address = "Address 4",
                             City = "City 4",
-                            Name = "CustomerTwo: Organization 4",
+                            Name = "CustomerOne: Organization 4",
                             OrgNo = 104,
                             PostalCode = "PostalCode 4"
                         },
@@ -360,7 +366,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 105,
                             Address = "Address 5",
                             City = "City 5",
-                            Name = "CustomerTwo: Organization 5",
+                            Name = "CustomerOne: Organization 5",
                             OrgNo = 105,
                             PostalCode = "PostalCode 5"
                         },
@@ -369,7 +375,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 106,
                             Address = "Address 6",
                             City = "City 6",
-                            Name = "CustomerTwo: Organization 6",
+                            Name = "CustomerOne: Organization 6",
                             OrgNo = 106,
                             PostalCode = "PostalCode 6"
                         },
@@ -378,7 +384,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 107,
                             Address = "Address 7",
                             City = "City 7",
-                            Name = "CustomerTwo: Organization 7",
+                            Name = "CustomerOne: Organization 7",
                             OrgNo = 107,
                             PostalCode = "PostalCode 7"
                         },
@@ -387,7 +393,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 108,
                             Address = "Address 8",
                             City = "City 8",
-                            Name = "CustomerTwo: Organization 8",
+                            Name = "CustomerOne: Organization 8",
                             OrgNo = 108,
                             PostalCode = "PostalCode 8"
                         },
@@ -396,7 +402,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 109,
                             Address = "Address 9",
                             City = "City 9",
-                            Name = "CustomerTwo: Organization 9",
+                            Name = "CustomerOne: Organization 9",
                             OrgNo = 109,
                             PostalCode = "PostalCode 9"
                         },
@@ -405,7 +411,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 110,
                             Address = "Address 10",
                             City = "City 10",
-                            Name = "CustomerTwo: Organization 10",
+                            Name = "CustomerOne: Organization 10",
                             OrgNo = 110,
                             PostalCode = "PostalCode 10"
                         },
@@ -414,7 +420,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 111,
                             Address = "Address 11",
                             City = "City 11",
-                            Name = "CustomerTwo: Organization 11",
+                            Name = "CustomerOne: Organization 11",
                             OrgNo = 111,
                             PostalCode = "PostalCode 11"
                         },
@@ -423,7 +429,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 112,
                             Address = "Address 12",
                             City = "City 12",
-                            Name = "CustomerTwo: Organization 12",
+                            Name = "CustomerOne: Organization 12",
                             OrgNo = 112,
                             PostalCode = "PostalCode 12"
                         },
@@ -432,7 +438,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 113,
                             Address = "Address 13",
                             City = "City 13",
-                            Name = "CustomerTwo: Organization 13",
+                            Name = "CustomerOne: Organization 13",
                             OrgNo = 113,
                             PostalCode = "PostalCode 13"
                         },
@@ -441,7 +447,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 114,
                             Address = "Address 14",
                             City = "City 14",
-                            Name = "CustomerTwo: Organization 14",
+                            Name = "CustomerOne: Organization 14",
                             OrgNo = 114,
                             PostalCode = "PostalCode 14"
                         },
@@ -450,7 +456,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 115,
                             Address = "Address 15",
                             City = "City 15",
-                            Name = "CustomerTwo: Organization 15",
+                            Name = "CustomerOne: Organization 15",
                             OrgNo = 115,
                             PostalCode = "PostalCode 15"
                         },
@@ -459,7 +465,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 116,
                             Address = "Address 16",
                             City = "City 16",
-                            Name = "CustomerTwo: Organization 16",
+                            Name = "CustomerOne: Organization 16",
                             OrgNo = 116,
                             PostalCode = "PostalCode 16"
                         },
@@ -468,7 +474,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 117,
                             Address = "Address 17",
                             City = "City 17",
-                            Name = "CustomerTwo: Organization 17",
+                            Name = "CustomerOne: Organization 17",
                             OrgNo = 117,
                             PostalCode = "PostalCode 17"
                         },
@@ -477,7 +483,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 118,
                             Address = "Address 18",
                             City = "City 18",
-                            Name = "CustomerTwo: Organization 18",
+                            Name = "CustomerOne: Organization 18",
                             OrgNo = 118,
                             PostalCode = "PostalCode 18"
                         },
@@ -486,7 +492,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 119,
                             Address = "Address 19",
                             City = "City 19",
-                            Name = "CustomerTwo: Organization 19",
+                            Name = "CustomerOne: Organization 19",
                             OrgNo = 119,
                             PostalCode = "PostalCode 19"
                         },
@@ -495,7 +501,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 120,
                             Address = "Address 20",
                             City = "City 20",
-                            Name = "CustomerTwo: Organization 20",
+                            Name = "CustomerOne: Organization 20",
                             OrgNo = 120,
                             PostalCode = "PostalCode 20"
                         },
@@ -504,7 +510,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 121,
                             Address = "Address 21",
                             City = "City 21",
-                            Name = "CustomerTwo: Organization 21",
+                            Name = "CustomerOne: Organization 21",
                             OrgNo = 121,
                             PostalCode = "PostalCode 21"
                         },
@@ -513,7 +519,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 122,
                             Address = "Address 22",
                             City = "City 22",
-                            Name = "CustomerTwo: Organization 22",
+                            Name = "CustomerOne: Organization 22",
                             OrgNo = 122,
                             PostalCode = "PostalCode 22"
                         },
@@ -522,7 +528,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 123,
                             Address = "Address 23",
                             City = "City 23",
-                            Name = "CustomerTwo: Organization 23",
+                            Name = "CustomerOne: Organization 23",
                             OrgNo = 123,
                             PostalCode = "PostalCode 23"
                         },
@@ -531,7 +537,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 124,
                             Address = "Address 24",
                             City = "City 24",
-                            Name = "CustomerTwo: Organization 24",
+                            Name = "CustomerOne: Organization 24",
                             OrgNo = 124,
                             PostalCode = "PostalCode 24"
                         },
@@ -540,7 +546,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 125,
                             Address = "Address 25",
                             City = "City 25",
-                            Name = "CustomerTwo: Organization 25",
+                            Name = "CustomerOne: Organization 25",
                             OrgNo = 125,
                             PostalCode = "PostalCode 25"
                         },
@@ -549,7 +555,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 126,
                             Address = "Address 26",
                             City = "City 26",
-                            Name = "CustomerTwo: Organization 26",
+                            Name = "CustomerOne: Organization 26",
                             OrgNo = 126,
                             PostalCode = "PostalCode 26"
                         },
@@ -558,7 +564,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 127,
                             Address = "Address 27",
                             City = "City 27",
-                            Name = "CustomerTwo: Organization 27",
+                            Name = "CustomerOne: Organization 27",
                             OrgNo = 127,
                             PostalCode = "PostalCode 27"
                         },
@@ -567,7 +573,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 128,
                             Address = "Address 28",
                             City = "City 28",
-                            Name = "CustomerTwo: Organization 28",
+                            Name = "CustomerOne: Organization 28",
                             OrgNo = 128,
                             PostalCode = "PostalCode 28"
                         },
@@ -576,7 +582,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 129,
                             Address = "Address 29",
                             City = "City 29",
-                            Name = "CustomerTwo: Organization 29",
+                            Name = "CustomerOne: Organization 29",
                             OrgNo = 129,
                             PostalCode = "PostalCode 29"
                         },
@@ -585,7 +591,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 130,
                             Address = "Address 30",
                             City = "City 30",
-                            Name = "CustomerTwo: Organization 30",
+                            Name = "CustomerOne: Organization 30",
                             OrgNo = 130,
                             PostalCode = "PostalCode 30"
                         },
@@ -594,7 +600,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 131,
                             Address = "Address 31",
                             City = "City 31",
-                            Name = "CustomerTwo: Organization 31",
+                            Name = "CustomerOne: Organization 31",
                             OrgNo = 131,
                             PostalCode = "PostalCode 31"
                         },
@@ -603,7 +609,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 132,
                             Address = "Address 32",
                             City = "City 32",
-                            Name = "CustomerTwo: Organization 32",
+                            Name = "CustomerOne: Organization 32",
                             OrgNo = 132,
                             PostalCode = "PostalCode 32"
                         },
@@ -612,7 +618,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 133,
                             Address = "Address 33",
                             City = "City 33",
-                            Name = "CustomerTwo: Organization 33",
+                            Name = "CustomerOne: Organization 33",
                             OrgNo = 133,
                             PostalCode = "PostalCode 33"
                         },
@@ -621,7 +627,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 134,
                             Address = "Address 34",
                             City = "City 34",
-                            Name = "CustomerTwo: Organization 34",
+                            Name = "CustomerOne: Organization 34",
                             OrgNo = 134,
                             PostalCode = "PostalCode 34"
                         },
@@ -630,7 +636,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 135,
                             Address = "Address 35",
                             City = "City 35",
-                            Name = "CustomerTwo: Organization 35",
+                            Name = "CustomerOne: Organization 35",
                             OrgNo = 135,
                             PostalCode = "PostalCode 35"
                         },
@@ -639,7 +645,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 136,
                             Address = "Address 36",
                             City = "City 36",
-                            Name = "CustomerTwo: Organization 36",
+                            Name = "CustomerOne: Organization 36",
                             OrgNo = 136,
                             PostalCode = "PostalCode 36"
                         },
@@ -648,7 +654,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 137,
                             Address = "Address 37",
                             City = "City 37",
-                            Name = "CustomerTwo: Organization 37",
+                            Name = "CustomerOne: Organization 37",
                             OrgNo = 137,
                             PostalCode = "PostalCode 37"
                         },
@@ -657,7 +663,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 138,
                             Address = "Address 38",
                             City = "City 38",
-                            Name = "CustomerTwo: Organization 38",
+                            Name = "CustomerOne: Organization 38",
                             OrgNo = 138,
                             PostalCode = "PostalCode 38"
                         },
@@ -666,7 +672,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 139,
                             Address = "Address 39",
                             City = "City 39",
-                            Name = "CustomerTwo: Organization 39",
+                            Name = "CustomerOne: Organization 39",
                             OrgNo = 139,
                             PostalCode = "PostalCode 39"
                         },
@@ -675,7 +681,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 140,
                             Address = "Address 40",
                             City = "City 40",
-                            Name = "CustomerTwo: Organization 40",
+                            Name = "CustomerOne: Organization 40",
                             OrgNo = 140,
                             PostalCode = "PostalCode 40"
                         },
@@ -684,7 +690,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 141,
                             Address = "Address 41",
                             City = "City 41",
-                            Name = "CustomerTwo: Organization 41",
+                            Name = "CustomerOne: Organization 41",
                             OrgNo = 141,
                             PostalCode = "PostalCode 41"
                         },
@@ -693,7 +699,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 142,
                             Address = "Address 42",
                             City = "City 42",
-                            Name = "CustomerTwo: Organization 42",
+                            Name = "CustomerOne: Organization 42",
                             OrgNo = 142,
                             PostalCode = "PostalCode 42"
                         },
@@ -702,7 +708,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 143,
                             Address = "Address 43",
                             City = "City 43",
-                            Name = "CustomerTwo: Organization 43",
+                            Name = "CustomerOne: Organization 43",
                             OrgNo = 143,
                             PostalCode = "PostalCode 43"
                         },
@@ -711,7 +717,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 144,
                             Address = "Address 44",
                             City = "City 44",
-                            Name = "CustomerTwo: Organization 44",
+                            Name = "CustomerOne: Organization 44",
                             OrgNo = 144,
                             PostalCode = "PostalCode 44"
                         },
@@ -720,7 +726,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 145,
                             Address = "Address 45",
                             City = "City 45",
-                            Name = "CustomerTwo: Organization 45",
+                            Name = "CustomerOne: Organization 45",
                             OrgNo = 145,
                             PostalCode = "PostalCode 45"
                         },
@@ -729,7 +735,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 146,
                             Address = "Address 46",
                             City = "City 46",
-                            Name = "CustomerTwo: Organization 46",
+                            Name = "CustomerOne: Organization 46",
                             OrgNo = 146,
                             PostalCode = "PostalCode 46"
                         },
@@ -738,7 +744,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 147,
                             Address = "Address 47",
                             City = "City 47",
-                            Name = "CustomerTwo: Organization 47",
+                            Name = "CustomerOne: Organization 47",
                             OrgNo = 147,
                             PostalCode = "PostalCode 47"
                         },
@@ -747,7 +753,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 148,
                             Address = "Address 48",
                             City = "City 48",
-                            Name = "CustomerTwo: Organization 48",
+                            Name = "CustomerOne: Organization 48",
                             OrgNo = 148,
                             PostalCode = "PostalCode 48"
                         },
@@ -756,7 +762,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 149,
                             Address = "Address 49",
                             City = "City 49",
-                            Name = "CustomerTwo: Organization 49",
+                            Name = "CustomerOne: Organization 49",
                             OrgNo = 149,
                             PostalCode = "PostalCode 49"
                         },
@@ -765,7 +771,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 150,
                             Address = "Address 50",
                             City = "City 50",
-                            Name = "CustomerTwo: Organization 50",
+                            Name = "CustomerOne: Organization 50",
                             OrgNo = 150,
                             PostalCode = "PostalCode 50"
                         },
@@ -774,7 +780,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 151,
                             Address = "Address 51",
                             City = "City 51",
-                            Name = "CustomerTwo: Organization 51",
+                            Name = "CustomerOne: Organization 51",
                             OrgNo = 151,
                             PostalCode = "PostalCode 51"
                         },
@@ -783,7 +789,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 152,
                             Address = "Address 52",
                             City = "City 52",
-                            Name = "CustomerTwo: Organization 52",
+                            Name = "CustomerOne: Organization 52",
                             OrgNo = 152,
                             PostalCode = "PostalCode 52"
                         },
@@ -792,7 +798,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 153,
                             Address = "Address 53",
                             City = "City 53",
-                            Name = "CustomerTwo: Organization 53",
+                            Name = "CustomerOne: Organization 53",
                             OrgNo = 153,
                             PostalCode = "PostalCode 53"
                         },
@@ -801,7 +807,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 154,
                             Address = "Address 54",
                             City = "City 54",
-                            Name = "CustomerTwo: Organization 54",
+                            Name = "CustomerOne: Organization 54",
                             OrgNo = 154,
                             PostalCode = "PostalCode 54"
                         },
@@ -810,7 +816,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 155,
                             Address = "Address 55",
                             City = "City 55",
-                            Name = "CustomerTwo: Organization 55",
+                            Name = "CustomerOne: Organization 55",
                             OrgNo = 155,
                             PostalCode = "PostalCode 55"
                         },
@@ -819,7 +825,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 156,
                             Address = "Address 56",
                             City = "City 56",
-                            Name = "CustomerTwo: Organization 56",
+                            Name = "CustomerOne: Organization 56",
                             OrgNo = 156,
                             PostalCode = "PostalCode 56"
                         },
@@ -828,7 +834,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 157,
                             Address = "Address 57",
                             City = "City 57",
-                            Name = "CustomerTwo: Organization 57",
+                            Name = "CustomerOne: Organization 57",
                             OrgNo = 157,
                             PostalCode = "PostalCode 57"
                         },
@@ -837,7 +843,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 158,
                             Address = "Address 58",
                             City = "City 58",
-                            Name = "CustomerTwo: Organization 58",
+                            Name = "CustomerOne: Organization 58",
                             OrgNo = 158,
                             PostalCode = "PostalCode 58"
                         },
@@ -846,7 +852,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 159,
                             Address = "Address 59",
                             City = "City 59",
-                            Name = "CustomerTwo: Organization 59",
+                            Name = "CustomerOne: Organization 59",
                             OrgNo = 159,
                             PostalCode = "PostalCode 59"
                         },
@@ -855,7 +861,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 160,
                             Address = "Address 60",
                             City = "City 60",
-                            Name = "CustomerTwo: Organization 60",
+                            Name = "CustomerOne: Organization 60",
                             OrgNo = 160,
                             PostalCode = "PostalCode 60"
                         },
@@ -864,7 +870,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 161,
                             Address = "Address 61",
                             City = "City 61",
-                            Name = "CustomerTwo: Organization 61",
+                            Name = "CustomerOne: Organization 61",
                             OrgNo = 161,
                             PostalCode = "PostalCode 61"
                         },
@@ -873,7 +879,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 162,
                             Address = "Address 62",
                             City = "City 62",
-                            Name = "CustomerTwo: Organization 62",
+                            Name = "CustomerOne: Organization 62",
                             OrgNo = 162,
                             PostalCode = "PostalCode 62"
                         },
@@ -882,7 +888,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 163,
                             Address = "Address 63",
                             City = "City 63",
-                            Name = "CustomerTwo: Organization 63",
+                            Name = "CustomerOne: Organization 63",
                             OrgNo = 163,
                             PostalCode = "PostalCode 63"
                         },
@@ -891,7 +897,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 164,
                             Address = "Address 64",
                             City = "City 64",
-                            Name = "CustomerTwo: Organization 64",
+                            Name = "CustomerOne: Organization 64",
                             OrgNo = 164,
                             PostalCode = "PostalCode 64"
                         },
@@ -900,7 +906,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 165,
                             Address = "Address 65",
                             City = "City 65",
-                            Name = "CustomerTwo: Organization 65",
+                            Name = "CustomerOne: Organization 65",
                             OrgNo = 165,
                             PostalCode = "PostalCode 65"
                         },
@@ -909,7 +915,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 166,
                             Address = "Address 66",
                             City = "City 66",
-                            Name = "CustomerTwo: Organization 66",
+                            Name = "CustomerOne: Organization 66",
                             OrgNo = 166,
                             PostalCode = "PostalCode 66"
                         },
@@ -918,7 +924,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 167,
                             Address = "Address 67",
                             City = "City 67",
-                            Name = "CustomerTwo: Organization 67",
+                            Name = "CustomerOne: Organization 67",
                             OrgNo = 167,
                             PostalCode = "PostalCode 67"
                         },
@@ -927,7 +933,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 168,
                             Address = "Address 68",
                             City = "City 68",
-                            Name = "CustomerTwo: Organization 68",
+                            Name = "CustomerOne: Organization 68",
                             OrgNo = 168,
                             PostalCode = "PostalCode 68"
                         },
@@ -936,7 +942,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 169,
                             Address = "Address 69",
                             City = "City 69",
-                            Name = "CustomerTwo: Organization 69",
+                            Name = "CustomerOne: Organization 69",
                             OrgNo = 169,
                             PostalCode = "PostalCode 69"
                         },
@@ -945,7 +951,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 170,
                             Address = "Address 70",
                             City = "City 70",
-                            Name = "CustomerTwo: Organization 70",
+                            Name = "CustomerOne: Organization 70",
                             OrgNo = 170,
                             PostalCode = "PostalCode 70"
                         },
@@ -954,7 +960,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 171,
                             Address = "Address 71",
                             City = "City 71",
-                            Name = "CustomerTwo: Organization 71",
+                            Name = "CustomerOne: Organization 71",
                             OrgNo = 171,
                             PostalCode = "PostalCode 71"
                         },
@@ -963,7 +969,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 172,
                             Address = "Address 72",
                             City = "City 72",
-                            Name = "CustomerTwo: Organization 72",
+                            Name = "CustomerOne: Organization 72",
                             OrgNo = 172,
                             PostalCode = "PostalCode 72"
                         },
@@ -972,7 +978,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 173,
                             Address = "Address 73",
                             City = "City 73",
-                            Name = "CustomerTwo: Organization 73",
+                            Name = "CustomerOne: Organization 73",
                             OrgNo = 173,
                             PostalCode = "PostalCode 73"
                         },
@@ -981,7 +987,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 174,
                             Address = "Address 74",
                             City = "City 74",
-                            Name = "CustomerTwo: Organization 74",
+                            Name = "CustomerOne: Organization 74",
                             OrgNo = 174,
                             PostalCode = "PostalCode 74"
                         },
@@ -990,7 +996,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 175,
                             Address = "Address 75",
                             City = "City 75",
-                            Name = "CustomerTwo: Organization 75",
+                            Name = "CustomerOne: Organization 75",
                             OrgNo = 175,
                             PostalCode = "PostalCode 75"
                         },
@@ -999,7 +1005,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 176,
                             Address = "Address 76",
                             City = "City 76",
-                            Name = "CustomerTwo: Organization 76",
+                            Name = "CustomerOne: Organization 76",
                             OrgNo = 176,
                             PostalCode = "PostalCode 76"
                         },
@@ -1008,7 +1014,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 177,
                             Address = "Address 77",
                             City = "City 77",
-                            Name = "CustomerTwo: Organization 77",
+                            Name = "CustomerOne: Organization 77",
                             OrgNo = 177,
                             PostalCode = "PostalCode 77"
                         },
@@ -1017,7 +1023,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 178,
                             Address = "Address 78",
                             City = "City 78",
-                            Name = "CustomerTwo: Organization 78",
+                            Name = "CustomerOne: Organization 78",
                             OrgNo = 178,
                             PostalCode = "PostalCode 78"
                         },
@@ -1026,7 +1032,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 179,
                             Address = "Address 79",
                             City = "City 79",
-                            Name = "CustomerTwo: Organization 79",
+                            Name = "CustomerOne: Organization 79",
                             OrgNo = 179,
                             PostalCode = "PostalCode 79"
                         },
@@ -1035,7 +1041,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 180,
                             Address = "Address 80",
                             City = "City 80",
-                            Name = "CustomerTwo: Organization 80",
+                            Name = "CustomerOne: Organization 80",
                             OrgNo = 180,
                             PostalCode = "PostalCode 80"
                         },
@@ -1044,7 +1050,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 181,
                             Address = "Address 81",
                             City = "City 81",
-                            Name = "CustomerTwo: Organization 81",
+                            Name = "CustomerOne: Organization 81",
                             OrgNo = 181,
                             PostalCode = "PostalCode 81"
                         },
@@ -1053,7 +1059,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 182,
                             Address = "Address 82",
                             City = "City 82",
-                            Name = "CustomerTwo: Organization 82",
+                            Name = "CustomerOne: Organization 82",
                             OrgNo = 182,
                             PostalCode = "PostalCode 82"
                         },
@@ -1062,7 +1068,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 183,
                             Address = "Address 83",
                             City = "City 83",
-                            Name = "CustomerTwo: Organization 83",
+                            Name = "CustomerOne: Organization 83",
                             OrgNo = 183,
                             PostalCode = "PostalCode 83"
                         },
@@ -1071,7 +1077,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 184,
                             Address = "Address 84",
                             City = "City 84",
-                            Name = "CustomerTwo: Organization 84",
+                            Name = "CustomerOne: Organization 84",
                             OrgNo = 184,
                             PostalCode = "PostalCode 84"
                         },
@@ -1080,7 +1086,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 185,
                             Address = "Address 85",
                             City = "City 85",
-                            Name = "CustomerTwo: Organization 85",
+                            Name = "CustomerOne: Organization 85",
                             OrgNo = 185,
                             PostalCode = "PostalCode 85"
                         },
@@ -1089,7 +1095,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 186,
                             Address = "Address 86",
                             City = "City 86",
-                            Name = "CustomerTwo: Organization 86",
+                            Name = "CustomerOne: Organization 86",
                             OrgNo = 186,
                             PostalCode = "PostalCode 86"
                         },
@@ -1098,7 +1104,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 187,
                             Address = "Address 87",
                             City = "City 87",
-                            Name = "CustomerTwo: Organization 87",
+                            Name = "CustomerOne: Organization 87",
                             OrgNo = 187,
                             PostalCode = "PostalCode 87"
                         },
@@ -1107,7 +1113,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 188,
                             Address = "Address 88",
                             City = "City 88",
-                            Name = "CustomerTwo: Organization 88",
+                            Name = "CustomerOne: Organization 88",
                             OrgNo = 188,
                             PostalCode = "PostalCode 88"
                         },
@@ -1116,7 +1122,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 189,
                             Address = "Address 89",
                             City = "City 89",
-                            Name = "CustomerTwo: Organization 89",
+                            Name = "CustomerOne: Organization 89",
                             OrgNo = 189,
                             PostalCode = "PostalCode 89"
                         },
@@ -1125,7 +1131,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 190,
                             Address = "Address 90",
                             City = "City 90",
-                            Name = "CustomerTwo: Organization 90",
+                            Name = "CustomerOne: Organization 90",
                             OrgNo = 190,
                             PostalCode = "PostalCode 90"
                         },
@@ -1134,7 +1140,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 191,
                             Address = "Address 91",
                             City = "City 91",
-                            Name = "CustomerTwo: Organization 91",
+                            Name = "CustomerOne: Organization 91",
                             OrgNo = 191,
                             PostalCode = "PostalCode 91"
                         },
@@ -1143,7 +1149,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 192,
                             Address = "Address 92",
                             City = "City 92",
-                            Name = "CustomerTwo: Organization 92",
+                            Name = "CustomerOne: Organization 92",
                             OrgNo = 192,
                             PostalCode = "PostalCode 92"
                         },
@@ -1152,7 +1158,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 193,
                             Address = "Address 93",
                             City = "City 93",
-                            Name = "CustomerTwo: Organization 93",
+                            Name = "CustomerOne: Organization 93",
                             OrgNo = 193,
                             PostalCode = "PostalCode 93"
                         },
@@ -1161,7 +1167,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 194,
                             Address = "Address 94",
                             City = "City 94",
-                            Name = "CustomerTwo: Organization 94",
+                            Name = "CustomerOne: Organization 94",
                             OrgNo = 194,
                             PostalCode = "PostalCode 94"
                         },
@@ -1170,7 +1176,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 195,
                             Address = "Address 95",
                             City = "City 95",
-                            Name = "CustomerTwo: Organization 95",
+                            Name = "CustomerOne: Organization 95",
                             OrgNo = 195,
                             PostalCode = "PostalCode 95"
                         },
@@ -1179,7 +1185,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 196,
                             Address = "Address 96",
                             City = "City 96",
-                            Name = "CustomerTwo: Organization 96",
+                            Name = "CustomerOne: Organization 96",
                             OrgNo = 196,
                             PostalCode = "PostalCode 96"
                         },
@@ -1188,7 +1194,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 197,
                             Address = "Address 97",
                             City = "City 97",
-                            Name = "CustomerTwo: Organization 97",
+                            Name = "CustomerOne: Organization 97",
                             OrgNo = 197,
                             PostalCode = "PostalCode 97"
                         },
@@ -1197,7 +1203,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 198,
                             Address = "Address 98",
                             City = "City 98",
-                            Name = "CustomerTwo: Organization 98",
+                            Name = "CustomerOne: Organization 98",
                             OrgNo = 198,
                             PostalCode = "PostalCode 98"
                         },
@@ -1206,7 +1212,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 199,
                             Address = "Address 99",
                             City = "City 99",
-                            Name = "CustomerTwo: Organization 99",
+                            Name = "CustomerOne: Organization 99",
                             OrgNo = 199,
                             PostalCode = "PostalCode 99"
                         },
@@ -1215,7 +1221,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                             Id = 200,
                             Address = "Address 100",
                             City = "City 100",
-                            Name = "CustomerTwo: Organization 100",
+                            Name = "CustomerOne: Organization 100",
                             OrgNo = 200,
                             PostalCode = "PostalCode 100"
                         });
@@ -1230,7 +1236,6 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int?>("SuperSecretNumber")
@@ -1244,601 +1249,601 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         new
                         {
                             Id = 101,
-                            Name = "CustomerTwo: Species 1",
+                            Name = "CustomerOne: Species 1",
                             SuperSecretNumber = 1
                         },
                         new
                         {
                             Id = 102,
-                            Name = "CustomerTwo: Species 2",
+                            Name = "CustomerOne: Species 2",
                             SuperSecretNumber = 2
                         },
                         new
                         {
                             Id = 103,
-                            Name = "CustomerTwo: Species 3",
+                            Name = "CustomerOne: Species 3",
                             SuperSecretNumber = 3
                         },
                         new
                         {
                             Id = 104,
-                            Name = "CustomerTwo: Species 4",
+                            Name = "CustomerOne: Species 4",
                             SuperSecretNumber = 4
                         },
                         new
                         {
                             Id = 105,
-                            Name = "CustomerTwo: Species 5",
+                            Name = "CustomerOne: Species 5",
                             SuperSecretNumber = 5
                         },
                         new
                         {
                             Id = 106,
-                            Name = "CustomerTwo: Species 6",
+                            Name = "CustomerOne: Species 6",
                             SuperSecretNumber = 6
                         },
                         new
                         {
                             Id = 107,
-                            Name = "CustomerTwo: Species 7",
+                            Name = "CustomerOne: Species 7",
                             SuperSecretNumber = 7
                         },
                         new
                         {
                             Id = 108,
-                            Name = "CustomerTwo: Species 8",
+                            Name = "CustomerOne: Species 8",
                             SuperSecretNumber = 8
                         },
                         new
                         {
                             Id = 109,
-                            Name = "CustomerTwo: Species 9",
+                            Name = "CustomerOne: Species 9",
                             SuperSecretNumber = 9
                         },
                         new
                         {
                             Id = 110,
-                            Name = "CustomerTwo: Species 10",
+                            Name = "CustomerOne: Species 10",
                             SuperSecretNumber = 10
                         },
                         new
                         {
                             Id = 111,
-                            Name = "CustomerTwo: Species 11",
+                            Name = "CustomerOne: Species 11",
                             SuperSecretNumber = 11
                         },
                         new
                         {
                             Id = 112,
-                            Name = "CustomerTwo: Species 12",
+                            Name = "CustomerOne: Species 12",
                             SuperSecretNumber = 12
                         },
                         new
                         {
                             Id = 113,
-                            Name = "CustomerTwo: Species 13",
+                            Name = "CustomerOne: Species 13",
                             SuperSecretNumber = 13
                         },
                         new
                         {
                             Id = 114,
-                            Name = "CustomerTwo: Species 14",
+                            Name = "CustomerOne: Species 14",
                             SuperSecretNumber = 14
                         },
                         new
                         {
                             Id = 115,
-                            Name = "CustomerTwo: Species 15",
+                            Name = "CustomerOne: Species 15",
                             SuperSecretNumber = 15
                         },
                         new
                         {
                             Id = 116,
-                            Name = "CustomerTwo: Species 16",
+                            Name = "CustomerOne: Species 16",
                             SuperSecretNumber = 16
                         },
                         new
                         {
                             Id = 117,
-                            Name = "CustomerTwo: Species 17",
+                            Name = "CustomerOne: Species 17",
                             SuperSecretNumber = 17
                         },
                         new
                         {
                             Id = 118,
-                            Name = "CustomerTwo: Species 18",
+                            Name = "CustomerOne: Species 18",
                             SuperSecretNumber = 18
                         },
                         new
                         {
                             Id = 119,
-                            Name = "CustomerTwo: Species 19",
+                            Name = "CustomerOne: Species 19",
                             SuperSecretNumber = 19
                         },
                         new
                         {
                             Id = 120,
-                            Name = "CustomerTwo: Species 20",
+                            Name = "CustomerOne: Species 20",
                             SuperSecretNumber = 20
                         },
                         new
                         {
                             Id = 121,
-                            Name = "CustomerTwo: Species 21",
+                            Name = "CustomerOne: Species 21",
                             SuperSecretNumber = 21
                         },
                         new
                         {
                             Id = 122,
-                            Name = "CustomerTwo: Species 22",
+                            Name = "CustomerOne: Species 22",
                             SuperSecretNumber = 22
                         },
                         new
                         {
                             Id = 123,
-                            Name = "CustomerTwo: Species 23",
+                            Name = "CustomerOne: Species 23",
                             SuperSecretNumber = 23
                         },
                         new
                         {
                             Id = 124,
-                            Name = "CustomerTwo: Species 24",
+                            Name = "CustomerOne: Species 24",
                             SuperSecretNumber = 24
                         },
                         new
                         {
                             Id = 125,
-                            Name = "CustomerTwo: Species 25",
+                            Name = "CustomerOne: Species 25",
                             SuperSecretNumber = 25
                         },
                         new
                         {
                             Id = 126,
-                            Name = "CustomerTwo: Species 26",
+                            Name = "CustomerOne: Species 26",
                             SuperSecretNumber = 26
                         },
                         new
                         {
                             Id = 127,
-                            Name = "CustomerTwo: Species 27",
+                            Name = "CustomerOne: Species 27",
                             SuperSecretNumber = 27
                         },
                         new
                         {
                             Id = 128,
-                            Name = "CustomerTwo: Species 28",
+                            Name = "CustomerOne: Species 28",
                             SuperSecretNumber = 28
                         },
                         new
                         {
                             Id = 129,
-                            Name = "CustomerTwo: Species 29",
+                            Name = "CustomerOne: Species 29",
                             SuperSecretNumber = 29
                         },
                         new
                         {
                             Id = 130,
-                            Name = "CustomerTwo: Species 30",
+                            Name = "CustomerOne: Species 30",
                             SuperSecretNumber = 30
                         },
                         new
                         {
                             Id = 131,
-                            Name = "CustomerTwo: Species 31",
+                            Name = "CustomerOne: Species 31",
                             SuperSecretNumber = 31
                         },
                         new
                         {
                             Id = 132,
-                            Name = "CustomerTwo: Species 32",
+                            Name = "CustomerOne: Species 32",
                             SuperSecretNumber = 32
                         },
                         new
                         {
                             Id = 133,
-                            Name = "CustomerTwo: Species 33",
+                            Name = "CustomerOne: Species 33",
                             SuperSecretNumber = 33
                         },
                         new
                         {
                             Id = 134,
-                            Name = "CustomerTwo: Species 34",
+                            Name = "CustomerOne: Species 34",
                             SuperSecretNumber = 34
                         },
                         new
                         {
                             Id = 135,
-                            Name = "CustomerTwo: Species 35",
+                            Name = "CustomerOne: Species 35",
                             SuperSecretNumber = 35
                         },
                         new
                         {
                             Id = 136,
-                            Name = "CustomerTwo: Species 36",
+                            Name = "CustomerOne: Species 36",
                             SuperSecretNumber = 36
                         },
                         new
                         {
                             Id = 137,
-                            Name = "CustomerTwo: Species 37",
+                            Name = "CustomerOne: Species 37",
                             SuperSecretNumber = 37
                         },
                         new
                         {
                             Id = 138,
-                            Name = "CustomerTwo: Species 38",
+                            Name = "CustomerOne: Species 38",
                             SuperSecretNumber = 38
                         },
                         new
                         {
                             Id = 139,
-                            Name = "CustomerTwo: Species 39",
+                            Name = "CustomerOne: Species 39",
                             SuperSecretNumber = 39
                         },
                         new
                         {
                             Id = 140,
-                            Name = "CustomerTwo: Species 40",
+                            Name = "CustomerOne: Species 40",
                             SuperSecretNumber = 40
                         },
                         new
                         {
                             Id = 141,
-                            Name = "CustomerTwo: Species 41",
+                            Name = "CustomerOne: Species 41",
                             SuperSecretNumber = 41
                         },
                         new
                         {
                             Id = 142,
-                            Name = "CustomerTwo: Species 42",
+                            Name = "CustomerOne: Species 42",
                             SuperSecretNumber = 42
                         },
                         new
                         {
                             Id = 143,
-                            Name = "CustomerTwo: Species 43",
+                            Name = "CustomerOne: Species 43",
                             SuperSecretNumber = 43
                         },
                         new
                         {
                             Id = 144,
-                            Name = "CustomerTwo: Species 44",
+                            Name = "CustomerOne: Species 44",
                             SuperSecretNumber = 44
                         },
                         new
                         {
                             Id = 145,
-                            Name = "CustomerTwo: Species 45",
+                            Name = "CustomerOne: Species 45",
                             SuperSecretNumber = 45
                         },
                         new
                         {
                             Id = 146,
-                            Name = "CustomerTwo: Species 46",
+                            Name = "CustomerOne: Species 46",
                             SuperSecretNumber = 46
                         },
                         new
                         {
                             Id = 147,
-                            Name = "CustomerTwo: Species 47",
+                            Name = "CustomerOne: Species 47",
                             SuperSecretNumber = 47
                         },
                         new
                         {
                             Id = 148,
-                            Name = "CustomerTwo: Species 48",
+                            Name = "CustomerOne: Species 48",
                             SuperSecretNumber = 48
                         },
                         new
                         {
                             Id = 149,
-                            Name = "CustomerTwo: Species 49",
+                            Name = "CustomerOne: Species 49",
                             SuperSecretNumber = 49
                         },
                         new
                         {
                             Id = 150,
-                            Name = "CustomerTwo: Species 50",
+                            Name = "CustomerOne: Species 50",
                             SuperSecretNumber = 50
                         },
                         new
                         {
                             Id = 151,
-                            Name = "CustomerTwo: Species 51",
+                            Name = "CustomerOne: Species 51",
                             SuperSecretNumber = 51
                         },
                         new
                         {
                             Id = 152,
-                            Name = "CustomerTwo: Species 52",
+                            Name = "CustomerOne: Species 52",
                             SuperSecretNumber = 52
                         },
                         new
                         {
                             Id = 153,
-                            Name = "CustomerTwo: Species 53",
+                            Name = "CustomerOne: Species 53",
                             SuperSecretNumber = 53
                         },
                         new
                         {
                             Id = 154,
-                            Name = "CustomerTwo: Species 54",
+                            Name = "CustomerOne: Species 54",
                             SuperSecretNumber = 54
                         },
                         new
                         {
                             Id = 155,
-                            Name = "CustomerTwo: Species 55",
+                            Name = "CustomerOne: Species 55",
                             SuperSecretNumber = 55
                         },
                         new
                         {
                             Id = 156,
-                            Name = "CustomerTwo: Species 56",
+                            Name = "CustomerOne: Species 56",
                             SuperSecretNumber = 56
                         },
                         new
                         {
                             Id = 157,
-                            Name = "CustomerTwo: Species 57",
+                            Name = "CustomerOne: Species 57",
                             SuperSecretNumber = 57
                         },
                         new
                         {
                             Id = 158,
-                            Name = "CustomerTwo: Species 58",
+                            Name = "CustomerOne: Species 58",
                             SuperSecretNumber = 58
                         },
                         new
                         {
                             Id = 159,
-                            Name = "CustomerTwo: Species 59",
+                            Name = "CustomerOne: Species 59",
                             SuperSecretNumber = 59
                         },
                         new
                         {
                             Id = 160,
-                            Name = "CustomerTwo: Species 60",
+                            Name = "CustomerOne: Species 60",
                             SuperSecretNumber = 60
                         },
                         new
                         {
                             Id = 161,
-                            Name = "CustomerTwo: Species 61",
+                            Name = "CustomerOne: Species 61",
                             SuperSecretNumber = 61
                         },
                         new
                         {
                             Id = 162,
-                            Name = "CustomerTwo: Species 62",
+                            Name = "CustomerOne: Species 62",
                             SuperSecretNumber = 62
                         },
                         new
                         {
                             Id = 163,
-                            Name = "CustomerTwo: Species 63",
+                            Name = "CustomerOne: Species 63",
                             SuperSecretNumber = 63
                         },
                         new
                         {
                             Id = 164,
-                            Name = "CustomerTwo: Species 64",
+                            Name = "CustomerOne: Species 64",
                             SuperSecretNumber = 64
                         },
                         new
                         {
                             Id = 165,
-                            Name = "CustomerTwo: Species 65",
+                            Name = "CustomerOne: Species 65",
                             SuperSecretNumber = 65
                         },
                         new
                         {
                             Id = 166,
-                            Name = "CustomerTwo: Species 66",
+                            Name = "CustomerOne: Species 66",
                             SuperSecretNumber = 66
                         },
                         new
                         {
                             Id = 167,
-                            Name = "CustomerTwo: Species 67",
+                            Name = "CustomerOne: Species 67",
                             SuperSecretNumber = 67
                         },
                         new
                         {
                             Id = 168,
-                            Name = "CustomerTwo: Species 68",
+                            Name = "CustomerOne: Species 68",
                             SuperSecretNumber = 68
                         },
                         new
                         {
                             Id = 169,
-                            Name = "CustomerTwo: Species 69",
+                            Name = "CustomerOne: Species 69",
                             SuperSecretNumber = 69
                         },
                         new
                         {
                             Id = 170,
-                            Name = "CustomerTwo: Species 70",
+                            Name = "CustomerOne: Species 70",
                             SuperSecretNumber = 70
                         },
                         new
                         {
                             Id = 171,
-                            Name = "CustomerTwo: Species 71",
+                            Name = "CustomerOne: Species 71",
                             SuperSecretNumber = 71
                         },
                         new
                         {
                             Id = 172,
-                            Name = "CustomerTwo: Species 72",
+                            Name = "CustomerOne: Species 72",
                             SuperSecretNumber = 72
                         },
                         new
                         {
                             Id = 173,
-                            Name = "CustomerTwo: Species 73",
+                            Name = "CustomerOne: Species 73",
                             SuperSecretNumber = 73
                         },
                         new
                         {
                             Id = 174,
-                            Name = "CustomerTwo: Species 74",
+                            Name = "CustomerOne: Species 74",
                             SuperSecretNumber = 74
                         },
                         new
                         {
                             Id = 175,
-                            Name = "CustomerTwo: Species 75",
+                            Name = "CustomerOne: Species 75",
                             SuperSecretNumber = 75
                         },
                         new
                         {
                             Id = 176,
-                            Name = "CustomerTwo: Species 76",
+                            Name = "CustomerOne: Species 76",
                             SuperSecretNumber = 76
                         },
                         new
                         {
                             Id = 177,
-                            Name = "CustomerTwo: Species 77",
+                            Name = "CustomerOne: Species 77",
                             SuperSecretNumber = 77
                         },
                         new
                         {
                             Id = 178,
-                            Name = "CustomerTwo: Species 78",
+                            Name = "CustomerOne: Species 78",
                             SuperSecretNumber = 78
                         },
                         new
                         {
                             Id = 179,
-                            Name = "CustomerTwo: Species 79",
+                            Name = "CustomerOne: Species 79",
                             SuperSecretNumber = 79
                         },
                         new
                         {
                             Id = 180,
-                            Name = "CustomerTwo: Species 80",
+                            Name = "CustomerOne: Species 80",
                             SuperSecretNumber = 80
                         },
                         new
                         {
                             Id = 181,
-                            Name = "CustomerTwo: Species 81",
+                            Name = "CustomerOne: Species 81",
                             SuperSecretNumber = 81
                         },
                         new
                         {
                             Id = 182,
-                            Name = "CustomerTwo: Species 82",
+                            Name = "CustomerOne: Species 82",
                             SuperSecretNumber = 82
                         },
                         new
                         {
                             Id = 183,
-                            Name = "CustomerTwo: Species 83",
+                            Name = "CustomerOne: Species 83",
                             SuperSecretNumber = 83
                         },
                         new
                         {
                             Id = 184,
-                            Name = "CustomerTwo: Species 84",
+                            Name = "CustomerOne: Species 84",
                             SuperSecretNumber = 84
                         },
                         new
                         {
                             Id = 185,
-                            Name = "CustomerTwo: Species 85",
+                            Name = "CustomerOne: Species 85",
                             SuperSecretNumber = 85
                         },
                         new
                         {
                             Id = 186,
-                            Name = "CustomerTwo: Species 86",
+                            Name = "CustomerOne: Species 86",
                             SuperSecretNumber = 86
                         },
                         new
                         {
                             Id = 187,
-                            Name = "CustomerTwo: Species 87",
+                            Name = "CustomerOne: Species 87",
                             SuperSecretNumber = 87
                         },
                         new
                         {
                             Id = 188,
-                            Name = "CustomerTwo: Species 88",
+                            Name = "CustomerOne: Species 88",
                             SuperSecretNumber = 88
                         },
                         new
                         {
                             Id = 189,
-                            Name = "CustomerTwo: Species 89",
+                            Name = "CustomerOne: Species 89",
                             SuperSecretNumber = 89
                         },
                         new
                         {
                             Id = 190,
-                            Name = "CustomerTwo: Species 90",
+                            Name = "CustomerOne: Species 90",
                             SuperSecretNumber = 90
                         },
                         new
                         {
                             Id = 191,
-                            Name = "CustomerTwo: Species 91",
+                            Name = "CustomerOne: Species 91",
                             SuperSecretNumber = 91
                         },
                         new
                         {
                             Id = 192,
-                            Name = "CustomerTwo: Species 92",
+                            Name = "CustomerOne: Species 92",
                             SuperSecretNumber = 92
                         },
                         new
                         {
                             Id = 193,
-                            Name = "CustomerTwo: Species 93",
+                            Name = "CustomerOne: Species 93",
                             SuperSecretNumber = 93
                         },
                         new
                         {
                             Id = 194,
-                            Name = "CustomerTwo: Species 94",
+                            Name = "CustomerOne: Species 94",
                             SuperSecretNumber = 94
                         },
                         new
                         {
                             Id = 195,
-                            Name = "CustomerTwo: Species 95",
+                            Name = "CustomerOne: Species 95",
                             SuperSecretNumber = 95
                         },
                         new
                         {
                             Id = 196,
-                            Name = "CustomerTwo: Species 96",
+                            Name = "CustomerOne: Species 96",
                             SuperSecretNumber = 96
                         },
                         new
                         {
                             Id = 197,
-                            Name = "CustomerTwo: Species 97",
+                            Name = "CustomerOne: Species 97",
                             SuperSecretNumber = 97
                         },
                         new
                         {
                             Id = 198,
-                            Name = "CustomerTwo: Species 98",
+                            Name = "CustomerOne: Species 98",
                             SuperSecretNumber = 98
                         },
                         new
                         {
                             Id = 199,
-                            Name = "CustomerTwo: Species 99",
+                            Name = "CustomerOne: Species 99",
                             SuperSecretNumber = 99
                         },
                         new
                         {
                             Id = 200,
-                            Name = "CustomerTwo: Species 100",
+                            Name = "CustomerOne: Species 100",
                             SuperSecretNumber = 100
                         });
                 });
@@ -1961,13 +1966,26 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("NetBackend.Models.Keys.AccessKey", b =>
+                {
+                    b.HasOne("NetBackend.Models.Keys.ApiKey", "ApiKey")
+                        .WithOne("AccessKey")
+                        .HasForeignKey("NetBackend.Models.Keys.AccessKey", "ApiKeyId");
+
+                    b.HasOne("NetBackend.Models.Keys.GraphQLApiKey", "GraphQLApiKey")
+                        .WithOne("AccessKey")
+                        .HasForeignKey("NetBackend.Models.Keys.AccessKey", "GraphQLApiKeyId");
+
+                    b.Navigation("ApiKey");
+
+                    b.Navigation("GraphQLApiKey");
+                });
+
             modelBuilder.Entity("NetBackend.Models.Keys.AccessKeyPermission", b =>
                 {
                     b.HasOne("NetBackend.Models.Keys.GraphQLApiKey", "GraphQLApiKey")
                         .WithMany("AccessKeyPermissions")
-                        .HasForeignKey("GraphQLApiKeyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("GraphQLApiKeyId");
 
                     b.Navigation("GraphQLApiKey");
                 });
@@ -2013,11 +2031,15 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
             modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
+                    b.Navigation("AccessKey");
+
                     b.Navigation("Themes");
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
                 {
+                    b.Navigation("AccessKey");
+
                     b.Navigation("AccessKeyPermissions");
                 });
 

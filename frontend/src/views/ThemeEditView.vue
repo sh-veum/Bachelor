@@ -3,7 +3,7 @@ import ThemeDialog from '@/components/theme-view/ThemeDialog.vue'
 import ThemeComponent from '@/components/theme-view/ThemeComponent.vue'
 import { Button } from '@/components/ui/button'
 
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import axios from 'axios'
 
 //TODO: move interface and fetching to a separate file and resuse them in the other components
@@ -30,7 +30,7 @@ const fetchData = async () => {
 onMounted(fetchData)
 
 //TODO: should maybe update the themes directly in the frontend instead of refetching them?
-watch(themes, fetchData)
+// watch(themes, fetchData)
 
 const handleEdit = (theme: Theme) => {
   editingTheme.value = theme

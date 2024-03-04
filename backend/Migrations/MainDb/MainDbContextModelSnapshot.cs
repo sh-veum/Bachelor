@@ -155,6 +155,32 @@ namespace NetBackend.Migrations.MainDb
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("NetBackend.Models.Keys.AccessKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ApiKeyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("GraphQLApiKeyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("KeyHash")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApiKeyId")
+                        .IsUnique();
+
+                    b.HasIndex("GraphQLApiKeyId")
+                        .IsUnique();
+
+                    b.ToTable("AccessKeys");
+                });
+
             modelBuilder.Entity("NetBackend.Models.Keys.AccessKeyPermission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -164,8 +190,8 @@ namespace NetBackend.Migrations.MainDb
                     b.Property<List<string>>("AllowedFields")
                         .HasColumnType("text[]");
 
-                    b.Property<int>("GraphQLApiKeyId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("GraphQLApiKeyId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("QueryName")
                         .IsRequired()
@@ -180,11 +206,9 @@ namespace NetBackend.Migrations.MainDb
 
             modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -212,11 +236,9 @@ namespace NetBackend.Migrations.MainDb
 
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -252,8 +274,8 @@ namespace NetBackend.Migrations.MainDb
                         .IsRequired()
                         .HasColumnType("text[]");
 
-                    b.Property<int?>("ApiKeyID")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("ApiKeyID")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ThemeName")
                         .IsRequired()
@@ -390,13 +412,26 @@ namespace NetBackend.Migrations.MainDb
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("NetBackend.Models.Keys.AccessKey", b =>
+                {
+                    b.HasOne("NetBackend.Models.Keys.ApiKey", "ApiKey")
+                        .WithOne("AccessKey")
+                        .HasForeignKey("NetBackend.Models.Keys.AccessKey", "ApiKeyId");
+
+                    b.HasOne("NetBackend.Models.Keys.GraphQLApiKey", "GraphQLApiKey")
+                        .WithOne("AccessKey")
+                        .HasForeignKey("NetBackend.Models.Keys.AccessKey", "GraphQLApiKeyId");
+
+                    b.Navigation("ApiKey");
+
+                    b.Navigation("GraphQLApiKey");
+                });
+
             modelBuilder.Entity("NetBackend.Models.Keys.AccessKeyPermission", b =>
                 {
                     b.HasOne("NetBackend.Models.Keys.GraphQLApiKey", "GraphQLApiKey")
                         .WithMany("AccessKeyPermissions")
-                        .HasForeignKey("GraphQLApiKeyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("GraphQLApiKeyId");
 
                     b.Navigation("GraphQLApiKey");
                 });
@@ -442,11 +477,15 @@ namespace NetBackend.Migrations.MainDb
 
             modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
+                    b.Navigation("AccessKey");
+
                     b.Navigation("Themes");
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
                 {
+                    b.Navigation("AccessKey");
+
                     b.Navigation("AccessKeyPermissions");
                 });
 

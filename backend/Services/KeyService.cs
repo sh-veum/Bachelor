@@ -29,14 +29,26 @@ public partial class KeyService : IKeyService
 
     public async Task<string> EncryptAndStoreAccessKey(IApiKey apiKey, UserModel user)
     {
-        var dbContext = await _dbContextService.GetUserDatabaseContext(user);
+        // var dbContext = await _dbContextService.GetUserDatabaseContext(user);
+        var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         var dataToEncrypt = $"Id:{apiKey.Id},Type:{apiKey.GetType().Name}";
         var encryptedKey = _cryptoService.Encrypt(dataToEncrypt, SecretConstants.SecretKey);
 
         var accessKey = new AccessKey
         {
-            KeyHash = ComputeHash.ComputeSha256Hash(encryptedKey)
+            KeyHash = ComputeHash.ComputeSha256Hash(encryptedKey),
         };
+
+        if (apiKey is ApiKey api)
+        {
+            accessKey.ApiKeyId = api.Id;
+            accessKey.ApiKey = api;
+        }
+        else if (apiKey is GraphQLApiKey gqlApi)
+        {
+            accessKey.GraphQLApiKeyId = gqlApi.Id;
+            accessKey.GraphQLApiKey = gqlApi;
+        }
 
         dbContext.Set<AccessKey>().Add(accessKey);
         await dbContext.SaveChangesAsync();
@@ -52,7 +64,7 @@ public partial class KeyService : IKeyService
         var typePart = dataParts.FirstOrDefault(part => part.StartsWith("Type:"))?.Split(':')[1];
         var idPart = dataParts.FirstOrDefault(part => part.StartsWith("Id:"))?.Split(':')[1];
 
-        if (typePart == null || idPart == null || !int.TryParse(idPart, out var id))
+        if (typePart == null || idPart == null || !Guid.TryParse(idPart, out var id))
         {
             return (null, new BadRequestObjectResult("Invalid encrypted key format."));
         }
@@ -111,17 +123,17 @@ public partial class KeyService : IKeyService
         if (apiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
 
         var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-        string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
-
-        var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
 
         // Compute hash of the encrypted key and check if it exists in the database
         var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
-        var accessKey = await selectedContext.Set<AccessKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
+        var accessKey = await mainDbContext.Set<AccessKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
         if (accessKey == null)
         {
             return (null, new UnauthorizedResult());
         }
+
+        string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
+        var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
 
         return (selectedContext, null);
     }
@@ -171,17 +183,17 @@ public partial class KeyService : IKeyService
         if (apiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
 
         var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-        string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
-
-        var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
 
         // Compute hash of the encrypted key and check if it exists in the database
         var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
-        var accessKey = await selectedContext.Set<AccessKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
+        var accessKey = await mainDbContext.Set<AccessKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
         if (accessKey == null)
         {
             return (null, new UnauthorizedResult());
         }
+
+        string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
+        var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
 
         return (selectedContext, null);
     }
@@ -204,7 +216,7 @@ public partial class KeyService : IKeyService
         return new OkResult();
     }
 
-    public async Task<List<Theme>> GetApiKeyThemes(int apiKeyID)
+    public async Task<List<Theme>> GetApiKeyThemes(Guid apiKeyID)
     {
         var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
@@ -215,7 +227,7 @@ public partial class KeyService : IKeyService
         return themes;
     }
 
-    public async Task<List<AccessKeyPermission>> GetGraphQLAccessKeyPermissions(int graphQLApiKeyId)
+    public async Task<List<AccessKeyPermission>> GetGraphQLAccessKeyPermissions(Guid graphQLApiKeyId)
     {
         var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
@@ -226,7 +238,7 @@ public partial class KeyService : IKeyService
         return accessKeyPermissions;
     }
 
-    private static async Task<(IApiKey?, IActionResult?)> FetchApiKeyAsync(string typePart, int id, DbContext dbContext)
+    private static async Task<(IApiKey?, IActionResult?)> FetchApiKeyAsync(string typePart, Guid id, DbContext dbContext)
     {
         if (dbContext == null)
         {
@@ -375,11 +387,11 @@ public partial class KeyService : IKeyService
         return apiKeys;
     }
 
-    public Task<IActionResult> ToggleApiKey(int apiKeyId, bool isEnabled) => ToggleApiKeyEnabledStatus<ApiKey>(apiKeyId, isEnabled);
+    public Task<IActionResult> ToggleApiKey(Guid apiKeyId, bool isEnabled) => ToggleApiKeyEnabledStatus<ApiKey>(apiKeyId, isEnabled);
 
-    public Task<IActionResult> ToggleGraphQLApiKey(int graphQLApiKeyId, bool isEnabled) => ToggleApiKeyEnabledStatus<GraphQLApiKey>(graphQLApiKeyId, isEnabled);
+    public Task<IActionResult> ToggleGraphQLApiKey(Guid graphQLApiKeyId, bool isEnabled) => ToggleApiKeyEnabledStatus<GraphQLApiKey>(graphQLApiKeyId, isEnabled);
 
-    private async Task<IActionResult> ToggleApiKeyEnabledStatus<T>(int keyId, bool isEnabled) where T : IApiKey
+    private async Task<IActionResult> ToggleApiKeyEnabledStatus<T>(Guid keyId, bool isEnabled) where T : IApiKey
     {
         var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         var apiKey = await dbContext.Set<T>().FirstOrDefaultAsync(a => a.Id == keyId);
