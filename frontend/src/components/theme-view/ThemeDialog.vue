@@ -31,15 +31,6 @@ import { Check, ChevronsUpDown } from 'lucide-vue-next'
 import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 
-// const endpoints = [
-//   '/v1/geodata/fishhealth/licenseelist',
-//   '/v1/geodata/fishhealth/species',
-//   '/v1/geodata/codspawningground/{id}',
-//   '/v1/geodata/fishhealth/locality/diseasezonehistory/{localityNo}/{year}/{week}',
-//   '/v1/geodata/fishhealth/exportrestrictions/{year}/{week}',
-//   '/v1/geodata/fishhealth/exportrestrictions/{localityNo}/{year}/{week}'
-// ]
-
 // TODO: use a shared interface for theme
 const props = defineProps<{
   theme?: {
@@ -108,8 +99,11 @@ const onSubmit = handleSubmit((values) => {
   } else {
     createTheme(values)
   }
+  handleClose()
 })
 
+//TODO: maybe change to props.theme!
+//TODO: should we use watchEffect instead?
 watch(props, () =>
   setValues({
     name: props.theme?.themeName ?? '',
@@ -118,6 +112,12 @@ watch(props, () =>
 )
 
 onMounted(fetchData)
+
+const emit = defineEmits(['close'])
+
+const handleClose = () => {
+  emit('close')
+}
 </script>
 
 <template>

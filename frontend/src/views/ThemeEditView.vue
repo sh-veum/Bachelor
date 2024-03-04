@@ -36,13 +36,16 @@ const handleEdit = (theme: Theme) => {
   editingTheme.value = theme
   isOpen.value = true
 }
+
+const handleClose = () => {
+  isOpen.value = false
+}
 </script>
 
 <template>
-  <!-- TODO: put v-model:open in the ThemeDialog Component so that we can close on submit -->
-  <ThemeDialog :theme="editingTheme" v-model:open="isOpen">
+  <ThemeDialog :theme="editingTheme" @close="handleClose" v-model:open="isOpen">
     <div class="flex">
-      <Button class="ml-auto mr-4">Create Theme</Button>
+      <Button @click="editingTheme = undefined" class="ml-auto mr-4">Create Theme</Button>
     </div>
   </ThemeDialog>
 
