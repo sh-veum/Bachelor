@@ -18,6 +18,8 @@ const props = defineProps<{
   }
 }>()
 
+const emit = defineEmits(['edit', 'delete'])
+
 const isOpen = ref(true)
 
 const deleteTheme = async (theme: {
@@ -33,10 +35,8 @@ const deleteTheme = async (theme: {
 }
 
 const handleDelete = () => {
-  deleteTheme(props.theme)
+  deleteTheme(props.theme).then(() => emit('delete'))
 }
-
-const emit = defineEmits(['edit'])
 
 const handleEdit = () => {
   emit('edit', props.theme)

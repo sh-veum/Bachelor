@@ -27,23 +27,21 @@ const fetchData = async () => {
   }
 }
 
-onMounted(fetchData)
-
-//TODO: should maybe update the themes directly in the frontend instead of refetching them?
-// watch(themes, fetchData)
-
 const handleEdit = (theme: Theme) => {
   editingTheme.value = theme
   isOpen.value = true
 }
 
-const handleClose = () => {
+const handleSubmit = () => {
   isOpen.value = false
+  fetchData()
 }
+
+onMounted(fetchData)
 </script>
 
 <template>
-  <ThemeDialog :theme="editingTheme" @close="handleClose" v-model:open="isOpen">
+  <ThemeDialog :theme="editingTheme" @submit="handleSubmit" v-model:open="isOpen" :isOpen="isOpen">
     <div class="flex">
       <Button @click="editingTheme = undefined" class="ml-auto mr-4">Create Theme</Button>
     </div>
@@ -51,7 +49,13 @@ const handleClose = () => {
 
   <div class="flex justify-center">
     <div class="flex-row w-1/2">
-      <ThemeComponent v-for="theme in themes" :theme="theme" @edit="handleEdit" class="py-4" />
+      <ThemeComponent
+        v-for="theme in themes"
+        :theme="theme"
+        @delete="fetchData"
+        @edit="handleEdit"
+        class="py-4"
+      />
     </div>
   </div>
 </template>

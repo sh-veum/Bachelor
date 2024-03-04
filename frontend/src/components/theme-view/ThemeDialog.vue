@@ -28,17 +28,20 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, watchEffect } from 'vue'
 import axios from 'axios'
 
 // TODO: use a shared interface for theme
 const props = defineProps<{
+  isOpen: boolean
   theme?: {
     id: string
     themeName: string
     accessibleEndpoints: string[]
   }
 }>()
+
+const emit = defineEmits(['submit'])
 
 const endpoints = ref<string[]>([])
 
@@ -95,29 +98,27 @@ const editTheme = async (id: string, values: { name: string; endpoints: string[]
 
 const onSubmit = handleSubmit((values) => {
   if (props.theme) {
-    editTheme(props.theme.id, values)
+    editTheme(props.theme.id, values).then(() => emit('submit'))
   } else {
-    createTheme(values)
+    createTheme(values).then(() => emit('submit'))
   }
-  handleClose()
 })
 
-//TODO: maybe change to props.theme!
-//TODO: should we use watchEffect instead?
-watch(props, () =>
-  setValues({
-    name: props.theme?.themeName ?? '',
-    endpoints: props.theme?.accessibleEndpoints ?? []
-  })
+// Set values when the dialog is opened
+// To ensure that the form is filled out when the dialog is opened
+watch(
+  () => props.isOpen,
+  (isOpen) => {
+    if (isOpen) {
+      setValues({
+        name: props.theme?.themeName ?? '',
+        endpoints: props.theme?.accessibleEndpoints ?? []
+      })
+    }
+  }
 )
 
 onMounted(fetchData)
-
-const emit = defineEmits(['close'])
-
-const handleClose = () => {
-  emit('close')
-}
 </script>
 
 <template>
