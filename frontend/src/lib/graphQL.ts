@@ -6,6 +6,7 @@ import type {
   GraphQLPermission,
   Query
 } from '@/components/interfaces/GraphQLSchema'
+import type { UUID } from 'crypto'
 
 const GET_AVAILABLE_CLASS_TABLES = gql`
   query GetAvailableClassTables {
@@ -41,7 +42,7 @@ const GET_GRAPHQL_KEYS = gql`
 `
 
 const TOGGLE_GRAPHQL_KEY = gql`
-  mutation ToggleApiKey($id: Int!, $isEnabled: Boolean!, $keyType: String!) {
+  mutation ToggleApiKey($id: UUID!, $isEnabled: Boolean!, $keyType: String!) {
     toggleApiKey(toggleApiKeyStatusDto: { id: $id, isEnabled: $isEnabled, keyType: $keyType }) {
       isSuccess
       message
@@ -144,7 +145,7 @@ export async function fetchGraphQLKeys(): Promise<GraphQLKey[]> {
 }
 
 export async function toggleApiKey(
-  id: number,
+  id: UUID,
   isEnabled: boolean,
   keyType: string
 ): Promise<ToggleApiKeyResponse> {
