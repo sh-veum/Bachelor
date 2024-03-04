@@ -5,6 +5,8 @@ import {
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
+  NavigationMenuTrigger,
+  NavigationMenuContent,
   navigationMenuTriggerStyle
 } from './ui/navigation-menu'
 
@@ -23,49 +25,56 @@ const handleLogout = async () => {
     <!-- Left-aligned items -->
     <NavigationMenuList>
       <NavigationMenuItem>
-        <NavigationMenuLink
-          href="/rest"
-          :class="navigationMenuTriggerStyle()"
-          class="bg-zinc-50 hover:bg-zinc-200"
-        >
-          REST API Test
-        </NavigationMenuLink>
-      </NavigationMenuItem>
-      <NavigationMenuItem v-if="isLoggedIn">
-        <NavigationMenuLink
-          href="/rest/create-key"
-          :class="navigationMenuTriggerStyle()"
-          class="bg-zinc-50 hover:bg-zinc-200"
-        >
-          REST API Keys
-        </NavigationMenuLink>
-      </NavigationMenuItem>
-      <NavigationMenuItem v-if="isLoggedIn">
-        <NavigationMenuLink
-          href="/theme-edit"
-          :class="navigationMenuTriggerStyle()"
-          class="bg-zinc-50 hover:bg-zinc-200"
-        >
-          Theme edit
-        </NavigationMenuLink>
+        <NavigationMenuTrigger>REST API</NavigationMenuTrigger>
+        <NavigationMenuContent>
+          <ul class="grid w-max gap-3 p-4 md:grid-cols-1">
+            <NavigationMenuLink
+              href="/rest"
+              :class="navigationMenuTriggerStyle()"
+              class="bg-zinc-50 hover:bg-zinc-200"
+            >
+              REST API Test
+            </NavigationMenuLink>
+            <NavigationMenuLink
+              v-if="isLoggedIn"
+              href="/rest/create-key"
+              :class="navigationMenuTriggerStyle()"
+              class="bg-zinc-50 hover:bg-zinc-200"
+            >
+              REST API Keys
+            </NavigationMenuLink>
+            <NavigationMenuLink
+              v-if="isLoggedIn"
+              href="/theme-edit"
+              :class="navigationMenuTriggerStyle()"
+              class="bg-zinc-50 hover:bg-zinc-200"
+            >
+              Theme edit
+            </NavigationMenuLink>
+          </ul>
+        </NavigationMenuContent>
       </NavigationMenuItem>
       <NavigationMenuItem>
-        <NavigationMenuLink
-          href="/graphql"
-          :class="navigationMenuTriggerStyle()"
-          class="bg-zinc-50 hover:bg-zinc-200"
-        >
-          GraphQL Test
-        </NavigationMenuLink>
-      </NavigationMenuItem>
-      <NavigationMenuItem v-if="isLoggedIn">
-        <NavigationMenuLink
-          href="/graphql/create-key"
-          :class="navigationMenuTriggerStyle()"
-          class="bg-zinc-50 hover:bg-zinc-200"
-        >
-          GraphQL Create Key
-        </NavigationMenuLink>
+        <NavigationMenuTrigger>GraphQL</NavigationMenuTrigger>
+        <NavigationMenuContent>
+          <ul class="grid w-max gap-3 p-4 md:grid-cols-1">
+            <NavigationMenuLink
+              href="/graphql"
+              :class="navigationMenuTriggerStyle()"
+              class="bg-zinc-50 hover:bg-zinc-200"
+            >
+              GraphQL Test
+            </NavigationMenuLink>
+            <NavigationMenuLink
+              v-if="isLoggedIn"
+              href="/graphql/create-key"
+              :class="navigationMenuTriggerStyle()"
+              class="bg-zinc-50 hover:bg-zinc-200"
+            >
+              GraphQL Create Key
+            </NavigationMenuLink>
+          </ul>
+        </NavigationMenuContent>
       </NavigationMenuItem>
     </NavigationMenuList>
     <!-- right side -->
