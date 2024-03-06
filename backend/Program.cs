@@ -10,6 +10,7 @@ using NetBackend.Middleware;
 using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Kafka;
 using NetBackend.Types;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -89,6 +90,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<ICryptoService, CryptoService>();
 builder.Services.AddScoped<IKeyService, KeyService>();
 builder.Services.AddScoped<IApiService, ApiService>();
+builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Netbackend.Models.Dto.Keys;
@@ -5,6 +6,7 @@ using NetBackend.Constants;
 using NetBackend.Models;
 using NetBackend.Models.Dto;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Kafka;
 
 namespace NetBackend.Controllers;
 
@@ -16,17 +18,22 @@ public class AquaCultureListsController : ControllerBase
     private readonly IDbContextService _databaseContextService;
     private readonly IKeyService _keyService;
     private readonly IUserService _userService;
+    private readonly IKafkaProducerService _kafkaProducerService;
+    private readonly IConfiguration configuration;
 
     public AquaCultureListsController(
         ILogger<AquaCultureListsController> logger,
         IDbContextService databaseContextService,
         IKeyService keyService,
-        IUserService userService)
+        IUserService userService,
+        IKafkaProducerService kafkaProducerService,
+        IConfiguration configuration)
     {
         _logger = logger;
         _databaseContextService = databaseContextService;
         _keyService = keyService;
         _userService = userService;
+        _kafkaProducerService = kafkaProducerService;
     }
 
     [HttpPost("fishhealth/licenseelist")]
@@ -103,7 +110,7 @@ public class AquaCultureListsController : ControllerBase
             var allSpecies = await dbContext.Set<Species>()
                 .Select(s => new SpeciesDto
                 {
-                    Name = s.Name,
+                    Name = s.Name!,
                     SuperSecretNumber = s.SuperSecretNumber
                 })
                 .ToListAsync();
@@ -112,6 +119,49 @@ public class AquaCultureListsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while fetching species.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("fishhealth/species/add")]
+    [Authorize]
+    [ProducesResponseType(typeof(SpeciesDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> AddSpecies([FromQuery] string speciesName)
+    {
+        try
+        {
+            DbContext? dbContext = null;
+
+            var (user, error) = await _userService.GetUserAsync(HttpContext);
+            if (error != null) return error;
+
+            dbContext = await _databaseContextService.GetUserDatabaseContext(user);
+
+            if (dbContext is null) return BadRequest("Database context is null.");
+
+            var newSpecies = new Species
+            {
+                Name = speciesName,
+                SuperSecretNumber = 42
+            };
+
+            dbContext.Set<Species>().Add(newSpecies);
+            await dbContext.SaveChangesAsync();
+
+            await _kafkaProducerService.ProduceAsync("species-updates", $"New species added: {speciesName}. Update the database!");
+
+            var newSpeciesDto = new SpeciesDto
+            {
+                Name = newSpecies.Name!,
+                SuperSecretNumber = newSpecies.SuperSecretNumber
+            };
+
+            // Return the newly added species DTO
+            return Ok(newSpeciesDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while adding species.");
             return BadRequest(ex.Message);
         }
     }
