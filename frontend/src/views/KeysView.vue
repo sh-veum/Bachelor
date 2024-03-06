@@ -138,6 +138,24 @@ const fetchThemes = async () => {
   }
 }
 
+
+const toggleKeyEnabledStatus = async (id: string, isEnabled: boolean) => {
+  try {
+    await axios.patch('http://localhost:8088/api/key/toggle-apikey', {
+      id: id,
+      keyType: 'rest',
+      isEnabled: isEnabled
+    })
+    const keyIndex = keys.value.findIndex((key) => key.id === id)
+    if (keyIndex !== -1) {
+      keys.value[keyIndex].isEnabled = isEnabled
+    }
+  
+  } catch (error) {
+    console.error('Failed to toggle key:', error)
+  }
+}
+
 const fetchData = async () => {
   await fetchKeys()
   await fetchThemes()
@@ -255,8 +273,9 @@ onMounted(fetchData)
       <TableRow>
         <TableHead class="w-[200px]">Name</TableHead>
         <TableHead>Themes</TableHead>
-        <TableHead class="w-[200px] text-center">Actions</TableHead>
         <TableHead>Expires in (days)</TableHead>
+        <TableHead class="w-[200px] text-center">Disable</TableHead>
+        <TableHead class="w-[200px] text-center">Delete</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
@@ -268,10 +287,27 @@ onMounted(fetchData)
             {{ key.themes[0].themeName }}
           </div>
         </TableCell>
+        <TableCell>{{ key.expiresIn }}</TableCell>
+        <TableCell>
+            <Button
+              class="bg-zinc-600"
+              v-if="key.isEnabled"
+              @click="toggleKeyEnabledStatus(key.id, false)"
+            >
+              Disable
+            </Button>
+            <Button
+              class="bg-green-600"
+              v-else
+              @click="toggleKeyEnabledStatus(key.id, true)"
+            >
+              Enable
+            </Button>
+          </TableCell>
         <TableCell class="text-center"
           ><Button variant="destructive" @click="deleteAccessKey(key)"> Delete </Button></TableCell
         >
-        <TableCell>{{ key.expiresIn }}</TableCell>
+        
       </TableRow>
     </TableBody>
   </Table>
