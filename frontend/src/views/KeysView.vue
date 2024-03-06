@@ -41,42 +41,25 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import ThemeCollapsible from '@/components/ThemeCollapsible.vue'
-import { ref } from 'vue';
-// Need to replace with actual themes and endpoints
-const themesPlaceholder = [
-  {
-    themeName: 'Aquaculture List',
-    accessibleEndpoints: [
-        "/api/aquaculturelist/fishhealth/species",
-        "/api/aquaculturelist/fishhealth/licenseelist"
-    ]
-  },
-  {
-    themeName: 'Cod Spawning Ground',
-    accessibleEndpoints: [
-        "/api/aquaculturelist/fishhealth/species",
-        "/api/aquaculturelist/fishhealth/licenseelist"
-    ]
-  },
-  {
-    themeName: 'Disease History',
-    accessibleEndpoints: [
-        "/api/aquaculturelist/fishhealth/species",
-        "/api/aquaculturelist/fishhealth/licenseelist"
-    ]
-  },
-  {
-    themeName: 'Export Restrictions',
-    accessibleEndpoints: [
-        "/api/aquaculturelist/fishhealth/species",
-        "/api/aquaculturelist/fishhealth/licenseelist"
-    ]
-  }
-]
+import { ref, onMounted } from 'vue'
 
+interface Theme {
+  id: string
+  themeName: string
+  accessibleEndpoints: string[]
+}
 
+interface Key {
+  id: string
+  keyName: string
+  createdBy: string
+  expiresIn: number
+  isEnabled: boolean
+  themes: Theme[]
+}
 
-const keys = ref([]);
+const keys = ref<Key[]>([])
+const themes = ref<Theme[]>([])
 
 
 const formSchema = toTypedSchema(
@@ -86,7 +69,13 @@ const formSchema = toTypedSchema(
         required_error: 'Please enter a name.'
       })
       .min(1, 'Please enter a name.'),
-    themes: z.array(z.string()).min(1, 'Please select at least one theme.')
+    themes: z.array(
+      z.object({
+        id: z.string(),
+        themeName: z.string(),
+        accessibleEndpoints: z.array(z.string())
+      })
+    ).min(1, 'Please select at least one theme.')
   })
 )
 
@@ -98,30 +87,63 @@ const onSubmit = handleSubmit((values) => {
   createAccessKey(values.name, values.themes);
 })
 
-const createAccessKey = async (keyName: string, themes: string[]) => {
+const createAccessKey = async (keyName: string, themes: Theme[]) => {
   console.log('Creating access key:', keyName, themes)
   
   try {
     const response = await axios.post('http://localhost:8088/api/key/create-accesskey', {
       keyName: keyName,
-      themes: themesPlaceholder,
+      themes: themes,
     });
     console.log('Access key created:',  response.data)
+    keys.value.push(response.data);
   } catch (error) {
     console.error('Error creating access key:', (error as any).response.data);
     // Handle error
   }
 }
 
-const deleteAccessKey = async (encryptedKey: string) => {
-  try {
-    await axios.post('http://localhost:8088/api/key/delete-accesskey', { EncryptedKey: encryptedKey });
-    console.log('Access key deleted');
-  } catch (error) {
-    console.error('Error deleting access key:', (error as any).response.data);
-    // Handle error
-  }
+const deleteAccessKey = async (encryptedKey: Key) => {
+  console.log('Not yet implemented');
+  // try {
+  //   await axios.post('http://localhost:8088/api/key/delete-accesskey', { EncryptedKey: encryptedKey.id });
+  //   console.log('Access key deleted');
+  //   keys.value = keys.value.filter((key) => key.id !== encryptedKey.id);
+  // } 
+  // catch (error) {
+  //   console.error('Error deleting access key:', (error as any).response.data);
+  //   // Handle error
+  // }
 };
+
+
+
+const fetchKeys = async () => {
+  try {
+    //TODO: should the url be more dynamic?
+    const keysResponse = await axios.get('http://localhost:8088/api/key/get-apikeys-by-user?type=rest')
+    keys.value = keysResponse.data
+  } catch (error) {
+    console.error('Failed to fetch data:', error)
+  }
+}
+
+const fetchThemes = async () => {
+  try {
+    //TODO: should the url be more dynamic?
+    const themesResponse = await axios.get('http://localhost:8088/api/key/get-themes-by-user')
+    themes.value = themesResponse.data
+  } catch (error) {
+    console.error('Failed to fetch data:', error)
+  }
+}
+
+const fetchData = async () => {
+  await fetchKeys()
+  await fetchThemes()
+}
+
+onMounted(fetchData)
 
 </script>
 
@@ -139,7 +161,7 @@ const deleteAccessKey = async (encryptedKey: string) => {
             Choose a name for the key and which themes the key can access.
           </DialogDescription>
         </DialogHeader>
-        <form class="space-y-6" @submit.prevent="onSubmit">
+        <form class="space-y-6" @submit="onSubmit">
           <div class="grid gap-4 py-4">
             <FormField v-slot="{ componentField }" name="name">
               <FormItem>
@@ -170,7 +192,7 @@ const deleteAccessKey = async (encryptedKey: string) => {
                         {{
                           values.themes?.length
                             ? values.themes.length === 1
-                              ? themesPlaceholder.find((t) => t.themeName === values.themes?.[0])?.label
+                                ? themes.find((t) => t.id === values.themes?.[0].id)?.themeName
                               : `${values.themes.length} themes selected`
                             : 'Select themes...'
                         }}
@@ -185,17 +207,18 @@ const deleteAccessKey = async (encryptedKey: string) => {
                       <CommandList>
                         <CommandGroup>
                           <CommandItem
-                            v-for="theme in themesPlaceholder"
-                            :key="theme.themeName"
-                            :value="theme.themeName"
+                            v-for="theme in themes"
+                            :key="theme.id"
+                            :value="theme"
                             @select="
                               () => {
-                                const selectedThemes = values.themes?.includes(theme.themeName)
-                                  ? values.themes.filter((t) => t !== theme.themeName)
-                                  : [...(values.themes ?? []), theme.themeName]
+                                const selectedThemes = values.themes?.includes(theme)
+                                  ? values.themes.filter((t) => t.id !== theme.id)
+                                  : [...(values.themes ?? []), theme]
                                 setValues({
                                   themes: selectedThemes
                                 })
+                                console.log('Selected themes:', selectedThemes)
                               }
                             "
                           >
@@ -203,7 +226,7 @@ const deleteAccessKey = async (encryptedKey: string) => {
                               :class="
                                 cn(
                                   'mr-2 h-4 w-4',
-                                  values.themes?.includes(theme.themeName) ? 'opacity-100' : 'opacity-0'
+                                  values.themes?.includes(theme) ? 'opacity-100' : 'opacity-0'
                                 )
                               "
                             />
@@ -233,20 +256,22 @@ const deleteAccessKey = async (encryptedKey: string) => {
         <TableHead class="w-[200px]">Name</TableHead>
         <TableHead>Themes</TableHead>
         <TableHead class="w-[200px] text-center">Actions</TableHead>
+        <TableHead>Expires in (days)</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
       <TableRow v-for="(key, index) in keys" :key="index">
-        <TableCell>{{ key.name }}</TableCell>
+        <TableCell>{{ key.keyName }}</TableCell>
         <TableCell>
           <ThemeCollapsible v-if="key.themes.length > 1" :apiKey="key" />
           <div v-else class="py-3 font-mono text-sm">
-            {{ key.themes[0] }}
+            {{ key.themes[0].themeName }}
           </div>
         </TableCell>
         <TableCell class="text-center"
-          ><Button variant="destructive" @click="deleteAccessKey(key.encryptedKey)"> Delete </Button></TableCell
+          ><Button variant="destructive" @click="deleteAccessKey(key)"> Delete </Button></TableCell
         >
+        <TableCell>{{ key.expiresIn }}</TableCell>
       </TableRow>
     </TableBody>
   </Table>

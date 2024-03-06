@@ -6,12 +6,25 @@ import { ChevronsUpDown } from 'lucide-vue-next'
 import { ChevronsDown } from 'lucide-vue-next'
 import { ChevronsUp } from 'lucide-vue-next'
 
+interface Theme {
+  id: string
+  themeName: string
+  accessibleEndpoints: string[]
+}
+
+interface Key {
+  id: string
+  keyName: string
+  createdBy: string
+  expiresIn: number
+  isEnabled: boolean
+  themes: Theme[]
+}
+
 defineProps<{
-  apiKey: {
-    name: string
-    themes: string[]
-  }
+  apiKey: Key
 }>()
+
 
 const isOpen = ref(false)
 </script>
@@ -29,8 +42,8 @@ const isOpen = ref(false)
       </CollapsibleTrigger>
     </div>
     <CollapsibleContent class="space-y-2">
-      <div v-for="theme in apiKey.themes" class="py-3 font-mono text-sm">
-        {{ theme }}
+      <div v-for="theme in apiKey.themes" :key="theme.id" class="py-3 font-mono text-sm">
+        {{ theme.themeName }}
       </div>
     </CollapsibleContent>
   </Collapsible>
