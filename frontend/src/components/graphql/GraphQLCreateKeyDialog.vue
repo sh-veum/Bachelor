@@ -169,11 +169,15 @@ const closeKeyCreatedDialog = () => {
       <DialogHeader>
         <DialogTitle>Key Created Successfully</DialogTitle>
       </DialogHeader>
-      <p class="mt-4">Your encrypted key is:</p>
-      <p class="font-bold">{{ createdKey }}</p>
-      <p class="text-red-500 font-bold italic">
-        Store the key, you won't be able to see it again when you close the dialog
-      </p>
+      <div class="overflow-auto">
+        <p class="mt-4">Your encrypted key is:</p>
+        <br />
+        <p class="font-bold break-words">{{ createdKey }}</p>
+        <br />
+        <p class="text-red-500 font-bold italic break-words">
+          Store the key, you won't be able to see it again when you close the dialog
+        </p>
+      </div>
       <DialogFooter class="mt-4">
         <Button @click="closeKeyCreatedDialog">Close</Button>
       </DialogFooter>

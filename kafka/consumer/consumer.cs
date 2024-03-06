@@ -20,7 +20,7 @@ class Consumer
         configuration["group.id"] = "kafka-dotnet-getting-started";
         configuration["auto.offset.reset"] = "earliest";
 
-        const string topic = "species-updates";
+        const string topic = "key-updates";
 
         CancellationTokenSource cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) =>

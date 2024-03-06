@@ -1,3 +1,4 @@
+using System.Net.WebSockets;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Services.Interfaces;
 using NetBackend.Services.Kafka;
+using NetBackend.Services.WebSocket;
 using NetBackend.Types;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -91,6 +93,8 @@ builder.Services.AddSingleton<ICryptoService, CryptoService>();
 builder.Services.AddScoped<IKeyService, KeyService>();
 builder.Services.AddScoped<IApiService, ApiService>();
 builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
+builder.Services.AddHostedService<KafkaConsumerService>();
+builder.Services.AddSingleton<IAppWebSocketManager, AppWebSocketManager>();
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>
@@ -111,6 +115,38 @@ builder.Services
     .AddType<AccessKeyPermissionInputType>();
 
 var app = builder.Build();
+
+app.UseWebSockets();
+
+// Define a WebSocket endpoint
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/ws")
+    {
+        if (context.WebSockets.IsWebSocketRequest)
+        {
+            WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
+            var webSocketManager = app.Services.GetService<IAppWebSocketManager>();
+
+            if (webSocketManager != null)
+            {
+                await webSocketManager.HandleWebSocketAsync(webSocket);
+            }
+            else
+            {
+                context.Response.StatusCode = 500;
+            }
+        }
+        else
+        {
+            context.Response.StatusCode = 400;
+        }
+    }
+    else
+    {
+        await next();
+    }
+});
 
 app.UseMiddleware<GraphQLRequestLoggingMiddleware>();
 

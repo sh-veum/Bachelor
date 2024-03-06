@@ -19,15 +19,13 @@ public class AquaCultureListsController : ControllerBase
     private readonly IKeyService _keyService;
     private readonly IUserService _userService;
     private readonly IKafkaProducerService _kafkaProducerService;
-    private readonly IConfiguration configuration;
 
     public AquaCultureListsController(
         ILogger<AquaCultureListsController> logger,
         IDbContextService databaseContextService,
         IKeyService keyService,
         IUserService userService,
-        IKafkaProducerService kafkaProducerService,
-        IConfiguration configuration)
+        IKafkaProducerService kafkaProducerService)
     {
         _logger = logger;
         _databaseContextService = databaseContextService;
