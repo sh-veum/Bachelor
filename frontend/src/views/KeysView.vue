@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import * as z from 'zod'
-import axios from 'axios';
+import axios from 'axios'
 
 import {
   Table,
@@ -60,7 +60,7 @@ interface Key {
 
 const keys = ref<Key[]>([])
 const themes = ref<Theme[]>([])
-
+const isOpen = ref(false)
 
 const formSchema = toTypedSchema(
   z.object({
@@ -69,13 +69,7 @@ const formSchema = toTypedSchema(
         required_error: 'Please enter a name.'
       })
       .min(1, 'Please enter a name.'),
-    themes: z.array(
-      z.object({
-        id: z.string(),
-        themeName: z.string(),
-        accessibleEndpoints: z.array(z.string())
-      })
-    ).min(1, 'Please select at least one theme.')
+    themes: z.array(z.string()).min(1, 'Please select at least one theme.')
   })
 )
 
@@ -84,47 +78,51 @@ const { handleSubmit, setValues, values } = useForm({
 })
 
 const onSubmit = handleSubmit((values) => {
-  createAccessKey(values.name, values.themes);
+  const selectedThemes = themes.value.filter((theme) => values.themes.includes(theme.id))
+  createAccessKey(values.name, selectedThemes).then(() => {
+    fetchKeys()
+  })
+  isOpen.value = false
 })
 
 const createAccessKey = async (keyName: string, themes: Theme[]) => {
   console.log('Creating access key:', keyName, themes)
-  
+
   try {
     const response = await axios.post('http://localhost:8088/api/key/create-accesskey', {
       keyName: keyName,
-      themes: themes,
-    });
-    console.log('Access key created:',  response.data)
-    keys.value.push(response.data);
+      themes: themes
+    })
+    console.log('Access key created:', response.data)
+    // TODO: show the encrypted key to the user
   } catch (error) {
-    console.error('Error creating access key:', (error as any).response.data);
-    // Handle error
+    console.error('Error creating access key:', error)
+    // TODO: handle error
   }
 }
 
 const deleteAccessKey = async (encryptedKey: Key) => {
-  console.log('Not yet implemented');
+  console.log('Not yet implemented')
   // try {
   //   await axios.post('http://localhost:8088/api/key/delete-accesskey', { EncryptedKey: encryptedKey.id });
   //   console.log('Access key deleted');
   //   keys.value = keys.value.filter((key) => key.id !== encryptedKey.id);
-  // } 
+  // }
   // catch (error) {
   //   console.error('Error deleting access key:', (error as any).response.data);
   //   // Handle error
   // }
-};
-
-
+}
 
 const fetchKeys = async () => {
   try {
     //TODO: should the url be more dynamic?
-    const keysResponse = await axios.get('http://localhost:8088/api/key/get-apikeys-by-user?type=rest')
+    const keysResponse = await axios.get(
+      'http://localhost:8088/api/key/get-apikeys-by-user?type=rest'
+    )
     keys.value = keysResponse.data
   } catch (error) {
-    console.error('Failed to fetch data:', error)
+    console.error('Failed to fetch keys:', error)
   }
 }
 
@@ -134,10 +132,9 @@ const fetchThemes = async () => {
     const themesResponse = await axios.get('http://localhost:8088/api/key/get-themes-by-user')
     themes.value = themesResponse.data
   } catch (error) {
-    console.error('Failed to fetch data:', error)
+    console.error('Failed to fetch themes:', error)
   }
 }
-
 
 const toggleKeyEnabledStatus = async (id: string, isEnabled: boolean) => {
   try {
@@ -150,7 +147,6 @@ const toggleKeyEnabledStatus = async (id: string, isEnabled: boolean) => {
     if (keyIndex !== -1) {
       keys.value[keyIndex].isEnabled = isEnabled
     }
-  
   } catch (error) {
     console.error('Failed to toggle key:', error)
   }
@@ -162,13 +158,12 @@ const fetchData = async () => {
 }
 
 onMounted(fetchData)
-
 </script>
 
 <template>
   <div class="flex justify-between">
     <h1 class="text-3xl font-semibold mb-8 px-2">Your API keys</h1>
-    <Dialog>
+    <Dialog v-model:open="isOpen">
       <DialogTrigger as-child>
         <Button class="mr-4"> Create new key </Button>
       </DialogTrigger>
@@ -210,7 +205,7 @@ onMounted(fetchData)
                         {{
                           values.themes?.length
                             ? values.themes.length === 1
-                                ? themes.find((t) => t.id === values.themes?.[0].id)?.themeName
+                              ? themes.find((t) => t.id === values.themes?.[0])?.themeName
                               : `${values.themes.length} themes selected`
                             : 'Select themes...'
                         }}
@@ -227,12 +222,12 @@ onMounted(fetchData)
                           <CommandItem
                             v-for="theme in themes"
                             :key="theme.id"
-                            :value="theme"
+                            :value="theme.id"
                             @select="
                               () => {
-                                const selectedThemes = values.themes?.includes(theme)
-                                  ? values.themes.filter((t) => t.id !== theme.id)
-                                  : [...(values.themes ?? []), theme]
+                                const selectedThemes = values.themes?.includes(theme.id)
+                                  ? values.themes.filter((t) => t !== theme.id)
+                                  : [...(values.themes ?? []), theme.id]
                                 setValues({
                                   themes: selectedThemes
                                 })
@@ -244,7 +239,7 @@ onMounted(fetchData)
                               :class="
                                 cn(
                                   'mr-2 h-4 w-4',
-                                  values.themes?.includes(theme) ? 'opacity-100' : 'opacity-0'
+                                  values.themes?.includes(theme.id) ? 'opacity-100' : 'opacity-0'
                                 )
                               "
                             />
@@ -279,7 +274,7 @@ onMounted(fetchData)
       </TableRow>
     </TableHeader>
     <TableBody>
-      <TableRow v-for="(key, index) in keys" :key="index">
+      <TableRow v-for="key in keys" :key="key.id">
         <TableCell>{{ key.keyName }}</TableCell>
         <TableCell>
           <ThemeCollapsible v-if="key.themes.length > 1" :apiKey="key" />
@@ -288,26 +283,21 @@ onMounted(fetchData)
           </div>
         </TableCell>
         <TableCell>{{ key.expiresIn }}</TableCell>
-        <TableCell>
-            <Button
-              class="bg-zinc-600"
-              v-if="key.isEnabled"
-              @click="toggleKeyEnabledStatus(key.id, false)"
-            >
-              Disable
-            </Button>
-            <Button
-              class="bg-green-600"
-              v-else
-              @click="toggleKeyEnabledStatus(key.id, true)"
-            >
-              Enable
-            </Button>
-          </TableCell>
+        <TableCell class="text-center">
+          <Button
+            class="bg-zinc-600"
+            v-if="key.isEnabled"
+            @click="toggleKeyEnabledStatus(key.id, false)"
+          >
+            Disable
+          </Button>
+          <Button class="bg-green-600" v-else @click="toggleKeyEnabledStatus(key.id, true)">
+            Enable
+          </Button>
+        </TableCell>
         <TableCell class="text-center"
           ><Button variant="destructive" @click="deleteAccessKey(key)"> Delete </Button></TableCell
         >
-        
       </TableRow>
     </TableBody>
   </Table>
