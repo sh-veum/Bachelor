@@ -63,37 +63,36 @@ export function useAuth() {
   }
 
   const refreshUserCredentials = async () => {
-    const hasRefreshed = localStorage.getItem('hasRefreshedTokens')
+    // const hasRefreshed = localStorage.getItem('hasRefreshedTokens')
 
-    if (!hasRefreshed) {
-      console.log('refreshing user credentials')
-      const localRefreshToken = localStorage.getItem('refreshToken')
-      if (localRefreshToken) {
-        try {
-          const response = await axios.post('http://localhost:8088/refresh', {
-            refreshToken: localRefreshToken
-          })
-          if (response.status === 200) {
-            authToken.value = response.data.accessToken
-            refreshToken.value = response.data.refreshToken
+    // if (!hasRefreshed) {}
+    console.log('refreshing user credentials')
+    const localRefreshToken = localStorage.getItem('refreshToken')
+    if (localRefreshToken) {
+      try {
+        const response = await axios.post('http://localhost:8088/refresh', {
+          refreshToken: localRefreshToken
+        })
+        if (response.status === 200) {
+          authToken.value = response.data.accessToken
+          refreshToken.value = response.data.refreshToken
 
-            localStorage.setItem('authToken', authToken.value ?? '')
-            localStorage.setItem('refreshToken', refreshToken.value ?? '')
+          localStorage.setItem('authToken', authToken.value ?? '')
+          localStorage.setItem('refreshToken', refreshToken.value ?? '')
 
-            // localStorage.setItem('hasRefreshedTokens', 'true')
+          // localStorage.setItem('hasRefreshedTokens', 'true')
 
-            await fetchUserInfo()
-          }
-        } catch (error) {
-          console.error('Error refreshing token', error)
-          await logout()
+          await fetchUserInfo()
         }
+      } catch (error) {
+        console.error('Error refreshing token', error)
+        await logout()
       }
     }
 
     // Only refresh on page load
     // TODO: Get message from backend that token is expired
-    localStorage.setItem('hasRefreshedTokens', 'true')
+    // localStorage.setItem('hasRefreshedTokens', 'true')
   }
 
   return {

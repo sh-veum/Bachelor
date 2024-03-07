@@ -44,7 +44,7 @@ const authLink = new ApolloLink((operation, forward) => {
 const cache = new InMemoryCache()
 
 const apolloClient = new ApolloClient({
-  link: authLink.concat(httpLink), // Chain the links
+  link: authLink.concat(httpLink),
   cache
 })
 
