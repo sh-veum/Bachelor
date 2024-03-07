@@ -9,6 +9,7 @@ export function useAuth() {
   const isLoggedIn = computed(() => authToken.value !== null)
   const isRegistered = ref(false)
   const isAdmin = computed(() => userRole.value === 'ADMIN')
+  const registrationErrors = ref({})
 
   const login = async (email: string, password: string) => {
     const response = await axios.post('http://localhost:8088/login', { email, password })
@@ -36,12 +37,18 @@ export function useAuth() {
   }
 
   const register = async (email: string, password: string) => {
-    // Example login logic
-    const response = await axios.post('http://localhost:8088/register', { email, password })
-    if (response.status === 200) {
-      isRegistered.value = true
-    } else {
-      isRegistered.value = false
+    try {
+      const response = await axios.post('http://localhost:8088/register', { email, password })
+      if (response.status === 200) {
+        isRegistered.value = true
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        isRegistered.value = false
+        registrationErrors.value = error.response.data.errors || {}
+      } else {
+        registrationErrors.value = { UnexpectedError: ['An unexpected error occurred.'] }
+      }
     }
   }
 
@@ -103,6 +110,7 @@ export function useAuth() {
     isLoggedIn,
     isRegistered,
     isAdmin,
-    refreshUserCredentials
+    refreshUserCredentials,
+    registrationErrors
   }
 }

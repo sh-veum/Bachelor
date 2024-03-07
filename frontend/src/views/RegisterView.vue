@@ -8,7 +8,7 @@ const email = ref('')
 const password = ref('')
 const attemptedRegister = ref(false)
 
-const { register, isRegistered } = useAuth()
+const { register, isRegistered, registrationErrors } = useAuth()
 
 const handleSubmit = async () => {
   attemptedRegister.value = true
@@ -38,6 +38,13 @@ const handleSubmit = async () => {
         </div>
         <div v-if="attemptedRegister && !isRegistered" class="px-5 pb-2">
           <p class="text-red-500 font-bold">Failed registration</p>
+          <ul>
+            <li v-for="(errorMessages, index) in Object.values(registrationErrors)" :key="index">
+              <p v-for="message in errorMessages" :key="message" class="text-red-500">
+                - {{ message }}
+              </p>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
