@@ -27,11 +27,11 @@ public partial class KeyService : IKeyService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<string> EncryptAndStoreAccessKey(IApiKey apiKey, UserModel user)
+    public async Task<string> EncryptAndStoreAccessKey(IApiKey iApiKey, UserModel user)
     {
         // var dbContext = await _dbContextService.GetUserDatabaseContext(user);
         var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-        var dataToEncrypt = $"Id:{apiKey.Id},Type:{apiKey.GetType().Name}";
+        var dataToEncrypt = $"Id:{iApiKey.Id},Type:{iApiKey.GetType().Name}";
         var encryptedKey = _cryptoService.Encrypt(dataToEncrypt, SecretConstants.SecretKey);
 
         var accessKey = new AccessKey
@@ -39,18 +39,15 @@ public partial class KeyService : IKeyService
             KeyHash = ComputeHash.ComputeSha256Hash(encryptedKey),
         };
 
-        if (apiKey is ApiKey api)
-        {
-            accessKey.ApiKeyId = api.Id;
-            accessKey.ApiKey = api;
-        }
-        else if (apiKey is GraphQLApiKey gqlApi)
-        {
-            accessKey.GraphQLApiKeyId = gqlApi.Id;
-            accessKey.GraphQLApiKey = gqlApi;
-        }
-
+        // Add the access key to the database
         dbContext.Set<AccessKey>().Add(accessKey);
+        await dbContext.SaveChangesAsync();
+
+        // Update the IApiKey (ApiKey or GraphQLApiKey) with the access key
+        iApiKey.AccessKeyId = accessKey.Id;
+        iApiKey.AccessKey = accessKey;
+
+        dbContext.Entry(iApiKey).State = EntityState.Modified;
         await dbContext.SaveChangesAsync();
 
         return encryptedKey;

@@ -47,16 +47,10 @@ public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
             .WithOne(k => k.User)
             .HasForeignKey(k => k.UserId);
 
-        modelBuilder.Entity<ApiKey>()
-            .HasOne(a => a.AccessKey)
-            .WithOne(ak => ak.ApiKey)
-            .HasForeignKey<AccessKey>(ak => ak.ApiKeyId)
-            .IsRequired(false);
-
-        modelBuilder.Entity<GraphQLApiKey>()
-            .HasOne(a => a.AccessKey)
-            .WithOne(ak => ak.GraphQLApiKey)
-            .HasForeignKey<AccessKey>(ak => ak.GraphQLApiKeyId)
+        modelBuilder.Entity<AccessKey>()
+            .HasOne(a => a.IApiKey)
+            .WithOne(ak => ak.AccessKey)
+            .HasForeignKey<IApiKey>(ak => ak.AccessKeyId)
             .IsRequired(false);
     }
 }

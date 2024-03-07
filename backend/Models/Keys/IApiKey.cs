@@ -13,6 +13,8 @@ public class IApiKey
     public int ExpiresIn { get; set; }
     public required bool IsEnabled { get; set; }
 
+    [ForeignKey("AccessKey")]
+    public Guid? AccessKeyId { get; set; }
     public AccessKey? AccessKey { get; set; }
 
     [ForeignKey("User")]
