@@ -25,22 +25,22 @@ defineProps<{
   apiKey: Key
 }>()
 
-
 const isOpen = ref(false)
 </script>
 
 <template>
   <Collapsible v-model:open="isOpen" class="space-y-2">
-    <div class="flex items-center space-x-4">
-      <h4 class="text-sm py-3">{{ apiKey.themes.length }} themes</h4>
-      <CollapsibleTrigger as-child>
-        <Button variant="ghost" size="sm" class="w-9 p-0">
+    <CollapsibleTrigger as-child>
+      <Button variant="ghost" size="sm" class="w-full p-0 hover:bg-zinc-50">
+        <div class="flex items-center space-x-4 justify-between w-full">
+          <h4 class="text-sm py-3">{{ apiKey.themes.length }} themes</h4>
           <ChevronsDown v-if="isOpen == false" class="h-4 w-4" />
           <ChevronsUp v-if="isOpen == true" class="h-4 w-4" />
           <span class="sr-only">Toggle</span>
-        </Button>
-      </CollapsibleTrigger>
-    </div>
+        </div>
+      </Button>
+    </CollapsibleTrigger>
+
     <CollapsibleContent class="space-y-2">
       <div v-for="theme in apiKey.themes" :key="theme.id" class="py-3 font-mono text-sm">
         {{ theme.themeName }}
