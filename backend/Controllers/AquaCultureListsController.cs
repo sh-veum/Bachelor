@@ -112,6 +112,10 @@ public class AquaCultureListsController : ControllerBase
                     SuperSecretNumber = s.SuperSecretNumber
                 })
                 .ToListAsync();
+
+            // Just to easily test if kafka works
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.SpeciesTopic, "Got Species");
+
             return Ok(allSpecies);
         }
         catch (Exception ex)
@@ -146,7 +150,7 @@ public class AquaCultureListsController : ControllerBase
             dbContext.Set<Species>().Add(newSpecies);
             await dbContext.SaveChangesAsync();
 
-            await _kafkaProducerService.ProduceAsync("species-updates", $"New species added: {speciesName}. Update the database!");
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.SpeciesTopic, $"New species added: {speciesName}. Update the database!");
 
             var newSpeciesDto = new SpeciesDto
             {

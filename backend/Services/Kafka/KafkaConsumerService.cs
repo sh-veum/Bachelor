@@ -1,45 +1,60 @@
+using System.Text.Json;
 using Confluent.Kafka;
+using NetBackend.Constants;
 using NetBackend.Services.WebSocket;
 
 namespace NetBackend.Services.Kafka;
 
 public class KafkaConsumerService : BackgroundService
 {
-    private readonly string _topic = "key-updates";
+    private readonly List<string> _topics;
     private readonly IConsumer<Ignore, string> _consumer;
     private readonly ILogger<KafkaConsumerService> _logger;
     private readonly IAppWebSocketManager _webSocketManager;
 
     public KafkaConsumerService(IConfiguration configuration, ILogger<KafkaConsumerService> logger, IAppWebSocketManager webSocketManager)
     {
+        _topics = [
+            KafkaConstants.SpeciesTopic,
+            KafkaConstants.OrgTopic,
+            KafkaConstants.RestKeyTopic,
+            KafkaConstants.GraphQLKeyTopic
+            ];
+        _logger = logger;
+        _webSocketManager = webSocketManager;
+
         var consumerConfig = new ConsumerConfig
         {
             BootstrapServers = configuration["Kafka:BootstrapServers"],
-            GroupId = $"{_topic}-group",
+            GroupId = configuration["Kafka:GroupId"],
             AutoOffsetReset = AutoOffsetReset.Earliest
         };
         _consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build();
-        _logger = logger;
-        _webSocketManager = webSocketManager;
+
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _consumer.Subscribe(_topic);
-        _logger.LogInformation($"Subscribed to {_topic}");
+        _consumer.Subscribe(_topics);
+        _logger.LogInformation($"Subscribed to topics: {string.Join(", ", _topics)}");
 
-        // Run the consuming loop in a separate task
         Task.Run(async () =>
         {
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    var consumeResult = _consumer.Consume(100);
+                    var consumeResult = _consumer.Consume(stoppingToken);
                     if (consumeResult != null && !consumeResult.IsPartitionEOF)
                     {
-                        _logger.LogInformation($"Message received: {consumeResult.Message.Value}");
-                        await _webSocketManager.SendMessageAsync(consumeResult.Message.Value);
+                        var webSocketMessage = new
+                        {
+                            topic = consumeResult.Topic,
+                            message = consumeResult.Message.Value
+                        };
+                        var serializedMessage = JsonSerializer.Serialize(webSocketMessage);
+                        await _webSocketManager.SendMessageAsync(serializedMessage);
+                        _logger.LogInformation($"WebSocket message sent: {serializedMessage}");
                     }
                 }
                 catch (OperationCanceledException)
@@ -52,7 +67,6 @@ public class KafkaConsumerService : BackgroundService
                     _logger.LogError($"Error consuming Kafka message: {ex.Message}");
                 }
             }
-
             _consumer.Close();
         }, stoppingToken);
 

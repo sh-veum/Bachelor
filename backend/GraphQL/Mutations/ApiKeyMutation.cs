@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Netbackend.Models.Dto.Keys;
+using NetBackend.Constants;
 using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
 using NetBackend.Services.Interfaces;
@@ -49,7 +50,7 @@ public class ApiKeyMutation
         // Encrypt and store access key
         var encryptedKey = await keyService.EncryptAndStoreAccessKey(graphQLApiKey, user);
 
-        await _kafkaProducerService.ProduceAsync("key-updates", $"New key added: {graphQLApiKey.KeyName} Update the database!");
+        await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic, $"New key added: {graphQLApiKey.KeyName} Update the database!");
 
         return new AccessKeyDto
         {

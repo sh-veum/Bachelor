@@ -58,7 +58,10 @@ const deleteKey = async () => {
 const handleWebSocketMessage = (event: MessageEvent) => {
   const message = JSON.parse(event.data)
   console.log('Received message:', message)
-  receivedMessage.value = message
+
+  if (message.topic === 'graphql-key-updates') {
+    receivedMessage.value = message.message
+  }
 }
 
 const setupWebSocket = () => {

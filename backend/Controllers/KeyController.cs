@@ -18,20 +18,16 @@ namespace NetBackend.Controllers;
 public class KeyController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
-    private readonly UserManager<UserModel> _userManager;
     private readonly IKeyService _keyService;
     private readonly IApiService _apiService;
-    private readonly IDbContextService _dbContextService;
     private readonly IUserService _userService;
     private readonly IKafkaProducerService _kafkaProducerService;
 
-    public KeyController(ILogger<UserController> logger, UserManager<UserModel> userManager, IKeyService keyService, IApiService apiService, IDbContextService dbContextService, IUserService userService, IKafkaProducerService kafkaProducerService)
+    public KeyController(ILogger<UserController> logger, IKeyService keyService, IApiService apiService, IUserService userService, IKafkaProducerService kafkaProducerService)
     {
         _logger = logger;
-        _userManager = userManager;
         _keyService = keyService;
         _apiService = apiService;
-        _dbContextService = dbContextService;
         _userService = userService;
         _kafkaProducerService = kafkaProducerService;
     }
@@ -67,6 +63,8 @@ public class KeyController : ControllerBase
             {
                 EncryptedKey = accesKey ?? ""
             };
+
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic, "New Rest Access Key Created");
 
             return Ok(accesKeyDto);
         }
@@ -182,6 +180,8 @@ public class KeyController : ControllerBase
             {
                 return BadRequest("Failed to delete API key.");
             }
+
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic, "Rest Access Key Deleted");
 
             return Ok("API key deleted successfully.");
         }

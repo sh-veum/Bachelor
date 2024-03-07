@@ -42,7 +42,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import ThemeCollapsible from '@/components/ThemeCollapsible.vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import Label from '@/components/ui/label/Label.vue'
 
 interface Theme {
@@ -65,6 +65,10 @@ const themes = ref<Theme[]>([])
 const createIsOpen = ref(false)
 const copyIsOpen = ref(false)
 const encryptedKey = ref('something')
+
+// WebSocket
+const webSocket = ref<WebSocket | null>(null)
+const receivedMessage = ref(null)
 
 const formSchema = toTypedSchema(
   z.object({
@@ -167,7 +171,37 @@ const copyLink = () => {
   navigator.clipboard.writeText(encryptedKey.value)
 }
 
-onMounted(fetchData)
+const handleWebSocketMessage = (event: MessageEvent) => {
+  const message = JSON.parse(event.data)
+  console.log('Received message:', message)
+
+  if (message.topic === 'rest-key-updates') {
+    fetchData()
+  }
+}
+
+const setupWebSocket = () => {
+  webSocket.value = new WebSocket('ws://localhost:8088/ws')
+
+  webSocket.value.onmessage = handleWebSocketMessage
+  webSocket.value.onopen = () => console.log('WebSocket connected')
+  webSocket.value.onclose = () => console.log('WebSocket disconnected')
+}
+
+const cleanupWebSocket = () => {
+  if (webSocket.value) {
+    webSocket.value.close()
+  }
+}
+
+onMounted(() => {
+  setupWebSocket()
+  fetchData()
+})
+
+onUnmounted(() => {
+  cleanupWebSocket()
+})
 </script>
 
 <template>

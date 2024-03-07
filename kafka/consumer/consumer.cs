@@ -1,16 +1,17 @@
 using Confluent.Kafka;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Microsoft.Extensions.Configuration;
 
 class Consumer
 {
-
     static void Main(string[] args)
     {
         if (args.Length != 1)
         {
             Console.WriteLine("Please provide the configuration file path as a command line argument");
+            return;
         }
 
         IConfiguration configuration = new ConfigurationBuilder()
@@ -20,7 +21,7 @@ class Consumer
         configuration["group.id"] = "kafka-dotnet-getting-started";
         configuration["auto.offset.reset"] = "earliest";
 
-        const string topic = "key-updates";
+        List<string> topics = new List<string> { "species-updates", "org-updates", "rest-key-updates", "graphql-key-updates" };
 
         CancellationTokenSource cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) =>
@@ -29,16 +30,16 @@ class Consumer
             cts.Cancel();
         };
 
-        using (var consumer = new ConsumerBuilder<string, string>(
-            configuration.AsEnumerable()).Build())
+        using (var consumer = new ConsumerBuilder<string, string>(configuration.AsEnumerable()).Build())
         {
-            consumer.Subscribe(topic);
+            consumer.Subscribe(topics);
+
             try
             {
                 while (true)
                 {
                     var cr = consumer.Consume(cts.Token);
-                    Console.WriteLine($"Consumed event from topic {topic}: key = {cr.Message.Key,-10} value = {cr.Message.Value}");
+                    Console.WriteLine($"Consumed event from topic {cr.Topic}: key = {cr.Message.Key,-10} value = {cr.Message.Value}");
                 }
             }
             catch (OperationCanceledException)
