@@ -55,6 +55,7 @@ onMounted(fetchData)
         @delete="fetchData"
         @edit="handleEdit"
         class="py-4"
+        :key="theme.id"
       />
     </div>
   </div>

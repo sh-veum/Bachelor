@@ -69,6 +69,7 @@ const handleEdit = () => {
     <CollapsibleContent class="space-y-2">
       <div
         v-for="endpoint in theme.accessibleEndpoints"
+        :key="endpoint"
         class="rounded-md border px-4 py-3 font-mono text-sm break-all"
       >
         {{ endpoint }}
