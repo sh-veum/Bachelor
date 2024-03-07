@@ -17,6 +17,7 @@ import {
 
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -28,7 +29,7 @@ import { Input } from '@/components/ui/input'
 
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 
-import { Check, ChevronsUpDown } from 'lucide-vue-next'
+import { Check, ChevronsUpDown, Copy } from 'lucide-vue-next'
 
 import {
   Command,
@@ -42,6 +43,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils'
 import ThemeCollapsible from '@/components/ThemeCollapsible.vue'
 import { ref, onMounted } from 'vue'
+import Label from '@/components/ui/label/Label.vue'
 
 interface Theme {
   id: string
@@ -60,7 +62,9 @@ interface Key {
 
 const keys = ref<Key[]>([])
 const themes = ref<Theme[]>([])
-const isOpen = ref(false)
+const createIsOpen = ref(false)
+const copyIsOpen = ref(false)
+const encryptedKey = ref('something')
 
 const formSchema = toTypedSchema(
   z.object({
@@ -82,7 +86,7 @@ const onSubmit = handleSubmit((values) => {
   createAccessKey(values.name, selectedThemes).then(() => {
     fetchKeys()
   })
-  isOpen.value = false
+  createIsOpen.value = false
 })
 
 const createAccessKey = async (keyName: string, themes: Theme[]) => {
@@ -94,7 +98,9 @@ const createAccessKey = async (keyName: string, themes: Theme[]) => {
       themes: themes
     })
     console.log('Access key created:', response.data)
+    encryptedKey.value = response.data.encryptedKey
     // TODO: show the encrypted key to the user
+    copyIsOpen.value = true
   } catch (error) {
     console.error('Error creating access key:', error)
     // TODO: handle error
@@ -157,13 +163,56 @@ const fetchData = async () => {
   await fetchThemes()
 }
 
+const copyLink = () => {
+  navigator.clipboard.writeText(encryptedKey.value)
+}
+
 onMounted(fetchData)
 </script>
 
 <template>
+  <Dialog v-model:open="copyIsOpen">
+    <DialogTrigger as-child>
+      <Button variant="outline"> Test key copy </Button>
+    </DialogTrigger>
+    <!-- Prevent user from closing dialog by clicking outside of it -->
+    <DialogContent
+      @interact-outside="
+        (event) => {
+          return event.preventDefault()
+        }
+      "
+      class="sm:max-w-md"
+    >
+      <DialogHeader>
+        <DialogTitle>Key created successfully</DialogTitle>
+        <DialogDescription class="text-red-500 font-bold italic">
+          Store the key, you won't be able to see it again when you close the dialog
+        </DialogDescription>
+      </DialogHeader>
+      <div class="flex items-center space-x-2">
+        <div class="grid flex-1 gap-2">
+          <Label for="link" class="sr-only"> Link </Label>
+          <Input id="link" :model-value="encryptedKey" readonly />
+        </div>
+        <Button type="submit" size="sm" class="px-3">
+          <!-- TODO: change copy icon to green checkmark and use a popover with "key copied" text ? -->
+          <!-- https://github.com/docker/awesome-compose/blob/master/official-documentation-samples/django/README.md -->
+          <span class="sr-only">Copy</span>
+          <Copy @click="copyLink" class="w-4 h-4" />
+        </Button>
+      </div>
+      <DialogFooter class="sm:justify-start">
+        <DialogClose as-child>
+          <Button type="button" variant="secondary"> Close </Button>
+        </DialogClose>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+
   <div class="flex justify-between">
     <h1 class="text-3xl font-semibold mb-8 px-2">Your API keys</h1>
-    <Dialog v-model:open="isOpen">
+    <Dialog v-model:open="createIsOpen">
       <DialogTrigger as-child>
         <Button class="mr-4"> Create new key </Button>
       </DialogTrigger>
