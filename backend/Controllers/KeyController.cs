@@ -1,15 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Netbackend.Models.Dto.Keys;
-using NetBackend.Models.User;
 using NetBackend.Constants;
 using NetBackend.Models.Keys;
 using NetBackend.Services.Interfaces;
 using NetBackend.Models.Dto.Keys;
 using NetBackend.Tools;
 using NetBackend.Models.Dto;
-using NetBackend.Services.Kafka;
+using NetBackend.Services.Keys;
+using NetBackend.Services.Interfaces.Keys;
 
 namespace NetBackend.Controllers;
 
@@ -18,16 +17,18 @@ namespace NetBackend.Controllers;
 public class KeyController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
-    private readonly IKeyService _keyService;
-    private readonly IApiService _apiService;
+    private readonly IRestKeyService _restKeyService;
+    private readonly IGraphQLKeyService _graphQlKeyService;
+    private readonly IBaseKeyService _baseKeyService;
     private readonly IUserService _userService;
     private readonly IKafkaProducerService _kafkaProducerService;
 
-    public KeyController(ILogger<UserController> logger, IKeyService keyService, IApiService apiService, IUserService userService, IKafkaProducerService kafkaProducerService)
+    public KeyController(ILogger<UserController> logger, IRestKeyService restKeyService, IGraphQLKeyService graphQLKeyService, IBaseKeyService baseKeyService, IUserService userService, IKafkaProducerService kafkaProducerService)
     {
         _logger = logger;
-        _keyService = keyService;
-        _apiService = apiService;
+        _restKeyService = restKeyService;
+        _graphQlKeyService = graphQLKeyService;
+        _baseKeyService = baseKeyService;
         _userService = userService;
         _kafkaProducerService = kafkaProducerService;
     }
@@ -48,16 +49,16 @@ public class KeyController : ControllerBase
                 return BadRequest("Endpoints are null.");
             }
 
-            var apiKey = await _apiService.CreateRESTApiKey(user, createAccessKeyDto.KeyName, createAccessKeyDto.Themes);
+            var restApiKey = await _restKeyService.CreateRESTApiKey(user, createAccessKeyDto.KeyName, createAccessKeyDto.Themes);
 
-            if (apiKey == null)
+            if (restApiKey == null)
             {
-                _logger.LogError("Failed to create API key for user: {UserId}", user.Id);
-                return BadRequest("Failed to create API key.");
+                _logger.LogError("Failed to create REST API key for user: {UserId}", user.Id);
+                return BadRequest("Failed to create REST API key.");
             }
 
             // Encrypt and store access key
-            var accesKey = await _keyService.EncryptAndStoreAccessKey(apiKey, user);
+            var accesKey = await _baseKeyService.EncryptAndStoreAccessKey(restApiKey, user);
 
             var accesKeyDto = new AccessKeyDto
             {
@@ -77,7 +78,7 @@ public class KeyController : ControllerBase
 
     [HttpPost("decrypt-rest-accesskey")]
     [Authorize(Roles = RoleConstants.AdminRole)]
-    [ProducesResponseType(typeof(ApiKeyDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(RestApiKeyDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> DecryptAccessKey([FromBody] AccessKeyDto accessKeyDto)
     {
         try
@@ -85,15 +86,15 @@ public class KeyController : ControllerBase
             var userResult = await _userService.GetUserAsync(HttpContext);
             var user = userResult.user;
 
-            var apiKey = await DecryptAndValidateApiKey(accessKeyDto.EncryptedKey, user.Id);
+            var restApiKey = await DecryptAndValidateApiKey(accessKeyDto.EncryptedKey, user.Id);
 
-            var expiresInDays = CalculateExpiresInDays(apiKey);
+            var expiresInDays = CalculateExpiresInDays(restApiKey);
 
-            var themes = await _keyService.GetApiKeyThemes(apiKey.Id);
+            var themes = await _restKeyService.GetRESTApiKeyThemes(restApiKey.Id);
 
-            if (apiKey is ApiKey api)
+            if (restApiKey is RestApiKey api)
             {
-                var apiKeyDto = new ApiKeyDto
+                var restApiKeyDto = new RestApiKeyDto
                 {
                     Id = api.Id,
                     KeyName = api.KeyName ?? "",
@@ -107,10 +108,10 @@ public class KeyController : ControllerBase
                     IsEnabled = api.IsEnabled
                 };
 
-                return Ok(apiKeyDto);
+                return Ok(restApiKeyDto);
             }
 
-            return NotFound("API key type mismatch.");
+            return NotFound("REST API key type mismatch.");
         }
         catch (Exception ex)
         {
@@ -134,7 +135,7 @@ public class KeyController : ControllerBase
 
             var expiresInDays = CalculateExpiresInDays(apiKey);
 
-            var permissions = await _keyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
+            var permissions = await _graphQlKeyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
 
             if (apiKey is GraphQLApiKey api)
             {
@@ -175,7 +176,7 @@ public class KeyController : ControllerBase
             var userResult = await _userService.GetUserAsync(HttpContext);
             var user = userResult.user;
 
-            var result = await _keyService.RemoveAccessKey(accessKeyDto.EncryptedKey);
+            var result = await _baseKeyService.RemoveAccessKey(accessKeyDto.EncryptedKey);
             if (result == null)
             {
                 return BadRequest("Failed to delete API key.");
@@ -192,66 +193,21 @@ public class KeyController : ControllerBase
         }
     }
 
-    // TODO: Remove since themes are used instead
-    [HttpPost("accesskey-rest-endpoints")]
-    [ProducesResponseType(typeof(List<ApiEndpointSchema>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetEndpointInfo([FromBody] AccessKeyDto accessKeyDto)
-    {
-        try
-        {
-            var (apiKey, errorResult) = await _keyService.DecryptAccessKey(accessKeyDto.EncryptedKey);
-            if (errorResult != null)
-            {
-                return errorResult;
-            }
-
-            if (apiKey is ApiKey api)
-            {
-                var themes = await _keyService.GetApiKeyThemes(apiKey.Id);
-                var allAccessibleEndpoints = themes.SelectMany(t => t.AccessibleEndpoints).ToList();
-
-                var validEndpoints = ApiConstants.DefaultApiEndpoints
-                    .Where(endpoint => allAccessibleEndpoints.Contains(endpoint.Path))
-                    .Select(endpoint => new
-                    {
-                        endpoint.Path,
-                        endpoint.Method,
-                        ExpectedBody = endpoint.ExpectedBodyType != null ? DtoTools.GetDtoStructure(endpoint.ExpectedBodyType) : null
-                    })
-                    .ToList<object>();
-
-                if (validEndpoints.Count == 0)
-                {
-                    return NotFound("No valid endpoints found for the provided access key.");
-                }
-
-                return Ok(validEndpoints);
-            }
-
-            return NotFound("API key type mismatch.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while retrieving endpoint information.");
-            return BadRequest(ex.Message);
-        }
-    }
-
     [HttpPost("accesskey-themes")]
-    [ProducesResponseType(typeof(List<ApiThemeDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<RestApiThemeDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetThemeInfo([FromBody] AccessKeyDto accessKeyDto)
     {
         try
         {
-            var (apiKey, errorResult) = await _keyService.DecryptAccessKey(accessKeyDto.EncryptedKey);
+            var (restApiKey, errorResult) = await _baseKeyService.DecryptAccessKey(accessKeyDto.EncryptedKey);
             if (errorResult != null)
             {
                 return errorResult;
             }
 
-            if (apiKey is ApiKey api)
+            if (restApiKey is RestApiKey api)
             {
-                var themes = await _keyService.GetApiKeyThemes(apiKey.Id);
+                var themes = await _restKeyService.GetRESTApiKeyThemes(restApiKey.Id);
 
                 if (themes.Count == 0)
                 {
@@ -274,7 +230,7 @@ public class KeyController : ControllerBase
                 return Ok(validThemes);
             }
 
-            return NotFound("API key type mismatch.");
+            return NotFound("REST API key type mismatch.");
         }
         catch (Exception ex)
         {
@@ -289,15 +245,15 @@ public class KeyController : ControllerBase
     {
         try
         {
-            var (apiKey, errorResult) = await _keyService.DecryptAccessKey(accessKeyDto.EncryptedKey);
+            var (graphQLApiKey, errorResult) = await _baseKeyService.DecryptAccessKey(accessKeyDto.EncryptedKey);
             if (errorResult != null)
             {
                 return errorResult;
             }
 
-            if (apiKey is GraphQLApiKey api)
+            if (graphQLApiKey is GraphQLApiKey api)
             {
-                var permissions = await _keyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
+                var permissions = await _graphQlKeyService.GetGraphQLAccessKeyPermissions(graphQLApiKey.Id);
 
                 var validPermissions = permissions
                     .Where(p => GraphQLConstants.AvailableQueries
@@ -311,7 +267,7 @@ public class KeyController : ControllerBase
                 return Ok(validPermissions);
             }
 
-            return NotFound("API key type mismatch.");
+            return NotFound("GraphQL API key type mismatch.");
         }
         catch (Exception ex)
         {
@@ -322,7 +278,7 @@ public class KeyController : ControllerBase
 
     private async Task<IApiKey> DecryptAndValidateApiKey(string encryptedKey, string userId)
     {
-        var (apiKey, errorResult) = await _keyService.DecryptAccessKeyUserCheck(encryptedKey, userId);
+        var (apiKey, errorResult) = await _baseKeyService.DecryptAccessKeyUserCheck(encryptedKey, userId);
         if (errorResult != null)
         {
             throw new InvalidOperationException("Error validating API key.");
@@ -355,28 +311,28 @@ public class KeyController : ControllerBase
 
             if (type == "rest")
             {
-                var apiKeysDto = new List<ApiKeyDto>();
+                var apiKeysDto = new List<RestApiKeyDto>();
 
-                var apiKeys = await _keyService.GetRestApiKeysByUserId(user.Id);
+                var restApiKeys = await _restKeyService.GetRestApiKeysByUserId(user.Id);
 
-                foreach (var apiKey in apiKeys)
+                foreach (var restApiKey in restApiKeys)
                 {
-                    var themes = await _keyService.GetApiKeyThemes(apiKey.Id);
-                    var apiKeyDto = new ApiKeyDto
+                    var themes = await _restKeyService.GetRESTApiKeyThemes(restApiKey.Id);
+                    var restApiKeyDto = new RestApiKeyDto
                     {
-                        Id = apiKey.Id,
-                        KeyName = apiKey.KeyName,
+                        Id = restApiKey.Id,
+                        KeyName = restApiKey.KeyName,
                         CreatedBy = userResult.user.Email ?? "error fetching user email",
-                        ExpiresIn = apiKey.ExpiresIn,
+                        ExpiresIn = restApiKey.ExpiresIn,
                         Themes = themes.Select(t => new ThemeDto
                         {
                             Id = t.Id,
                             ThemeName = t.ThemeName,
                             AccessibleEndpoints = t.AccessibleEndpoints
                         }).ToList(),
-                        IsEnabled = apiKey.IsEnabled
+                        IsEnabled = restApiKey.IsEnabled
                     };
-                    apiKeysDto.Add(apiKeyDto);
+                    apiKeysDto.Add(restApiKeyDto);
                 }
 
                 return Ok(apiKeysDto);
@@ -384,23 +340,23 @@ public class KeyController : ControllerBase
             else if (type == "graphql")
             {
                 var apiKeysDto = new List<GraphQLApiKeyDto>();
-                var apiKeys = await _keyService.GetGraphQLApiKeysByUserId(user.Id);
+                var graphQLApiKeys = await _graphQlKeyService.GetGraphQLApiKeysByUserId(user.Id);
 
-                foreach (var apiKey in apiKeys)
+                foreach (var graphQLApiKey in graphQLApiKeys)
                 {
-                    var permissions = await _keyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
+                    var permissions = await _graphQlKeyService.GetGraphQLAccessKeyPermissions(graphQLApiKey.Id);
                     var graphQLApiKeyDto = new GraphQLApiKeyDto
                     {
-                        Id = apiKey.Id,
-                        KeyName = apiKey.KeyName,
+                        Id = graphQLApiKey.Id,
+                        KeyName = graphQLApiKey.KeyName,
                         CreatedBy = userResult.user.Email ?? "error fetching user email",
-                        ExpiresIn = apiKey.ExpiresIn,
+                        ExpiresIn = graphQLApiKey.ExpiresIn,
                         GraphQLAccessKeyPermissionDto = permissions.Select(p => new GraphQLAccessKeyPermissionDto
                         {
                             QueryName = p.QueryName,
                             AllowedFields = p.AllowedFields ?? []
                         }).ToList(),
-                        IsEnabled = apiKey.IsEnabled
+                        IsEnabled = graphQLApiKey.IsEnabled
                     };
                     apiKeysDto.Add(graphQLApiKeyDto);
                 }
@@ -429,7 +385,7 @@ public class KeyController : ControllerBase
             var userResult = await _userService.GetUserAsync(HttpContext);
             var user = userResult.user;
 
-            var themes = await _keyService.GetThemesByUserId(user.Id);
+            var themes = await _restKeyService.GetThemesByUserId(user.Id);
 
             if (themes.Count == 0)
             {
@@ -470,7 +426,7 @@ public class KeyController : ControllerBase
                 User = user
             };
 
-            var createdTheme = await _keyService.CreateTheme(theme);
+            var createdTheme = await _restKeyService.CreateTheme(theme);
 
             if (createdTheme == null)
             {
@@ -512,7 +468,7 @@ public class KeyController : ControllerBase
                 User = user
             };
 
-            var updatedTheme = await _keyService.UpdateTheme(theme);
+            var updatedTheme = await _restKeyService.UpdateTheme(theme);
 
             if (updatedTheme == null)
             {
@@ -535,7 +491,7 @@ public class KeyController : ControllerBase
     {
         try
         {
-            var result = await _keyService.DeleteTheme(id);
+            var result = await _restKeyService.DeleteTheme(id);
             if (result == null)
             {
                 return BadRequest("Failed to delete theme.");
@@ -558,13 +514,14 @@ public class KeyController : ControllerBase
         try
         {
             string keyType = toggleApiKeyStatusDto.KeyType.ToUpper();
+
             if (keyType == "REST")
             {
-                return await _keyService.ToggleApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
+                return await _restKeyService.ToggleRestApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
             }
             else if (keyType == "GRAPHQL")
             {
-                return await _keyService.ToggleGraphQLApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
+                return await _graphQlKeyService.ToggleGraphQLApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
             }
             else
             {

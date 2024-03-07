@@ -11,7 +11,9 @@ using NetBackend.Middleware;
 using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Interfaces.Keys;
 using NetBackend.Services.Kafka;
+using NetBackend.Services.Keys;
 using NetBackend.Services.WebSocket;
 using NetBackend.Types;
 
@@ -89,12 +91,14 @@ builder.Services.AddIdentityCore<UserModel>()
 // Services
 builder.Services.AddScoped<IDbContextService, DbContextService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IBaseKeyService, BaseKeyService>();
+builder.Services.AddScoped<IGraphQLKeyService, GraphQLKeyService>();
+builder.Services.AddScoped<IRestKeyService, RestKeyService>();
 builder.Services.AddSingleton<ICryptoService, CryptoService>();
-builder.Services.AddScoped<IKeyService, KeyService>();
-builder.Services.AddScoped<IApiService, ApiService>();
 builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
-builder.Services.AddHostedService<KafkaConsumerService>();
 builder.Services.AddSingleton<IAppWebSocketManager, AppWebSocketManager>();
+
+builder.Services.AddHostedService<KafkaConsumerService>();
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>

@@ -7,7 +7,7 @@ namespace NetBackend.Constants;
 
 public static class ApiConstants
 {
-    public static readonly List<ApiEndpointDto> DefaultApiEndpoints =
+    public static readonly List<RestApiEndpointDto> DefaultApiEndpoints =
     [
         new() {
             Path = "/api/aquaculturelist/fishhealth/licenseelist",
@@ -28,7 +28,7 @@ public static class ApiConstants
         new() {
             Path = "/api/key/accesskey-rest-endpoints",
             Method = "POST",
-            ExpectedBodyType = typeof(ApiEndpointSchema)
+            ExpectedBodyType = typeof(RestApiEndpointSchema)
         }
     ];
 }

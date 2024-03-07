@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Confluent.Kafka;
 using NetBackend.Constants;
-using NetBackend.Services.WebSocket;
+using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Services.Kafka;
 

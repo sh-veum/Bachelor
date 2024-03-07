@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
+using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Services.WebSocket;
 

@@ -178,39 +178,6 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.ToTable("AccessKeyPermission");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ExpiresIn")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("KeyHash")
-                        .HasColumnType("text");
-
-                    b.Property<string>("KeyName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ApiKey");
-                });
-
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
                 {
                     b.Property<Guid>("Id")
@@ -244,6 +211,39 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.ToTable("GraphQLApiKey");
                 });
 
+            modelBuilder.Entity("NetBackend.Models.Keys.RestApiKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpiresIn")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("KeyHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("KeyName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RestApiKey");
+                });
+
             modelBuilder.Entity("NetBackend.Models.Keys.Theme", b =>
                 {
                     b.Property<Guid>("Id")
@@ -254,7 +254,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .IsRequired()
                         .HasColumnType("text[]");
 
-                    b.Property<Guid?>("ApiKeyID")
+                    b.Property<Guid?>("RestApiKeyID")
                         .HasColumnType("uuid");
 
                     b.Property<string>("ThemeName")
@@ -267,7 +267,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApiKeyID");
+                    b.HasIndex("RestApiKeyID");
 
                     b.HasIndex("UserId");
 
@@ -1952,17 +1952,6 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.Navigation("GraphQLApiKey");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
-                {
-                    b.HasOne("NetBackend.Models.User.UserModel", "User")
-                        .WithMany("ApiKey")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
                 {
                     b.HasOne("NetBackend.Models.User.UserModel", "User")
@@ -1974,11 +1963,22 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("NetBackend.Models.Keys.RestApiKey", b =>
+                {
+                    b.HasOne("NetBackend.Models.User.UserModel", "User")
+                        .WithMany("ApiKey")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("NetBackend.Models.Keys.Theme", b =>
                 {
-                    b.HasOne("NetBackend.Models.Keys.ApiKey", "ApiKey")
+                    b.HasOne("NetBackend.Models.Keys.RestApiKey", "RestApiKey")
                         .WithMany("Themes")
-                        .HasForeignKey("ApiKeyID");
+                        .HasForeignKey("RestApiKeyID");
 
                     b.HasOne("NetBackend.Models.User.UserModel", "User")
                         .WithMany("Themes")
@@ -1986,19 +1986,19 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ApiKey");
+                    b.Navigation("RestApiKey");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
-                {
-                    b.Navigation("Themes");
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
                 {
                     b.Navigation("AccessKeyPermissions");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Keys.RestApiKey", b =>
+                {
+                    b.Navigation("Themes");
                 });
 
             modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>

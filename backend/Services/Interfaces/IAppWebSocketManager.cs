@@ -1,4 +1,4 @@
-namespace NetBackend.Services.WebSocket;
+namespace NetBackend.Services.Interfaces;
 
 public interface IAppWebSocketManager
 {
