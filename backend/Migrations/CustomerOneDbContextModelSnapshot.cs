@@ -155,20 +155,6 @@ namespace NetBackend.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("NetBackend.Models.Keys.AccessKey", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("KeyHash")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AccessKey");
-                });
-
             modelBuilder.Entity("NetBackend.Models.Keys.AccessKeyPermission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -192,28 +178,23 @@ namespace NetBackend.Migrations
                     b.ToTable("AccessKeyPermission");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.Keys.IApiKey", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AccessKeyId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("character varying(13)");
 
                     b.Property<int>("ExpiresIn")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("KeyHash")
+                        .HasColumnType("text");
 
                     b.Property<string>("KeyName")
                         .IsRequired()
@@ -225,14 +206,42 @@ namespace NetBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccessKeyId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
-                    b.ToTable("IApiKey");
+                    b.ToTable("ApiKey");
+                });
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("IApiKey");
+            modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
-                    b.UseTphMappingStrategy();
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpiresIn")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("KeyHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("KeyName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GraphQLApiKey");
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.Theme", b =>
@@ -1883,24 +1892,6 @@ namespace NetBackend.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
-                {
-                    b.HasBaseType("NetBackend.Models.Keys.IApiKey");
-
-                    b.HasIndex("UserId");
-
-                    b.HasDiscriminator().HasValue("ApiKey");
-                });
-
-            modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
-                {
-                    b.HasBaseType("NetBackend.Models.Keys.IApiKey");
-
-                    b.HasIndex("UserId");
-
-                    b.HasDiscriminator().HasValue("GraphQLApiKey");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1961,32 +1952,6 @@ namespace NetBackend.Migrations
                     b.Navigation("GraphQLApiKey");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.Keys.IApiKey", b =>
-                {
-                    b.HasOne("NetBackend.Models.Keys.AccessKey", "AccessKey")
-                        .WithOne("IApiKey")
-                        .HasForeignKey("NetBackend.Models.Keys.IApiKey", "AccessKeyId");
-
-                    b.Navigation("AccessKey");
-                });
-
-            modelBuilder.Entity("NetBackend.Models.Keys.Theme", b =>
-                {
-                    b.HasOne("NetBackend.Models.Keys.ApiKey", "ApiKey")
-                        .WithMany("Themes")
-                        .HasForeignKey("ApiKeyID");
-
-                    b.HasOne("NetBackend.Models.User.UserModel", "User")
-                        .WithMany("Themes")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ApiKey");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
                 {
                     b.HasOne("NetBackend.Models.User.UserModel", "User")
@@ -2009,18 +1974,21 @@ namespace NetBackend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NetBackend.Models.Keys.AccessKey", b =>
+            modelBuilder.Entity("NetBackend.Models.Keys.Theme", b =>
                 {
-                    b.Navigation("IApiKey");
-                });
+                    b.HasOne("NetBackend.Models.Keys.ApiKey", "ApiKey")
+                        .WithMany("Themes")
+                        .HasForeignKey("ApiKeyID");
 
-            modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>
-                {
+                    b.HasOne("NetBackend.Models.User.UserModel", "User")
+                        .WithMany("Themes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("ApiKey");
 
-                    b.Navigation("GraphQLApiKey");
-
-                    b.Navigation("Themes");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.ApiKey", b =>
@@ -2031,6 +1999,15 @@ namespace NetBackend.Migrations
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
                 {
                     b.Navigation("AccessKeyPermissions");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>
+                {
+                    b.Navigation("ApiKey");
+
+                    b.Navigation("GraphQLApiKey");
+
+                    b.Navigation("Themes");
                 });
 #pragma warning restore 612, 618
         }

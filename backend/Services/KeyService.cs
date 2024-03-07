@@ -29,23 +29,11 @@ public partial class KeyService : IKeyService
 
     public async Task<string> EncryptAndStoreAccessKey(IApiKey iApiKey, UserModel user)
     {
-        // var dbContext = await _dbContextService.GetUserDatabaseContext(user);
         var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         var dataToEncrypt = $"Id:{iApiKey.Id},Type:{iApiKey.GetType().Name}";
         var encryptedKey = _cryptoService.Encrypt(dataToEncrypt, SecretConstants.SecretKey);
 
-        var accessKey = new AccessKey
-        {
-            KeyHash = ComputeHash.ComputeSha256Hash(encryptedKey),
-        };
-
-        // Add the access key to the database
-        dbContext.Set<AccessKey>().Add(accessKey);
-        await dbContext.SaveChangesAsync();
-
-        // Update the IApiKey (ApiKey or GraphQLApiKey) with the access key
-        iApiKey.AccessKeyId = accessKey.Id;
-        iApiKey.AccessKey = accessKey;
+        iApiKey.KeyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
 
         dbContext.Entry(iApiKey).State = EntityState.Modified;
         await dbContext.SaveChangesAsync();
@@ -96,6 +84,16 @@ public partial class KeyService : IKeyService
             return (null, new BadRequestObjectResult("API key not found."));
         }
 
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        // Compute hash of the encrypted key and check if it exists in the database
+        var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
+        var iApiKey = await mainDbContext.Set<IApiKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
+        if (iApiKey == null)
+        {
+            return (null, new UnauthorizedResult());
+        }
+
         if (!apiKey.IsEnabled) return (null, new BadRequestObjectResult("API key is disabled."));
 
         var expirationDate = apiKey.CreatedAt.AddDays(apiKey.ExpiresIn);
@@ -119,16 +117,6 @@ public partial class KeyService : IKeyService
 
         if (apiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
 
-        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-
-        // Compute hash of the encrypted key and check if it exists in the database
-        var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
-        var accessKey = await mainDbContext.Set<AccessKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
-        if (accessKey == null)
-        {
-            return (null, new UnauthorizedResult());
-        }
-
         string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
         var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
 
@@ -143,6 +131,16 @@ public partial class KeyService : IKeyService
         if (apiKey == null)
         {
             return (null, new BadRequestObjectResult("API key not found."));
+        }
+
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+
+        // Compute hash of the encrypted key and check if it exists in the database
+        var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
+        var iApiKey = await mainDbContext.Set<IApiKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
+        if (iApiKey == null)
+        {
+            return (null, new UnauthorizedResult());
         }
 
         if (!apiKey.IsEnabled) return (null, new BadRequestObjectResult("API key is disabled."));
@@ -179,16 +177,6 @@ public partial class KeyService : IKeyService
 
         if (apiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
 
-        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-
-        // Compute hash of the encrypted key and check if it exists in the database
-        var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
-        var accessKey = await mainDbContext.Set<AccessKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
-        if (accessKey == null)
-        {
-            return (null, new UnauthorizedResult());
-        }
-
         string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
         var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
 
@@ -208,15 +196,6 @@ public partial class KeyService : IKeyService
         if (apiKey != null)
         {
             RemoveApiKey(apiKey, dbContext);
-            await dbContext.SaveChangesAsync();
-        }
-
-        // Compute hash of the encrypted key and remove it from the database
-        var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
-        var accessKeyToRemove = dbContext.Set<AccessKey>().FirstOrDefault(h => h.KeyHash == keyHash);
-        if (accessKeyToRemove != null)
-        {
-            dbContext.Set<AccessKey>().Remove(accessKeyToRemove);
             await dbContext.SaveChangesAsync();
         }
 

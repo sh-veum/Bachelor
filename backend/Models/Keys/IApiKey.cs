@@ -12,10 +12,7 @@ public class IApiKey
     public DateTime CreatedAt { get; set; }
     public int ExpiresIn { get; set; }
     public required bool IsEnabled { get; set; }
-
-    [ForeignKey("AccessKey")]
-    public Guid? AccessKeyId { get; set; }
-    public AccessKey? AccessKey { get; set; }
+    public string? KeyHash { get; set; }
 
     [ForeignKey("User")]
     public required string UserId { get; set; }
