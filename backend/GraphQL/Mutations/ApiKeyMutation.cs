@@ -3,6 +3,7 @@ using Netbackend.Models.Dto.Keys;
 using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Kafka;
 using NetBackend.Types;
 
 namespace NetBackend.GraphQL.Mutations;
@@ -11,11 +12,13 @@ public class ApiKeyMutation
 {
     private readonly ILogger<ApiKeyMutation> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IKafkaProducerService _kafkaProducerService;
 
-    public ApiKeyMutation(IHttpContextAccessor httpContextAccessor, ILogger<ApiKeyMutation> logger)
+    public ApiKeyMutation(IHttpContextAccessor httpContextAccessor, ILogger<ApiKeyMutation> logger, IKafkaProducerService kafkaProducerService)
     {
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
+        _kafkaProducerService = kafkaProducerService;
     }
 
     public async Task<AccessKeyDto?> CreateGraphQLAccessKey(
@@ -45,6 +48,8 @@ public class ApiKeyMutation
 
         // Encrypt and store access key
         var encryptedKey = await keyService.EncryptAndStoreAccessKey(graphQLApiKey, user);
+
+        await _kafkaProducerService.ProduceAsync("key-updates", $"New key added: {graphQLApiKey.KeyName} Update the database!");
 
         return new AccessKeyDto
         {

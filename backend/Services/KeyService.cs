@@ -206,10 +206,20 @@ public partial class KeyService : IKeyService
             return actionResult;
         }
 
+        // Remove the Api Key from the database
         var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         if (apiKey != null)
         {
             RemoveApiKey(apiKey, dbContext);
+            await dbContext.SaveChangesAsync();
+        }
+
+        // Compute hash of the encrypted key and remove it from the database
+        var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
+        var accessKeyToRemove = dbContext.Set<AccessKey>().FirstOrDefault(h => h.KeyHash == keyHash);
+        if (accessKeyToRemove != null)
+        {
+            dbContext.Set<AccessKey>().Remove(accessKeyToRemove);
             await dbContext.SaveChangesAsync();
         }
 

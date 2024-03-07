@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import {
   Table,
   TableBody,
@@ -20,6 +20,10 @@ import type { GraphQLKey } from '../interfaces/GraphQLSchema'
 import { fetchGraphQLKeys, toggleApiKey } from '@/lib/graphQL'
 
 const graphQLKeys = ref<GraphQLKey[]>([])
+
+// Initialize a ref for the WebSocket
+const webSocket = ref<WebSocket | null>(null)
+const receivedMessage = ref(null)
 
 const fetchData = async () => {
   try {
@@ -50,12 +54,41 @@ const deleteKey = async () => {
   alert('Not yet implemented')
 }
 
-onMounted(fetchData)
+// Function to handle incoming WebSocket messages
+const handleWebSocketMessage = (event: MessageEvent) => {
+  const message = JSON.parse(event.data)
+  console.log('Received message:', message)
+  receivedMessage.value = message
+}
+
+const setupWebSocket = () => {
+  webSocket.value = new WebSocket('ws://localhost:8088/ws')
+
+  webSocket.value.onmessage = handleWebSocketMessage
+  webSocket.value.onopen = () => console.log('WebSocket connected')
+  webSocket.value.onclose = () => console.log('WebSocket disconnected')
+}
+
+const cleanupWebSocket = () => {
+  if (webSocket.value) {
+    webSocket.value.close()
+  }
+}
+
+onMounted(() => {
+  setupWebSocket()
+  fetchData()
+})
+
+onUnmounted(() => {
+  cleanupWebSocket()
+})
 </script>
 
 <template>
   <div>
     <Button @click="fetchData">Re-Load Table</Button>
+    <span v-if="receivedMessage" class="text-red-500 ml-4 font-bold">{{ receivedMessage }}</span>
     <Table>
       <TableCaption>GraphQL Keys Overview</TableCaption>
       <TableHeader>

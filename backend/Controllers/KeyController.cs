@@ -9,6 +9,7 @@ using NetBackend.Services.Interfaces;
 using NetBackend.Models.Dto.Keys;
 using NetBackend.Tools;
 using NetBackend.Models.Dto;
+using NetBackend.Services.Kafka;
 
 namespace NetBackend.Controllers;
 
@@ -22,8 +23,9 @@ public class KeyController : ControllerBase
     private readonly IApiService _apiService;
     private readonly IDbContextService _dbContextService;
     private readonly IUserService _userService;
+    private readonly IKafkaProducerService _kafkaProducerService;
 
-    public KeyController(ILogger<UserController> logger, UserManager<UserModel> userManager, IKeyService keyService, IApiService apiService, IDbContextService dbContextService, IUserService userService)
+    public KeyController(ILogger<UserController> logger, UserManager<UserModel> userManager, IKeyService keyService, IApiService apiService, IDbContextService dbContextService, IUserService userService, IKafkaProducerService kafkaProducerService)
     {
         _logger = logger;
         _userManager = userManager;
@@ -31,6 +33,7 @@ public class KeyController : ControllerBase
         _apiService = apiService;
         _dbContextService = dbContextService;
         _userService = userService;
+        _kafkaProducerService = kafkaProducerService;
     }
 
     [HttpPost("create-accesskey")]
