@@ -3,7 +3,7 @@ import ThemeDialog from '@/components/theme-view/ThemeDialog.vue'
 import ThemeComponent from '@/components/theme-view/ThemeComponent.vue'
 import { Button } from '@/components/ui/button'
 
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
 //TODO: move interface and fetching to a separate file and resuse them in the other components
@@ -20,7 +20,7 @@ const isOpen = ref(false)
 const fetchData = async () => {
   try {
     //TODO: should the url be more dynamic?
-    const themesResponse = await axios.get('http://localhost:8088/api/key/get-themes-by-user')
+    const themesResponse = await axios.get('http://localhost:8088/api/rest/get-themes-by-user')
     themes.value = themesResponse.data
   } catch (error) {
     console.error('Failed to fetch data:', error)

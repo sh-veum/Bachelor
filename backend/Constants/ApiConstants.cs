@@ -21,12 +21,12 @@ public static class ApiConstants
         },
         // Placeholder to show more themes:
         new() {
-            Path = "/api/key/accesskey-themes",
+            Path = "/api/rest/accesskey-themes",
             Method = "POST",
             ExpectedBodyType = typeof(ThemeDto)
         },
         new() {
-            Path = "/api/key/accesskey-rest-endpoints",
+            Path = "/api/rest/accesskey-rest-endpoints",
             Method = "POST",
             ExpectedBodyType = typeof(RestApiEndpointSchema)
         }

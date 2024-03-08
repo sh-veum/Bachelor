@@ -68,7 +68,6 @@ const encryptedKey = ref('something')
 
 // WebSocket
 const webSocket = ref<WebSocket | null>(null)
-const receivedMessage = ref(null)
 
 const formSchema = toTypedSchema(
   z.object({
@@ -97,7 +96,7 @@ const createAccessKey = async (keyName: string, themes: Theme[]) => {
   console.log('Creating access key:', keyName, themes)
 
   try {
-    const response = await axios.post('http://localhost:8088/api/key/create-accesskey', {
+    const response = await axios.post('http://localhost:8088/api/rest/create-accesskey', {
       keyName: keyName,
       themes: themes
     })
@@ -127,9 +126,7 @@ const deleteAccessKey = async (encryptedKey: Key) => {
 const fetchKeys = async () => {
   try {
     //TODO: should the url be more dynamic?
-    const keysResponse = await axios.get(
-      'http://localhost:8088/api/key/get-apikeys-by-user?type=rest'
-    )
+    const keysResponse = await axios.get('http://localhost:8088/api/rest/get-keys-by-user')
     keys.value = keysResponse.data
   } catch (error) {
     console.error('Failed to fetch keys:', error)
@@ -139,7 +136,7 @@ const fetchKeys = async () => {
 const fetchThemes = async () => {
   try {
     //TODO: should the url be more dynamic?
-    const themesResponse = await axios.get('http://localhost:8088/api/key/get-themes-by-user')
+    const themesResponse = await axios.get('http://localhost:8088/api/rest/get-themes-by-user')
     themes.value = themesResponse.data
   } catch (error) {
     console.error('Failed to fetch themes:', error)
