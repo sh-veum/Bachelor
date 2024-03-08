@@ -41,7 +41,7 @@ const handleLogout = async () => {
             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
-        <NavigationListItem v-else href="/rest" title="REST API test">
+        <NavigationListItem class="space-y-0" v-else href="/rest" title="REST API test">
           <!-- Test an accesskey using REST API -->
         </NavigationListItem>
         <NavigationMenuItem v-if="isLoggedIn">
@@ -61,7 +61,7 @@ const handleLogout = async () => {
             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
-        <NavigationListItem v-else href="/graphql" title="GraphQL Test">
+        <NavigationListItem class="space-y-0" v-else href="/graphql" title="GraphQL Test">
           <!-- Test an accesskey using GraphQL -->
         </NavigationListItem>
       </NavigationMenuList>
