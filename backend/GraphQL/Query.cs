@@ -5,25 +5,30 @@ using NetBackend.Data;
 using NetBackend.Models;
 using NetBackend.Models.Dto.Keys;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Interfaces.Keys;
+using NetBackend.Services.Keys;
 using NetBackend.Tools;
 
 namespace NetBackend.GraphQL;
 
+// TODO: Figure out why UserService has to be specified in the constructor parameters of a method or it messes up getting a user from the httpContext
 public class Query
 {
     private readonly ILogger<Query> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public Query(ILogger<Query> logger, IHttpContextAccessor httpContextAccessor)
+    public Query(
+        ILogger<Query> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<IQueryable<Species>?> GetSpecies(
-        [Service] IKeyService keyService,
-        [Service] IUserService userService,
         [Service(ServiceKind.Synchronized)] IDbContextService dbContextService,
+        [Service] IUserService userService,
+        [Service] IGraphQLKeyService graphQlKeyService,
         string? encryptedKey = null)
     {
         try
@@ -39,10 +44,18 @@ public class Query
             }
             else
             {
-                var keyResult = await keyService.ProcessGraphQLAccessKey(encryptedKey);
-                if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext != null)
+                {
+                    var keyResult = await graphQlKeyService.ProcessGraphQLAccessKey(encryptedKey, httpContext);
+                    if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
 
-                dbContext = keyResult.dbContext as BaseDbContext;
+                    dbContext = keyResult.dbContext as BaseDbContext;
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             return dbContext?.GetSpecies();
@@ -54,7 +67,11 @@ public class Query
         }
     }
 
-    public async Task<IQueryable<Organization>?> GetOrganizations([Service] IKeyService keyService, [Service] IUserService userService, [Service(ServiceKind.Synchronized)] IDbContextService dbContextService, string? encryptedKey = null)
+    public async Task<IQueryable<Organization>?> GetOrganizations(
+        [Service(ServiceKind.Synchronized)] IDbContextService dbContextService,
+        [Service] IUserService userService,
+        [Service] IGraphQLKeyService graphQlKeyService,
+        string? encryptedKey = null)
     {
         try
         {
@@ -69,10 +86,18 @@ public class Query
             }
             else
             {
-                var keyResult = await keyService.ProcessGraphQLAccessKey(encryptedKey);
-                if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext != null)
+                {
+                    var keyResult = await graphQlKeyService.ProcessGraphQLAccessKey(encryptedKey, httpContext);
+                    if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
 
-                dbContext = keyResult.dbContext as BaseDbContext;
+                    dbContext = keyResult.dbContext as BaseDbContext;
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             return dbContext?.GetOrganizations();
@@ -110,23 +135,22 @@ public class Query
     // Need to split it up into two since the GraphQL schema cant detect the return type of the method since it returns IApiKeyDto
     // NOTE:
     // cant fetch GetRestApiKeysByUser and GetGraphQLApiKeysByUser unless (ServiceKind.Synchronized) is added to the IKeyService
-    public async Task<List<ApiKeyDto>> GetRestApiKeysByUser(
-        [Service(ServiceKind.Synchronized)] IKeyService keyService,
-        [Service] IUserService userService,
-        [Service] IHttpContextAccessor httpContextAccessor)
+    public async Task<List<RestApiKeyDto>> GetRestApiKeysByUser(
+        [Service] IRestKeyService restKeyService,
+        [Service] IUserService userService)
     {
-        var httpContext = httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(httpContextAccessor), "HttpContextAccessor's HttpContext is null.");
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null.");
         var userResult = await userService.GetUserAsync(httpContext);
         var user = userResult.user;
 
-        var apiKeys = await keyService.GetRestApiKeysByUserId(user.Id);
+        var apiKeys = await restKeyService.GetRestApiKeysByUserId(user.Id);
 
-        var apiKeysDto = new List<ApiKeyDto>();
+        var apiKeysDto = new List<RestApiKeyDto>();
 
         foreach (var apiKey in apiKeys)
         {
-            var themes = await keyService.GetApiKeyThemes(apiKey.Id);
-            var apiKeyDto = new ApiKeyDto
+            var themes = await restKeyService.GetRESTApiKeyThemes(apiKey.Id);
+            var apiKeyDto = new RestApiKeyDto
             {
                 Id = apiKey.Id,
                 KeyName = apiKey.KeyName,
@@ -146,21 +170,28 @@ public class Query
         return apiKeysDto;
     }
 
+
     public async Task<List<GraphQLApiKeyDto>> GetGraphQLApiKeysByUser(
-    [Service(ServiceKind.Synchronized)] IKeyService keyService,
-    [Service] IUserService userService,
-    [Service] IHttpContextAccessor httpContextAccessor)
+        [Service] IUserService userService,
+        [Service] IGraphQLKeyService graphQlKeyService)
     {
-        var httpContext = httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(httpContextAccessor), "HttpContextAccessor's HttpContext is null.");
+        _logger.LogInformation("GetGraphQLApiKeysByUser");
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null.");
+
+        _logger.LogInformation("Getting user...");
         var userResult = await userService.GetUserAsync(httpContext);
         var user = userResult.user;
+        _logger.LogInformation("Got user: {user}", user.Email ?? "error fetching user email");
 
-        var apiKeys = await keyService.GetGraphQLApiKeysByUserId(user.Id);
+        _logger.LogInformation("Getting api keys...");
+        var apiKeys = await graphQlKeyService.GetGraphQLApiKeysByUserId(user.Id);
         var apiKeysDto = new List<GraphQLApiKeyDto>();
+        _logger.LogInformation("Got api keys: {apiKeys}", apiKeys.Count);
 
+        _logger.LogInformation("Getting permissions ...");
         foreach (var apiKey in apiKeys)
         {
-            var permissions = await keyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
+            var permissions = await graphQlKeyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
             var apiKeyDto = new GraphQLApiKeyDto
             {
                 Id = apiKey.Id,
@@ -179,7 +210,6 @@ public class Query
 
         return apiKeysDto;
     }
-
 
     private async Task<(DbContext? DbContext, IActionResult? Error)> GetContextFromUser(IUserService userService, IDbContextService dbContextService)
     {

@@ -4,30 +4,31 @@ using NetBackend.Constants;
 using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
 using NetBackend.Services.Interfaces;
-using NetBackend.Services.Kafka;
+using NetBackend.Services.Interfaces.Keys;
+using NetBackend.Services.Keys;
 using NetBackend.Types;
 
 namespace NetBackend.GraphQL.Mutations;
 
+// TODO: NOTE: Might have to manually put everything in the constructors instead of private fields
 public class ApiKeyMutation
 {
     private readonly ILogger<ApiKeyMutation> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IKafkaProducerService _kafkaProducerService;
 
-    public ApiKeyMutation(IHttpContextAccessor httpContextAccessor, ILogger<ApiKeyMutation> logger, IKafkaProducerService kafkaProducerService)
+    public ApiKeyMutation(ILogger<ApiKeyMutation> logger, IHttpContextAccessor httpContextAccessor, IKafkaProducerService kafkaProducerService)
     {
-        _httpContextAccessor = httpContextAccessor;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
         _kafkaProducerService = kafkaProducerService;
     }
 
-    public async Task<AccessKeyDto?> CreateGraphQLAccessKey(
-            [Service] IKeyService keyService,
-            [Service] IApiService apiService,
-            [Service] IUserService userService,
-            string keyName,
-            List<AccessKeyPermissionInput> permissions)
+    public async Task<AccessKeyDto> CreateGraphQLAccessKey(
+             [Service] IGraphQLKeyService graphQLKeyService,
+             [Service] IUserService userService,
+             string keyName,
+             List<AccessKeyPermissionInput> permissions)
     {
         var httpContext = _httpContextAccessor.HttpContext ?? throw new Exception("HttpContext is null.");
 
@@ -44,11 +45,11 @@ public class ApiKeyMutation
         }).ToList();
         _logger.LogInformation("accessKeyPermissions: {accessKeyPermissions}", accessKeyPermissions);
 
-        var graphQLApiKey = await apiService.CreateGraphQLApiKey(user, keyName, accessKeyPermissions);
+        var graphQLApiKey = await graphQLKeyService.CreateGraphQLApiKey(user, keyName, accessKeyPermissions);
         _logger.LogInformation("graphQLApiKey: {graphQLApiKey}", graphQLApiKey);
 
         // Encrypt and store access key
-        var encryptedKey = await keyService.EncryptAndStoreAccessKey(graphQLApiKey, user);
+        var encryptedKey = await graphQLKeyService.EncryptAndStoreGraphQLAccessKey(graphQLApiKey);
 
         await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic, $"New key added: {graphQLApiKey.KeyName} Update the database!");
 
@@ -59,7 +60,8 @@ public class ApiKeyMutation
     }
 
     public async Task<ToggleApiKeyResponseDto> ToggleApiKey(
-        [Service] IKeyService keyService,
+        [Service] IRestKeyService restKeyService,
+        [Service] IGraphQLKeyService graphQLKeyService,
         ToggleApiKeyStatusDto toggleApiKeyStatusDto)
     {
         IActionResult result;
@@ -69,10 +71,10 @@ public class ApiKeyMutation
             switch (keyType)
             {
                 case "REST":
-                    result = await keyService.ToggleApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
+                    result = await restKeyService.ToggleRestApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
                     break;
                 case "GRAPHQL":
-                    result = await keyService.ToggleGraphQLApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
+                    result = await graphQLKeyService.ToggleGraphQLApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
                     break;
                 default:
                     return new ToggleApiKeyResponseDto { IsSuccess = false, Message = "Invalid key type." };

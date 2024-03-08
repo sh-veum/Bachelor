@@ -6,7 +6,6 @@ using NetBackend.Models.Dto;
 using NetBackend.Models.User;
 using NetBackend.Constants;
 using Microsoft.EntityFrameworkCore;
-using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Controllers;
 

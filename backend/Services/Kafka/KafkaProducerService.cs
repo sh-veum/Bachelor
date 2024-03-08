@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Confluent.Kafka;
+using NetBackend.Services.Interfaces;
 namespace NetBackend.Services.Kafka;
 
 public class KafkaProducerService : IKafkaProducerService

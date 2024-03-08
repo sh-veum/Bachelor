@@ -28,7 +28,7 @@ const deleteTheme = async (theme: {
   accessibleEndpoints: string[]
 }) => {
   try {
-    await axios.delete(`http://localhost:8088/api/key/delete-theme?id=${theme.id}`, {})
+    await axios.delete(`http://localhost:8088/api/rest/delete-theme?id=${theme.id}`, {})
   } catch (error) {
     console.error('Failed to delete theme:', error)
   }

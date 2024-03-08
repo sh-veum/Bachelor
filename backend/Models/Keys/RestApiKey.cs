@@ -1,6 +1,6 @@
 namespace NetBackend.Models.Keys;
 
-public class ApiKey : IApiKey
+public class RestApiKey : IApiKey
 {
     public List<Theme>? Themes { get; set; }
 }

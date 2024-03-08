@@ -2,6 +2,8 @@
 
 ### need confluent installed: https://developer.confluent.io/get-started/dotnet/#kafka-setup
 
+### need a lot of patience to debug when this inevitably fails
+
 ```
 confluent local kafka start
 ```

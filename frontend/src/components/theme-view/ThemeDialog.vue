@@ -74,7 +74,7 @@ const { handleSubmit, setValues, values } = useForm({
 
 const createTheme = async (values: { name: string; endpoints: string[] }) => {
   try {
-    await axios.post('http://localhost:8088/api/key/create-theme', {
+    await axios.post('http://localhost:8088/api/rest/create-theme', {
       themeName: values.name,
       accessibleEndpoints: values.endpoints
     })
@@ -86,7 +86,7 @@ const createTheme = async (values: { name: string; endpoints: string[] }) => {
 const editTheme = async (id: string, values: { name: string; endpoints: string[] }) => {
   try {
     //TODO: change backend to be able to use `http://localhost:8088/api/key/update-theme?id=${id}`?
-    await axios.put('http://localhost:8088/api/key/update-theme', {
+    await axios.put('http://localhost:8088/api/rest/update-theme', {
       id,
       themeName: values.name,
       accessibleEndpoints: values.endpoints

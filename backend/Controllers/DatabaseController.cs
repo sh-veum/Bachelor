@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NetBackend.Constants;
 using NetBackend.Models.Dto;
-using NetBackend.Services;
-using NetBackend.Services.Interfaces;
 using NetBackend.Tools;
 
 namespace NetBackend.Controllers;
@@ -14,19 +12,19 @@ namespace NetBackend.Controllers;
 [Authorize]
 public class DatabaseController : ControllerBase
 {
-    private readonly ILogger<UserController> _logger;
-    private readonly IApiService _apiService;
+    private readonly ILogger<DatabaseController> _logger;
 
-    public DatabaseController(ILogger<UserController> logger, IApiService apiService)
+    public DatabaseController(ILogger<DatabaseController> logger)
     {
         _logger = logger;
-        _apiService = apiService;
     }
 
     [HttpGet("get-database-names")]
     [ProducesResponseType(typeof(DatabaseNameDto), StatusCodes.Status200OK)]
     public ActionResult GetDatabaseNames()
     {
+        _logger.LogInformation("Getting database names...");
+
         var databaseNames = typeof(DatabaseConstants)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.Name != nameof(DatabaseConstants.MainDbName))
@@ -37,9 +35,11 @@ public class DatabaseController : ControllerBase
     }
 
     [HttpGet("get-default-endpoints")]
-    [ProducesResponseType(typeof(ApiEndpointSchema), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(RestApiEndpointSchema), StatusCodes.Status200OK)]
     public ActionResult GetDefaultApiEndpoints()
     {
+        _logger.LogInformation("Getting default rest api endpoints...");
+
         var endpointsInfo = ApiConstants.DefaultApiEndpoints
             .Select(endpoint => new
             {

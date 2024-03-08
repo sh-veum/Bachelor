@@ -6,7 +6,7 @@ using NetBackend.Constants;
 using NetBackend.Models;
 using NetBackend.Models.Dto;
 using NetBackend.Services.Interfaces;
-using NetBackend.Services.Kafka;
+using NetBackend.Services.Interfaces.Keys;
 
 namespace NetBackend.Controllers;
 
@@ -16,20 +16,20 @@ public class AquaCultureListsController : ControllerBase
 {
     private readonly ILogger<AquaCultureListsController> _logger;
     private readonly IDbContextService _databaseContextService;
-    private readonly IKeyService _keyService;
+    private readonly IRestKeyService _restKeyService;
     private readonly IUserService _userService;
     private readonly IKafkaProducerService _kafkaProducerService;
 
     public AquaCultureListsController(
         ILogger<AquaCultureListsController> logger,
         IDbContextService databaseContextService,
-        IKeyService keyService,
+        IRestKeyService restKeyService,
         IUserService userService,
         IKafkaProducerService kafkaProducerService)
     {
         _logger = logger;
         _databaseContextService = databaseContextService;
-        _keyService = keyService;
+        _restKeyService = restKeyService;
         _userService = userService;
         _kafkaProducerService = kafkaProducerService;
     }
@@ -54,7 +54,7 @@ public class AquaCultureListsController : ControllerBase
             else if (model != null)
             {
                 // Get the database context using the access key
-                (dbContext, var errorResult) = await _keyService.ProcessAccessKey(model.EncryptedKey);
+                (dbContext, var errorResult) = await _restKeyService.ProcessRESTAccessKey(model.EncryptedKey, HttpContext);
                 if (errorResult != null) return errorResult;
 
                 if (dbContext is null) return BadRequest("Database context is null.");
@@ -96,7 +96,7 @@ public class AquaCultureListsController : ControllerBase
             else if (model != null)
             {
                 // Get the database context using the access key
-                (dbContext, var errorResult) = await _keyService.ProcessAccessKey(model.EncryptedKey);
+                (dbContext, var errorResult) = await _restKeyService.ProcessRESTAccessKey(model.EncryptedKey, HttpContext);
                 if (errorResult != null) return errorResult;
 
                 if (dbContext is null) return BadRequest("Database context is null.");

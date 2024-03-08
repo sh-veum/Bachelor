@@ -8,7 +8,7 @@ namespace NetBackend.Data.DbContexts;
 
 public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
 {
-    public DbSet<ApiKey> ApiKeys { get; set; }
+    public DbSet<RestApiKey> ApiKeys { get; set; }
     public DbSet<GraphQLApiKey> GraphQLApiKeys { get; set; }
     public DbSet<AccessKeyPermission> AccessKeyPermissions { get; set; }
 
@@ -35,10 +35,10 @@ public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
             .WithOne(k => k.GraphQLApiKey)
             .HasForeignKey(k => k.GraphQLApiKeyId);
 
-        modelBuilder.Entity<ApiKey>()
+        modelBuilder.Entity<RestApiKey>()
             .HasMany(u => u.Themes)
-            .WithOne(k => k.ApiKey)
-            .HasForeignKey(k => k.ApiKeyID)
+            .WithOne(k => k.RestApiKey)
+            .HasForeignKey(k => k.RestApiKeyID)
             .IsRequired(false);
 
         modelBuilder.Entity<UserModel>()

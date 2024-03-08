@@ -11,9 +11,9 @@ public class Theme
     public required string ThemeName { get; set; }
     public required List<string> AccessibleEndpoints { get; set; }
 
-    [ForeignKey("ApiKey")]
-    public Guid? ApiKeyID { get; set; }
-    public ApiKey? ApiKey { get; set; }
+    [ForeignKey("RestApiKey")]
+    public Guid? RestApiKeyID { get; set; }
+    public RestApiKey? RestApiKey { get; set; }
 
     [ForeignKey("User")]
     public required string UserId { get; set; }
