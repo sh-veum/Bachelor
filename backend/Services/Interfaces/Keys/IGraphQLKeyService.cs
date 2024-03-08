@@ -9,7 +9,7 @@ public interface IGraphQLKeyService
 {
     // GraphQL
     Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<AccessKeyPermission> permissions);
-    Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessGraphQLAccessKey(string encryptedKey);
+    Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessGraphQLAccessKey(string encryptedKey, HttpContext httpContext);
     Task<List<AccessKeyPermission>> GetGraphQLAccessKeyPermissions(Guid graphQLApiKeyId);
     Task<List<GraphQLApiKey>> GetGraphQLApiKeysByUserId(string userId);
     Task<IActionResult> ToggleGraphQLApiKey(Guid graphQLApiKeyId, bool isEnabled);

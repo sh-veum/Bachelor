@@ -9,15 +9,20 @@ using NetBackend.Tools;
 
 namespace NetBackend.Services.Keys;
 
-public class GraphQLKeyService : BaseKeyService, IGraphQLKeyService
+public class GraphQLKeyService : IGraphQLKeyService
 {
+    private readonly ILogger<GraphQLKeyService> _logger;
+    private readonly IDbContextService _dbContextService;
+    private readonly IBaseKeyService _baseKeyService;
+
     public GraphQLKeyService(
         ILogger<GraphQLKeyService> logger,
         IDbContextService dbContextService,
-        ICryptoService cryptoService,
-        IHttpContextAccessor httpContextAccessor)
-        : base(logger, dbContextService, cryptoService, httpContextAccessor)
+        IBaseKeyService baseKeyService)
     {
+        _logger = logger;
+        _dbContextService = dbContextService;
+        _baseKeyService = baseKeyService;
     }
 
     public async Task<GraphQLApiKey> CreateGraphQLApiKey(UserModel user, string keyName, List<AccessKeyPermission> permissions)
@@ -41,9 +46,9 @@ public class GraphQLKeyService : BaseKeyService, IGraphQLKeyService
         return graphQLApiKey;
     }
 
-    public async Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessGraphQLAccessKey(string encryptedKey)
+    public async Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessGraphQLAccessKey(string encryptedKey, HttpContext httpContext)
     {
-        var (apiKey, errorResult) = await DecryptAccessKey(encryptedKey);
+        var (apiKey, errorResult) = await _baseKeyService.DecryptAccessKey(encryptedKey);
         if (errorResult != null) return (null, errorResult);
 
         if (apiKey == null)
@@ -61,7 +66,6 @@ public class GraphQLKeyService : BaseKeyService, IGraphQLKeyService
             return (null, new UnauthorizedResult());
         }
 
-        var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext == null)
         {
             return (null, new BadRequestObjectResult("HttpContext is null."));
@@ -123,7 +127,7 @@ public class GraphQLKeyService : BaseKeyService, IGraphQLKeyService
         return apiKeys;
     }
 
-    public Task<IActionResult> ToggleGraphQLApiKey(Guid graphQLApiKeyId, bool isEnabled) => ToggleApiKeyEnabledStatus<GraphQLApiKey>(graphQLApiKeyId, isEnabled);
+    public Task<IActionResult> ToggleGraphQLApiKey(Guid graphQLApiKeyId, bool isEnabled) => _baseKeyService.ToggleApiKeyEnabledStatus<GraphQLApiKey>(graphQLApiKeyId, isEnabled);
 
     // Private methods
     private bool CheckQueryAuthorization(string graphqlQuery, List<AccessKeyPermission> permissions)

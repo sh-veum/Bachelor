@@ -10,17 +10,21 @@ using NetBackend.Tools;
 
 namespace NetBackend.Services.Keys;
 
-public class RestKeyService : BaseKeyService, IRestKeyService
+public class RestKeyService : IRestKeyService
 {
+    private readonly ILogger<RestKeyService> _logger;
+    private readonly IDbContextService _dbContextService;
+    private readonly IBaseKeyService _baseKeyService;
+
     public RestKeyService(
         ILogger<RestKeyService> logger,
         IDbContextService dbContextService,
-        ICryptoService cryptoService,
-        IHttpContextAccessor httpContextAccessor)
-        : base(logger, dbContextService, cryptoService, httpContextAccessor)
+        IBaseKeyService baseKeyService)
     {
+        _logger = logger;
+        _dbContextService = dbContextService;
+        _baseKeyService = baseKeyService;
     }
-
     public async Task<RestApiKey> CreateRESTApiKey(UserModel user, string keyName, List<ThemeDto> themeDtos)
     {
         var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
@@ -57,9 +61,9 @@ public class RestKeyService : BaseKeyService, IRestKeyService
         return apiKey;
     }
 
-    public async Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessRESTAccessKey(string encryptedKey)
+    public async Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessRESTAccessKey(string encryptedKey, HttpContext httpContext)
     {
-        var (restApiKey, errorResult) = await DecryptAccessKey(encryptedKey);
+        var (restApiKey, errorResult) = await _baseKeyService.DecryptAccessKey(encryptedKey);
         if (errorResult != null) return (null, errorResult);
 
         if (restApiKey == null)
@@ -77,7 +81,6 @@ public class RestKeyService : BaseKeyService, IRestKeyService
             return (null, new BadRequestObjectResult("API key has expired."));
         }
 
-        var httpContext = _httpContextAccessor.HttpContext;
         if (restApiKey is RestApiKey api)
         {
             // Aggregate all accessible endpoints from themes
@@ -175,5 +178,5 @@ public class RestKeyService : BaseKeyService, IRestKeyService
         return new OkResult();
     }
 
-    public Task<IActionResult> ToggleRestApiKey(Guid apiKeyId, bool isEnabled) => ToggleApiKeyEnabledStatus<RestApiKey>(apiKeyId, isEnabled);
+    public Task<IActionResult> ToggleRestApiKey(Guid apiKeyId, bool isEnabled) => _baseKeyService.ToggleApiKeyEnabledStatus<RestApiKey>(apiKeyId, isEnabled);
 }

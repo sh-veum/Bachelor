@@ -10,7 +10,7 @@ public interface IRestKeyService
 {
     // GraphQL
     Task<RestApiKey> CreateRESTApiKey(UserModel user, string keyName, List<ThemeDto> themeDtos);
-    Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessRESTAccessKey(string encryptedKey);
+    Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessRESTAccessKey(string encryptedKey, HttpContext httpContext);
     Task<List<RestApiKey>> GetRestApiKeysByUserId(string userId);
     Task<List<Theme>> GetRESTApiKeyThemes(Guid restApiKeyID);
     Task<List<Theme>> GetThemesByUserId(string userId);

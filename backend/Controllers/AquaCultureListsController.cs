@@ -54,7 +54,7 @@ public class AquaCultureListsController : ControllerBase
             else if (model != null)
             {
                 // Get the database context using the access key
-                (dbContext, var errorResult) = await _restKeyService.ProcessRESTAccessKey(model.EncryptedKey);
+                (dbContext, var errorResult) = await _restKeyService.ProcessRESTAccessKey(model.EncryptedKey, HttpContext);
                 if (errorResult != null) return errorResult;
 
                 if (dbContext is null) return BadRequest("Database context is null.");
@@ -96,7 +96,7 @@ public class AquaCultureListsController : ControllerBase
             else if (model != null)
             {
                 // Get the database context using the access key
-                (dbContext, var errorResult) = await _restKeyService.ProcessRESTAccessKey(model.EncryptedKey);
+                (dbContext, var errorResult) = await _restKeyService.ProcessRESTAccessKey(model.EncryptedKey, HttpContext);
                 if (errorResult != null) return errorResult;
 
                 if (dbContext is null) return BadRequest("Database context is null.");

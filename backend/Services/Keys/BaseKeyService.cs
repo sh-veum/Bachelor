@@ -11,21 +11,18 @@ namespace NetBackend.Services.Keys;
 
 public class BaseKeyService : IBaseKeyService
 {
-    protected readonly ILogger _logger;
-    protected readonly IDbContextService _dbContextService;
-    protected readonly ICryptoService _cryptoService;
-    protected readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<BaseKeyService> _logger;
+    private readonly IDbContextService _dbContextService;
+    private readonly ICryptoService _cryptoService;
 
-    protected BaseKeyService(
-        ILogger logger,
+    public BaseKeyService(
+        ILogger<BaseKeyService> logger,
         IDbContextService dbContextService,
-        ICryptoService cryptoService,
-        IHttpContextAccessor httpContextAccessor)
+        ICryptoService cryptoService)
     {
         _logger = logger;
         _dbContextService = dbContextService;
         _cryptoService = cryptoService;
-        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<string> EncryptAndStoreAccessKey(IApiKey iApiKey, UserModel user)
@@ -101,7 +98,7 @@ public class BaseKeyService : IBaseKeyService
         return new OkResult();
     }
 
-    protected async Task<IActionResult> ToggleApiKeyEnabledStatus<T>(Guid keyId, bool isEnabled) where T : IApiKey
+    public async Task<IActionResult> ToggleApiKeyEnabledStatus<T>(Guid keyId, bool isEnabled) where T : IApiKey
     {
         var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         var apiKey = await dbContext.Set<T>().FirstOrDefaultAsync(a => a.Id == keyId);

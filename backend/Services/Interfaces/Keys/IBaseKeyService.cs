@@ -10,4 +10,5 @@ public interface IBaseKeyService
     Task<(IApiKey?, IActionResult?)> DecryptAccessKey(string encryptedKey);
     Task<(IApiKey?, IActionResult?)> DecryptAccessKeyUserCheck(string encryptedKey, string currentUserId);
     Task<IActionResult> RemoveAccessKey(string encryptedKey);
+    Task<IActionResult> ToggleApiKeyEnabledStatus<T>(Guid keyId, bool isEnabled) where T : IApiKey;
 }

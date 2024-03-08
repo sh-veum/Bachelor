@@ -44,10 +44,18 @@ public class Query
             }
             else
             {
-                var keyResult = await graphQlKeyService.ProcessGraphQLAccessKey(encryptedKey);
-                if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext != null)
+                {
+                    var keyResult = await graphQlKeyService.ProcessGraphQLAccessKey(encryptedKey, httpContext);
+                    if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
 
-                dbContext = keyResult.dbContext as BaseDbContext;
+                    dbContext = keyResult.dbContext as BaseDbContext;
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             return dbContext?.GetSpecies();
@@ -78,10 +86,18 @@ public class Query
             }
             else
             {
-                var keyResult = await graphQlKeyService.ProcessGraphQLAccessKey(encryptedKey);
-                if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext != null)
+                {
+                    var keyResult = await graphQlKeyService.ProcessGraphQLAccessKey(encryptedKey, httpContext);
+                    if (keyResult.actionResult != null || keyResult.dbContext == null) return null;
 
-                dbContext = keyResult.dbContext as BaseDbContext;
+                    dbContext = keyResult.dbContext as BaseDbContext;
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             return dbContext?.GetOrganizations();

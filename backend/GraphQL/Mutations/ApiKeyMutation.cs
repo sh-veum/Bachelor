@@ -15,20 +15,22 @@ public class ApiKeyMutation
 {
     private readonly ILogger<ApiKeyMutation> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IKafkaProducerService _kafkaProducerService;
 
-    public ApiKeyMutation(ILogger<ApiKeyMutation> logger, IHttpContextAccessor httpContextAccessor)
+    public ApiKeyMutation(ILogger<ApiKeyMutation> logger, IHttpContextAccessor httpContextAccessor, IKafkaProducerService kafkaProducerService)
     {
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
+        _kafkaProducerService = kafkaProducerService;
     }
 
     public async Task<AccessKeyDto> CreateGraphQLAccessKey(
-        [Service] GraphQLKeyService graphQLKeyService,
-        [Service] IUserService userService,
-        string keyName,
-        List<AccessKeyPermissionInput> permissions)
+             [Service] IBaseKeyService baseKeyService,
+             [Service] IGraphQLKeyService graphQLKeyService,
+             [Service] IUserService userService,
+             string keyName,
+             List<AccessKeyPermissionInput> permissions)
     {
-        _logger.LogInformation("Creating GraphQL access key.");
         var httpContext = _httpContextAccessor.HttpContext ?? throw new Exception("HttpContext is null.");
 
         var (user, error) = await userService.GetUserAsync(httpContext);
@@ -48,9 +50,9 @@ public class ApiKeyMutation
         _logger.LogInformation("graphQLApiKey: {graphQLApiKey}", graphQLApiKey);
 
         // Encrypt and store access key
-        var encryptedKey = await graphQLKeyService.EncryptAndStoreAccessKey(graphQLApiKey, user);
+        var encryptedKey = await baseKeyService.EncryptAndStoreAccessKey(graphQLApiKey, user);
 
-        // await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic, $"New key added: {graphQLApiKey.KeyName} Update the database!");
+        await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic, $"New key added: {graphQLApiKey.KeyName} Update the database!");
 
         return new AccessKeyDto
         {
