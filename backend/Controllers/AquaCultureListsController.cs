@@ -6,7 +6,7 @@ using NetBackend.Constants;
 using NetBackend.Models;
 using NetBackend.Models.Dto;
 using NetBackend.Services.Interfaces;
-using NetBackend.Services.Keys;
+using NetBackend.Services.Interfaces.Keys;
 
 namespace NetBackend.Controllers;
 
@@ -16,14 +16,14 @@ public class AquaCultureListsController : ControllerBase
 {
     private readonly ILogger<AquaCultureListsController> _logger;
     private readonly IDbContextService _databaseContextService;
-    private readonly RestKeyService _restKeyService;
+    private readonly IRestKeyService _restKeyService;
     private readonly IUserService _userService;
     private readonly IKafkaProducerService _kafkaProducerService;
 
     public AquaCultureListsController(
         ILogger<AquaCultureListsController> logger,
         IDbContextService databaseContextService,
-        RestKeyService restKeyService,
+        IRestKeyService restKeyService,
         IUserService userService,
         IKafkaProducerService kafkaProducerService)
     {

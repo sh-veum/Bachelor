@@ -129,6 +129,14 @@ public class GraphQLKeyService : IGraphQLKeyService
 
     public Task<IActionResult> ToggleGraphQLApiKey(Guid graphQLApiKeyId, bool isEnabled) => _baseKeyService.ToggleApiKeyEnabledStatus<GraphQLApiKey>(graphQLApiKeyId, isEnabled);
 
+    public Task<string> EncryptAndStoreGraphQLAccessKey(GraphQLApiKey graphQLApiKey) => _baseKeyService.EncryptAndStoreAccessKey(graphQLApiKey);
+
+    public Task<IActionResult> RemoveGraphQLAccessKey(string encryptedKey) => _baseKeyService.RemoveAccessKey(encryptedKey);
+
+    public Task<(IApiKey?, IActionResult?)> DecryptGraphQLAccessKey(string encryptedKey) => _baseKeyService.DecryptAccessKey(encryptedKey);
+
+    public Task<(IApiKey?, IActionResult?)> DecryptGraphQLAccessKeyUserCheck(string encryptedKey, string currentUserId) => _baseKeyService.DecryptAccessKeyUserCheck(encryptedKey, currentUserId);
+
     // Private methods
     private bool CheckQueryAuthorization(string graphqlQuery, List<AccessKeyPermission> permissions)
     {

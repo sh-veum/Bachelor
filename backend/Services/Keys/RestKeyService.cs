@@ -179,4 +179,12 @@ public class RestKeyService : IRestKeyService
     }
 
     public Task<IActionResult> ToggleRestApiKey(Guid apiKeyId, bool isEnabled) => _baseKeyService.ToggleApiKeyEnabledStatus<RestApiKey>(apiKeyId, isEnabled);
+
+    public Task<string> EncryptAndStoreRestAccessKey(RestApiKey restApiKey) => _baseKeyService.EncryptAndStoreAccessKey(restApiKey);
+
+    public Task<IActionResult> RemoveRestAccessKey(string encryptedKey) => _baseKeyService.RemoveAccessKey(encryptedKey);
+
+    public Task<(IApiKey?, IActionResult?)> DecryptRestAccessKey(string encryptedKey) => _baseKeyService.DecryptAccessKey(encryptedKey);
+
+    public Task<(IApiKey?, IActionResult?)> DecryptRestAccessKeyUserCheck(string encryptedKey, string currentUserId) => _baseKeyService.DecryptAccessKeyUserCheck(encryptedKey, currentUserId);
 }

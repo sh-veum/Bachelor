@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetBackend.Constants;
 using NetBackend.Models.Keys;
-using NetBackend.Models.User;
 using NetBackend.Services.Interfaces;
 using NetBackend.Services.Interfaces.Keys;
 using NetBackend.Tools;
@@ -25,7 +24,7 @@ public class BaseKeyService : IBaseKeyService
         _cryptoService = cryptoService;
     }
 
-    public async Task<string> EncryptAndStoreAccessKey(IApiKey iApiKey, UserModel user)
+    public async Task<string> EncryptAndStoreAccessKey(IApiKey iApiKey)
     {
         var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         var dataToEncrypt = $"Id:{iApiKey.Id},Type:{iApiKey.GetType().Name}";
@@ -33,14 +32,8 @@ public class BaseKeyService : IBaseKeyService
 
         iApiKey.KeyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
 
-        if (iApiKey is RestApiKey restApiKey)
-        {
-            dbContext.Entry(restApiKey).State = EntityState.Modified;
-        }
-        else if (iApiKey is GraphQLApiKey gqlApi)
-        {
-            dbContext.Entry(gqlApi).State = EntityState.Modified;
-        }
+        dbContext.Entry(iApiKey).State = EntityState.Modified;
+
         await dbContext.SaveChangesAsync();
 
         return encryptedKey;

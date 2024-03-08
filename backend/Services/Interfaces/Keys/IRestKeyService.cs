@@ -18,4 +18,8 @@ public interface IRestKeyService
     Task<Theme> UpdateTheme(Theme theme);
     Task<IActionResult> DeleteTheme(Guid themeId);
     Task<IActionResult> ToggleRestApiKey(Guid apiKeyId, bool isEnabled);
+    Task<string> EncryptAndStoreRestAccessKey(RestApiKey restApiKey);
+    Task<IActionResult> RemoveRestAccessKey(string encryptedKey);
+    Task<(IApiKey?, IActionResult?)> DecryptRestAccessKey(string encryptedKey);
+    Task<(IApiKey?, IActionResult?)> DecryptRestAccessKeyUserCheck(string encryptedKey, string currentUserId);
 }

@@ -25,7 +25,6 @@ public class ApiKeyMutation
     }
 
     public async Task<AccessKeyDto> CreateGraphQLAccessKey(
-             [Service] IBaseKeyService baseKeyService,
              [Service] IGraphQLKeyService graphQLKeyService,
              [Service] IUserService userService,
              string keyName,
@@ -50,7 +49,7 @@ public class ApiKeyMutation
         _logger.LogInformation("graphQLApiKey: {graphQLApiKey}", graphQLApiKey);
 
         // Encrypt and store access key
-        var encryptedKey = await baseKeyService.EncryptAndStoreAccessKey(graphQLApiKey, user);
+        var encryptedKey = await graphQLKeyService.EncryptAndStoreGraphQLAccessKey(graphQLApiKey);
 
         await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic, $"New key added: {graphQLApiKey.KeyName} Update the database!");
 

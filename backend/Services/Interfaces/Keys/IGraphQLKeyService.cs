@@ -13,4 +13,8 @@ public interface IGraphQLKeyService
     Task<List<AccessKeyPermission>> GetGraphQLAccessKeyPermissions(Guid graphQLApiKeyId);
     Task<List<GraphQLApiKey>> GetGraphQLApiKeysByUserId(string userId);
     Task<IActionResult> ToggleGraphQLApiKey(Guid graphQLApiKeyId, bool isEnabled);
+    Task<string> EncryptAndStoreGraphQLAccessKey(GraphQLApiKey graphQLApiKey);
+    Task<IActionResult> RemoveGraphQLAccessKey(string encryptedKey);
+    Task<(IApiKey?, IActionResult?)> DecryptGraphQLAccessKey(string encryptedKey);
+    Task<(IApiKey?, IActionResult?)> DecryptGraphQLAccessKeyUserCheck(string encryptedKey, string currentUserId);
 }

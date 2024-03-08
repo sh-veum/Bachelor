@@ -19,16 +19,14 @@ public class KeyController : ControllerBase
     private readonly ILogger<UserController> _logger;
     private readonly IRestKeyService _restKeyService;
     private readonly IGraphQLKeyService _graphQlKeyService;
-    private readonly IBaseKeyService _baseKeyService;
     private readonly IUserService _userService;
     private readonly IKafkaProducerService _kafkaProducerService;
 
-    public KeyController(ILogger<UserController> logger, IRestKeyService restKeyService, IGraphQLKeyService graphQLKeyService, IBaseKeyService baseKeyService, IUserService userService, IKafkaProducerService kafkaProducerService)
+    public KeyController(ILogger<UserController> logger, IRestKeyService restKeyService, IGraphQLKeyService graphQLKeyService, IUserService userService, IKafkaProducerService kafkaProducerService)
     {
         _logger = logger;
         _restKeyService = restKeyService;
         _graphQlKeyService = graphQLKeyService;
-        _baseKeyService = baseKeyService;
         _userService = userService;
         _kafkaProducerService = kafkaProducerService;
     }
@@ -58,7 +56,7 @@ public class KeyController : ControllerBase
             }
 
             // Encrypt and store access key
-            var accesKey = await _baseKeyService.EncryptAndStoreAccessKey(restApiKey, user);
+            var accesKey = await _restKeyService.EncryptAndStoreRestAccessKey(restApiKey);
 
             var accesKeyDto = new AccessKeyDto
             {
@@ -176,7 +174,7 @@ public class KeyController : ControllerBase
             var userResult = await _userService.GetUserAsync(HttpContext);
             var user = userResult.user;
 
-            var result = await _baseKeyService.RemoveAccessKey(accessKeyDto.EncryptedKey);
+            var result = await _restKeyService.RemoveRestAccessKey(accessKeyDto.EncryptedKey);
             if (result == null)
             {
                 return BadRequest("Failed to delete API key.");
@@ -199,7 +197,7 @@ public class KeyController : ControllerBase
     {
         try
         {
-            var (restApiKey, errorResult) = await _baseKeyService.DecryptAccessKey(accessKeyDto.EncryptedKey);
+            var (restApiKey, errorResult) = await _restKeyService.DecryptRestAccessKey(accessKeyDto.EncryptedKey);
             if (errorResult != null)
             {
                 return errorResult;
@@ -245,7 +243,7 @@ public class KeyController : ControllerBase
     {
         try
         {
-            var (graphQLApiKey, errorResult) = await _baseKeyService.DecryptAccessKey(accessKeyDto.EncryptedKey);
+            var (graphQLApiKey, errorResult) = await _restKeyService.DecryptRestAccessKey(accessKeyDto.EncryptedKey);
             if (errorResult != null)
             {
                 return errorResult;
@@ -278,7 +276,7 @@ public class KeyController : ControllerBase
 
     private async Task<IApiKey> DecryptAndValidateApiKey(string encryptedKey, string userId)
     {
-        var (apiKey, errorResult) = await _baseKeyService.DecryptAccessKeyUserCheck(encryptedKey, userId);
+        var (apiKey, errorResult) = await _restKeyService.DecryptRestAccessKeyUserCheck(encryptedKey, userId);
         if (errorResult != null)
         {
             throw new InvalidOperationException("Error validating API key.");
