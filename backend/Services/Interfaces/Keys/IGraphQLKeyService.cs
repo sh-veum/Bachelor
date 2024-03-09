@@ -16,4 +16,5 @@ public interface IGraphQLKeyService
     Task<IActionResult> RemoveGraphQLAccessKey(string encryptedKey);
     Task<(IApiKey?, IActionResult?)> DecryptGraphQLAccessKey(string encryptedKey);
     Task<(IApiKey?, IActionResult?)> DecryptGraphQLAccessKeyUserCheck(string encryptedKey, string currentUserId);
+    Task<IActionResult> DeleteGraphQLApiKeyById(Guid id, string typePart);
 }

@@ -59,7 +59,7 @@ public class ApiKeyMutation
         };
     }
 
-    public async Task<ToggleApiKeyResponseDto> ToggleApiKey(
+    public async Task<ResponseDto> ToggleApiKey(
         [Service] IRestKeyService restKeyService,
         [Service] IGraphQLKeyService graphQLKeyService,
         ToggleApiKeyStatusDto toggleApiKeyStatusDto)
@@ -77,15 +77,17 @@ public class ApiKeyMutation
                     result = await graphQLKeyService.ToggleGraphQLApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
                     break;
                 default:
-                    return new ToggleApiKeyResponseDto { IsSuccess = false, Message = "Invalid key type." };
+                    return new ResponseDto { IsSuccess = false, Message = "Invalid key type." };
             }
 
-            return ConvertToToggleApiKeyResponseDto(result);
+            var successMessage = keyType == "REST" ? "REST API key status toggled successfully" : "GraphQL API key status toggled successfully";
+
+            return ConvertToResponseDto(result, successMessage);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while toggling the API key status.");
-            return new ToggleApiKeyResponseDto
+            return new ResponseDto
             {
                 IsSuccess = false,
                 Message = ex.Message
@@ -93,20 +95,44 @@ public class ApiKeyMutation
         }
     }
 
-    private static ToggleApiKeyResponseDto ConvertToToggleApiKeyResponseDto(IActionResult actionResult)
+    private static ResponseDto ConvertToResponseDto(IActionResult actionResult, string sucessMessage)
     {
         if (actionResult is OkResult)
         {
-            return new ToggleApiKeyResponseDto { IsSuccess = true, Message = "API key status toggled successfully." };
+            return new ResponseDto { IsSuccess = true, Message = sucessMessage };
         }
         else if (actionResult is NotFoundObjectResult notFoundResult)
         {
-            return new ToggleApiKeyResponseDto { IsSuccess = false, Message = notFoundResult.Value?.ToString() };
+            return new ResponseDto { IsSuccess = false, Message = notFoundResult.Value?.ToString() };
         }
         else
         {
             var badRequestResult = actionResult as BadRequestObjectResult;
-            return new ToggleApiKeyResponseDto { IsSuccess = false, Message = badRequestResult?.Value?.ToString() };
+            return new ResponseDto { IsSuccess = false, Message = badRequestResult?.Value?.ToString() };
+        }
+    }
+
+    public async Task<ResponseDto> DeleteGraphQLApiKey(
+        [Service] IGraphQLKeyService graphQLKeyService,
+        Guid id)
+    {
+        IActionResult result;
+        try
+        {
+            result = await graphQLKeyService.DeleteGraphQLApiKeyById(id, "graphqlapikey");
+
+            var successMessage = "GraphQL API key deleted successfully";
+
+            return ConvertToResponseDto(result, successMessage);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting the API key.");
+            return new ResponseDto
+            {
+                IsSuccess = false,
+                Message = ex.Message
+            };
         }
     }
 }

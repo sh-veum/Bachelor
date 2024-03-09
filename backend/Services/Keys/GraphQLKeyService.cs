@@ -137,6 +137,8 @@ public class GraphQLKeyService : IGraphQLKeyService
 
     public Task<(IApiKey?, IActionResult?)> DecryptGraphQLAccessKeyUserCheck(string encryptedKey, string currentUserId) => _baseKeyService.DecryptAccessKeyUserCheck(encryptedKey, currentUserId);
 
+    public Task<IActionResult> DeleteGraphQLApiKeyById(Guid id, string typePart) => _baseKeyService.DeleteApiKeyById(id, typePart);
+
     // Private methods
     private bool CheckQueryAuthorization(string graphqlQuery, List<AccessKeyPermission> permissions)
     {

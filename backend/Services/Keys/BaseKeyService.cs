@@ -84,11 +84,31 @@ public class BaseKeyService : IBaseKeyService
         var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
         if (apiKey != null)
         {
-            RemoveApiKey(apiKey, dbContext);
-            await dbContext.SaveChangesAsync();
+            await RemoveApiKeyAsync(apiKey, dbContext);
         }
 
         return new OkResult();
+    }
+
+    public async Task<IActionResult> DeleteApiKeyById(Guid id, string typePart)
+    {
+        var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        var (apiKey, actionResult) = await FetchApiKeyAsync(typePart, id, dbContext);
+        if (actionResult != null)
+        {
+            return actionResult;
+        }
+
+        if (apiKey == null)
+        {
+            return new NotFoundObjectResult("API key not found.");
+        }
+
+        await RemoveApiKeyAsync(apiKey, dbContext);
+
+        _logger.LogInformation("{KeyType} with ID {KeyId} has been deleted.", typePart, id);
+        return new OkResult();
+
     }
 
     public async Task<IActionResult> ToggleApiKeyEnabledStatus<T>(Guid keyId, bool isEnabled) where T : IApiKey
@@ -109,15 +129,29 @@ public class BaseKeyService : IBaseKeyService
     }
 
     // Private methods
-    private static void RemoveApiKey(IApiKey apiKey, DbContext dbContext)
+    private static async Task RemoveApiKeyAsync(IApiKey apiKey, DbContext dbContext)
     {
         switch (apiKey)
         {
             case RestApiKey api:
+                // var themes = await dbContext.Set<Theme>().Where(t => t.RestApiKeyID == api.Id).ToListAsync();
+                // dbContext.Set<Theme>().RemoveRange(themes);
+                // await dbContext.SaveChangesAsync();
+
                 dbContext.Set<RestApiKey>().Remove(api);
+                await dbContext.SaveChangesAsync();
                 break;
+
             case GraphQLApiKey gqlApi:
+                var permissions = await dbContext.Set<AccessKeyPermission>()
+                                         .Where(p => p.GraphQLApiKeyId == gqlApi.Id)
+                                         .ToListAsync();
+
+                dbContext.Set<AccessKeyPermission>().RemoveRange(permissions);
+                await dbContext.SaveChangesAsync();
+
                 dbContext.Set<GraphQLApiKey>().Remove(gqlApi);
+                await dbContext.SaveChangesAsync();
                 break;
         }
     }
