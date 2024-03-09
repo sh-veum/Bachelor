@@ -18,10 +18,11 @@ class Consumer
             .AddIniFile(args[0])
             .Build();
 
-        configuration["group.id"] = "kafka-dotnet-getting-started";
-        configuration["auto.offset.reset"] = "earliest";
+        string uniqueGroupId = $"kafka-dotnet-{Guid.NewGuid()}";
+        configuration["group.id"] = uniqueGroupId; // Unique consumer group ID
+        configuration["auto.offset.reset"] = "earliest"; // Start from the earliest message present in the topic
 
-        List<string> topics = new List<string> { "species-updates", "org-updates", "rest-key-updates", "graphql-key-updates" };
+        List<string> topics = new List<string> { "species-updates", "org-updates", "rest-key-updates", "graphql-key-updates", "water-quality-updates" };
 
         CancellationTokenSource cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) =>
