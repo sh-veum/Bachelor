@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import type { GraphQLKey } from '../interfaces/GraphQLSchema'
-import { fetchGraphQLKeys, toggleApiKey } from '@/lib/graphQL'
+import { fetchGraphQLKeys, toggleApiKey, deleteGraphQLApiKey } from '@/lib/graphQL'
+import type { UUID } from 'crypto'
 
 const graphQLKeys = ref<GraphQLKey[]>([])
 
@@ -33,7 +34,7 @@ const fetchData = async () => {
   }
 }
 
-const toggleKeyEnabledStatus = async (id: number, isEnabled: boolean) => {
+const toggleKeyEnabledStatus = async (id: UUID, isEnabled: boolean) => {
   try {
     const response = await toggleApiKey(id, isEnabled, 'graphql')
     if (response.toggleApiKey.isSuccess) {
@@ -50,8 +51,20 @@ const toggleKeyEnabledStatus = async (id: number, isEnabled: boolean) => {
   }
 }
 
-const deleteKey = async () => {
-  alert('Not yet implemented')
+const deleteKey = async (id: UUID) => {
+  try {
+    const response = await deleteGraphQLApiKey(id)
+    if (response.deleteGraphQLApiKey.isSuccess) {
+      const keyIndex = graphQLKeys.value.findIndex((key) => key.id === id)
+      if (keyIndex !== -1) {
+        graphQLKeys.value.splice(keyIndex, 1)
+      }
+    } else {
+      console.error('Failed to delete key:', response.deleteGraphQLApiKey.message)
+    }
+  } catch (error) {
+    console.error('Error deleting key:', error)
+  }
 }
 
 // Function to handle incoming WebSocket messages
@@ -141,7 +154,7 @@ onUnmounted(() => {
             </Button>
           </TableCell>
           <TableCell>
-            <Button variant="destructive" @click="deleteKey">Delete key</Button>
+            <Button variant="destructive" @click="deleteKey(graphQLKey.id)"> Delete key </Button>
           </TableCell>
         </TableRow>
       </TableBody>

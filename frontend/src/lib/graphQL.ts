@@ -50,6 +50,15 @@ const TOGGLE_GRAPHQL_KEY = gql`
   }
 `
 
+const DELETE_GRAPHQL_KEY = gql`
+  mutation DeleteGraphQLApiKey($id: UUID!) {
+    deleteGraphQLApiKey(id: $id) {
+      isSuccess
+      message
+    }
+  }
+`
+
 interface AvailableClassTablesResponse {
   availableClassTables: ClassTable[]
 }
@@ -73,6 +82,13 @@ interface GraphQLKeysResponse {
 
 interface ToggleApiKeyResponse {
   toggleApiKey: {
+    isSuccess: boolean
+    message: string
+  }
+}
+
+interface DeleteGraphQLApiKeyResponse {
+  deleteGraphQLApiKey: {
     isSuccess: boolean
     message: string
   }
@@ -167,5 +183,27 @@ export async function toggleApiKey(
       console.error('Error toggling API key:', error)
     }
     throw new Error('Error toggling API key')
+  }
+}
+
+export async function deleteGraphQLApiKey(id: UUID): Promise<DeleteGraphQLApiKeyResponse> {
+  try {
+    const response = await apolloClient.mutate<DeleteGraphQLApiKeyResponse>({
+      mutation: DELETE_GRAPHQL_KEY,
+      variables: { id }
+    })
+
+    if (response.data) {
+      return response.data
+    } else {
+      throw new Error('No data returned from deleteGraphQLApiKey mutation')
+    }
+  } catch (error) {
+    if (error instanceof ApolloError) {
+      console.error('GraphQL Error:', error.message)
+    } else {
+      console.error('Error deleting API key:', error)
+    }
+    throw new Error('Error deleting API key')
   }
 }
