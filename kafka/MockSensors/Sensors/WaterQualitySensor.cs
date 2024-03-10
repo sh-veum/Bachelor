@@ -7,12 +7,14 @@ public class WaterQualitySensor
     private readonly IProducer<Null, string> _producer;
     private readonly string _topic;
     private CancellationTokenSource? _cancellationTokenSource;
+    private readonly ILogger<WaterQualitySensor> _logger;
 
     public WaterQualitySensor(IConfiguration configuration, string topic)
     {
         var producerConfig = new ProducerConfig { BootstrapServers = configuration["Kafka:BootstrapServers"] };
         _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
         _topic = topic;
+        _logger = logger;
     }
 
     // Starting values for pH, turbidity, and temperature.
