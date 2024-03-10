@@ -60,7 +60,7 @@ services:
       kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic org-updates --replication-factor 1 --partitions 1
       kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic rest-key-updates --replication-factor 1 --partitions 1
       kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic graphql-key-updates --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic graphql-key-updates --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic water-quality-updates --replication-factor 1 --partitions 1
 
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka:29092 --list
@@ -146,18 +146,20 @@ services:
     networks:
       - dev
 
-  water-quality-sensor:
-    container_name: water-quality-sensor
+  mock-sensors:
+    image: docker.io/library/mocksensors
+    container_name: mock-sensors
     depends_on:
       - kafka
     networks:
       - dev
     build:
-      context: ./kafka/WaterQualitySensor
+      context: ./kafka/MockSensors
       dockerfile: Dockerfile
-    volumes:
-      - ./kafka/WaterQualitySensor/appsettings.ini:/app/kafka/WaterQualitySensor/appsettings.ini
-    command: ["./kafka/WaterQualitySensor/appsettings.ini"]
+    ports:
+      - "8089:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:80
 
 volumes:
   app_data:
