@@ -160,7 +160,8 @@ public class Query
                 {
                     Id = t.Id,
                     ThemeName = t.ThemeName,
-                    AccessibleEndpoints = t.AccessibleEndpoints
+                    AccessibleEndpoints = t.AccessibleEndpoints,
+                    IsDeprecated = t.IsDeprecated
                 }).ToList(),
                 IsEnabled = apiKey.IsEnabled
             };

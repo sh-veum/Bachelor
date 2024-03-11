@@ -37,9 +37,8 @@ public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
 
         modelBuilder.Entity<RestApiKey>()
             .HasMany(u => u.Themes)
-            .WithOne(k => k.RestApiKey)
-            .HasForeignKey(k => k.RestApiKeyID)
-            .IsRequired(false);
+            .WithMany(k => k.RestApiKeys)
+            .UsingEntity(j => j.ToTable("RestApiKeyThemes"));
 
         modelBuilder.Entity<UserModel>()
             .HasMany(u => u.Themes)

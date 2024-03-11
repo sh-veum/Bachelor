@@ -25,7 +25,7 @@ public class RestKeyService : IRestKeyService
         _dbContextService = dbContextService;
         _baseKeyService = baseKeyService;
     }
-    public async Task<RestApiKey> CreateRESTApiKey(UserModel user, string keyName, List<ThemeDto> themeDtos)
+    public async Task<RestApiKey> CreateRESTApiKey(UserModel user, string keyName, List<Guid> themeIds)
     {
         var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
@@ -40,19 +40,14 @@ public class RestKeyService : IRestKeyService
             IsEnabled = true
         };
 
-        foreach (var themeDto in themeDtos)
+        foreach (var themeId in themeIds)
         {
-            var theme = new Theme
-            {
-                AccessibleEndpoints = themeDto.AccessibleEndpoints,
-                ThemeName = themeDto.ThemeName,
-                RestApiKeyID = apiKey.Id,
-                RestApiKey = apiKey,
-                UserId = user.Id,
-                User = user
-            };
+            var theme = await dbContext.Set<Theme>().FirstOrDefaultAsync(t => t.Id == themeId);
 
-            apiKey.Themes.Add(theme);
+            if (theme != null)
+            {
+                apiKey.Themes.Add(theme);
+            }
         }
 
         dbContext.Set<RestApiKey>().Add(apiKey);
@@ -122,10 +117,17 @@ public class RestKeyService : IRestKeyService
 
     public async Task<List<Theme>> GetRESTApiKeyThemes(Guid restApiKeyID)
     {
-        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
-        var themes = await mainDbContext.Set<Theme>()
-            .Where(p => p.RestApiKeyID == restApiKeyID)
+        // First, get all Theme IDs associated with the RestApiKey
+        var themeIds = await dbContext.Set<RestApiKey>() // Adjust this line if you have a different way to access your DbSet
+            .Where(ak => ak.Id == restApiKeyID)
+            .SelectMany(ak => ak.Themes.Select(t => t.Id))
+            .ToListAsync();
+
+        // Then, fetch the themes by their IDs
+        var themes = await dbContext.Set<Theme>()
+            .Where(t => themeIds.Contains(t.Id))
             .ToListAsync();
 
         return themes;

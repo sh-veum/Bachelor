@@ -254,8 +254,8 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .IsRequired()
                         .HasColumnType("text[]");
 
-                    b.Property<Guid?>("RestApiKeyID")
-                        .HasColumnType("uuid");
+                    b.Property<bool>("IsDeprecated")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("ThemeName")
                         .IsRequired()
@@ -266,8 +266,6 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("RestApiKeyID");
 
                     b.HasIndex("UserId");
 
@@ -1892,6 +1890,21 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("RestApiKeyTheme", b =>
+                {
+                    b.Property<Guid>("RestApiKeysId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ThemesId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("RestApiKeysId", "ThemesId");
+
+                    b.HasIndex("ThemesId");
+
+                    b.ToTable("RestApiKeyTheme");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1976,29 +1989,33 @@ namespace NetBackend.Migrations.CustomerTwoDb
 
             modelBuilder.Entity("NetBackend.Models.Keys.Theme", b =>
                 {
-                    b.HasOne("NetBackend.Models.Keys.RestApiKey", "RestApiKey")
-                        .WithMany("Themes")
-                        .HasForeignKey("RestApiKeyID");
-
                     b.HasOne("NetBackend.Models.User.UserModel", "User")
                         .WithMany("Themes")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("RestApiKey");
-
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RestApiKeyTheme", b =>
+                {
+                    b.HasOne("NetBackend.Models.Keys.RestApiKey", null)
+                        .WithMany()
+                        .HasForeignKey("RestApiKeysId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NetBackend.Models.Keys.Theme", null)
+                        .WithMany()
+                        .HasForeignKey("ThemesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
                 {
                     b.Navigation("AccessKeyPermissions");
-                });
-
-            modelBuilder.Entity("NetBackend.Models.Keys.RestApiKey", b =>
-                {
-                    b.Navigation("Themes");
                 });
 
             modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>

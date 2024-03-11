@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetBackend.Data.DbContexts;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NetBackend.Migrations
 {
     [DbContext(typeof(CustomerOneDbContext))]
-    partial class CustomerOneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240311162258_add_isDeprecated_to_themes_table")]
+    partial class add_isDeprecated_to_themes_table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -257,6 +260,9 @@ namespace NetBackend.Migrations
                     b.Property<bool>("IsDeprecated")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid?>("RestApiKeyID")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ThemeName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -266,6 +272,8 @@ namespace NetBackend.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RestApiKeyID");
 
                     b.HasIndex("UserId");
 
@@ -1890,21 +1898,6 @@ namespace NetBackend.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("RestApiKeyTheme", b =>
-                {
-                    b.Property<Guid>("RestApiKeysId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ThemesId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("RestApiKeysId", "ThemesId");
-
-                    b.HasIndex("ThemesId");
-
-                    b.ToTable("RestApiKeyTheme");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1989,33 +1982,29 @@ namespace NetBackend.Migrations
 
             modelBuilder.Entity("NetBackend.Models.Keys.Theme", b =>
                 {
+                    b.HasOne("NetBackend.Models.Keys.RestApiKey", "RestApiKey")
+                        .WithMany("Themes")
+                        .HasForeignKey("RestApiKeyID");
+
                     b.HasOne("NetBackend.Models.User.UserModel", "User")
                         .WithMany("Themes")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("RestApiKey");
+
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("RestApiKeyTheme", b =>
-                {
-                    b.HasOne("NetBackend.Models.Keys.RestApiKey", null)
-                        .WithMany()
-                        .HasForeignKey("RestApiKeysId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("NetBackend.Models.Keys.Theme", null)
-                        .WithMany()
-                        .HasForeignKey("ThemesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.GraphQLApiKey", b =>
                 {
                     b.Navigation("AccessKeyPermissions");
+                });
+
+            modelBuilder.Entity("NetBackend.Models.Keys.RestApiKey", b =>
+                {
+                    b.Navigation("Themes");
                 });
 
             modelBuilder.Entity("NetBackend.Models.User.UserModel", b =>

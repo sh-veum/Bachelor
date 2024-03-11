@@ -11,6 +11,7 @@ interface Theme {
   id: string
   themeName: string
   accessibleEndpoints: string[]
+  isDeprecated: boolean
 }
 
 const themes = ref<Theme[]>([])

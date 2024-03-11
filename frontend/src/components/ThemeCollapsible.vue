@@ -10,6 +10,7 @@ interface Theme {
   id: string
   themeName: string
   accessibleEndpoints: string[]
+  isDeprecated: boolean
 }
 
 interface Key {

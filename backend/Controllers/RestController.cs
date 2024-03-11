@@ -37,12 +37,12 @@ public class RestController : ControllerBase
             var user = userResult.user;
 
             // Create Api Key
-            if (createAccessKeyDto.Themes == null)
+            if (createAccessKeyDto.ThemeIds == null)
             {
-                return BadRequest("Endpoints are null.");
+                return BadRequest("Themes are null.");
             }
 
-            var restApiKey = await _restKeyService.CreateRESTApiKey(user, createAccessKeyDto.KeyName, createAccessKeyDto.Themes);
+            var restApiKey = await _restKeyService.CreateRESTApiKey(user, createAccessKeyDto.KeyName, createAccessKeyDto.ThemeIds);
 
             if (restApiKey == null)
             {
@@ -170,6 +170,7 @@ public class RestController : ControllerBase
                     {
                         Id = t.Id,
                         ThemeName = t.ThemeName,
+                        IsDeprecated = t.IsDeprecated,
                         AccessibleEndpoints = t.AccessibleEndpoints ?? []
                     }).ToList() ?? [],
                     IsEnabled = api.IsEnabled
@@ -214,7 +215,8 @@ public class RestController : ControllerBase
                     {
                         Id = t.Id,
                         ThemeName = t.ThemeName,
-                        AccessibleEndpoints = t.AccessibleEndpoints
+                        AccessibleEndpoints = t.AccessibleEndpoints,
+                        IsDeprecated = t.IsDeprecated
                     }).ToList(),
                     IsEnabled = restApiKey.IsEnabled
                 };
@@ -267,7 +269,8 @@ public class RestController : ControllerBase
             {
                 Id = theme.Id,
                 ThemeName = theme.ThemeName,
-                AccessibleEndpoints = theme.AccessibleEndpoints
+                AccessibleEndpoints = theme.AccessibleEndpoints,
+                IsDeprecated = theme.IsDeprecated
             }).ToList();
 
             return Ok(validThemes);
@@ -293,6 +296,7 @@ public class RestController : ControllerBase
             {
                 ThemeName = themeDto.ThemeName,
                 AccessibleEndpoints = themeDto.AccessibleEndpoints,
+                IsDeprecated = themeDto.IsDeprecated,
                 UserId = user.Id,
                 User = user
             };
@@ -308,7 +312,8 @@ public class RestController : ControllerBase
             {
                 Id = createdTheme.Id,
                 ThemeName = createdTheme.ThemeName,
-                AccessibleEndpoints = createdTheme.AccessibleEndpoints
+                AccessibleEndpoints = createdTheme.AccessibleEndpoints,
+                IsDeprecated = createdTheme.IsDeprecated
             };
 
             return Ok(newThemeDto);
@@ -335,6 +340,7 @@ public class RestController : ControllerBase
                 Id = themeDto.Id ?? Guid.Empty,
                 ThemeName = themeDto.ThemeName,
                 AccessibleEndpoints = themeDto.AccessibleEndpoints,
+                IsDeprecated = themeDto.IsDeprecated,
                 UserId = user.Id,
                 User = user
             };

@@ -38,6 +38,7 @@ const props = defineProps<{
     id: string
     themeName: string
     accessibleEndpoints: string[]
+    isDeprecated: boolean
   }
 }>()
 
@@ -76,7 +77,8 @@ const createTheme = async (values: { name: string; endpoints: string[] }) => {
   try {
     await axios.post('http://localhost:8088/api/rest/create-theme', {
       themeName: values.name,
-      accessibleEndpoints: values.endpoints
+      accessibleEndpoints: values.endpoints,
+      isDeprecated: false
     })
   } catch (error) {
     console.error('Failed to create theme:', error)
@@ -89,7 +91,8 @@ const editTheme = async (id: string, values: { name: string; endpoints: string[]
     await axios.put('http://localhost:8088/api/rest/update-theme', {
       id,
       themeName: values.name,
-      accessibleEndpoints: values.endpoints
+      accessibleEndpoints: values.endpoints,
+      isDeprecated: props.theme?.isDeprecated
     })
   } catch (error) {
     console.error('Failed to edit theme:', error)

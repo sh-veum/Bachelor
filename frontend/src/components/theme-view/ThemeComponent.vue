@@ -15,6 +15,7 @@ const props = defineProps<{
     id: string
     themeName: string
     accessibleEndpoints: string[]
+    isDeprecated: boolean
   }
 }>()
 
@@ -22,20 +23,16 @@ const emit = defineEmits(['edit', 'delete'])
 
 const isOpen = ref(true)
 
-const deleteTheme = async (theme: {
-  id: string
-  themeName: string
-  accessibleEndpoints: string[]
-}) => {
+const deleteTheme = async (themeId: string) => {
   try {
-    await axios.delete(`http://localhost:8088/api/rest/delete-theme?id=${theme.id}`, {})
+    await axios.delete(`http://localhost:8088/api/rest/delete-theme?id=${themeId}`, {})
   } catch (error) {
     console.error('Failed to delete theme:', error)
   }
 }
 
 const handleDelete = () => {
-  deleteTheme(props.theme).then(() => emit('delete'))
+  deleteTheme(props.theme.id).then(() => emit('delete'))
 }
 
 const handleEdit = () => {

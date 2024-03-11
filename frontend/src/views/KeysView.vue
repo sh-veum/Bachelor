@@ -49,6 +49,7 @@ interface Theme {
   id: string
   themeName: string
   accessibleEndpoints: string[]
+  isDeprecated: boolean
 }
 
 interface Key {
@@ -98,7 +99,7 @@ const createAccessKey = async (keyName: string, themes: Theme[]) => {
   try {
     const response = await axios.post('http://localhost:8088/api/rest/create-accesskey', {
       keyName: keyName,
-      themes: themes
+      themeIds: themes.map((theme) => theme.id)
     })
     console.log('Access key created:', response.data)
     encryptedKey.value = response.data.encryptedKey
@@ -216,8 +217,8 @@ onUnmounted(() => {
       class="sm:max-w-md"
     >
       <DialogHeader>
-        <DialogTitle>Key created successfully</DialogTitle>
-        <DialogDescription class="text-red-500 font-bold italic">
+        <DialogTitle class="text-center">Key created successfully!</DialogTitle>
+        <DialogDescription class="text-red-500 font-bold italic text-center">
           Store the key, you won't be able to see it again when you close the dialog
         </DialogDescription>
       </DialogHeader>
@@ -228,6 +229,7 @@ onUnmounted(() => {
         </div>
         <Button type="submit" size="sm" class="px-3">
           <!-- TODO: change copy icon to green checkmark and use a popover with "key copied" text ? -->
+          <!-- Example: -->
           <!-- https://github.com/docker/awesome-compose/blob/master/official-documentation-samples/django/README.md -->
           <span class="sr-only">Copy</span>
           <Copy @click="copyLink" class="w-4 h-4" />
@@ -303,6 +305,7 @@ onUnmounted(() => {
                             v-for="theme in themes"
                             :key="theme.id"
                             :value="theme.id"
+                            :disabled="theme.isDeprecated"
                             @select="
                               () => {
                                 const selectedThemes = values.themes?.includes(theme.id)
@@ -359,7 +362,7 @@ onUnmounted(() => {
         <TableCell>
           <ThemeCollapsible v-if="key.themes.length > 1" :apiKey="key" />
           <div v-else class="py-3 font-mono text-sm">
-            {{ key.themes[0].themeName }}
+            {{ key.themes[0]?.themeName ?? 'No themes' }}
           </div>
         </TableCell>
         <TableCell>{{ key.expiresIn }}</TableCell>
