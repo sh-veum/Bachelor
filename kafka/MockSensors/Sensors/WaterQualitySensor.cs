@@ -9,7 +9,7 @@ public class WaterQualitySensor
     private CancellationTokenSource? _cancellationTokenSource;
     private readonly ILogger<WaterQualitySensor> _logger;
 
-    public WaterQualitySensor(IConfiguration configuration, string topic)
+    public WaterQualitySensor(IConfiguration configuration, string topic, ILogger<WaterQualitySensor> logger)
     {
         var producerConfig = new ProducerConfig { BootstrapServers = configuration["Kafka:BootstrapServers"] };
         _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
