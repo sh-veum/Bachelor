@@ -103,7 +103,6 @@ const createAccessKey = async (keyName: string, themes: Theme[]) => {
     })
     console.log('Access key created:', response.data)
     encryptedKey.value = response.data.encryptedKey
-    // TODO: show the encrypted key to the user
     copyIsOpen.value = true
   } catch (error) {
     console.error('Error creating access key:', error)
@@ -204,6 +203,7 @@ onUnmounted(() => {
 
 <template>
   <Dialog v-model:open="copyIsOpen">
+    <!-- TODO: remove this dialog trigger (its only here for testing purposes) -->
     <DialogTrigger as-child>
       <Button variant="outline"> Test key copy </Button>
     </DialogTrigger>
@@ -301,6 +301,8 @@ onUnmounted(() => {
                       <CommandEmpty>Nothing found.</CommandEmpty>
                       <CommandList>
                         <CommandGroup>
+                          <!-- To remove themes from the select all together: -->
+                          <!-- v-for="theme in themes.filter((t) => !t.isDeprecated)" -->
                           <CommandItem
                             v-for="theme in themes"
                             :key="theme.id"
@@ -327,6 +329,9 @@ onUnmounted(() => {
                               "
                             />
                             {{ theme.themeName }}
+                            <span v-if="theme.isDeprecated" class="text-red-500">
+                              (deprecated)</span
+                            >
                           </CommandItem>
                         </CommandGroup>
                       </CommandList>
