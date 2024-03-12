@@ -4,7 +4,6 @@ namespace NetBackend.Data.DbContexts;
 
 public class CustomerTwoDbContext : BaseDbContext
 {
-
     public CustomerTwoDbContext(DbContextOptions<CustomerTwoDbContext> options) : base(options)
     {
     }

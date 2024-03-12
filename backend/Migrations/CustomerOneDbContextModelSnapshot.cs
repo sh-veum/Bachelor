@@ -1890,6 +1890,35 @@ namespace NetBackend.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("NetBackend.Models.WaterQualityLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("Key_Timestamp");
+
+                    b.Property<double>("Ph")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Temperature")
+                        .HasColumnType("double precision")
+                        .HasColumnName("Temperature_C");
+
+                    b.Property<double>("Turbidity")
+                        .HasColumnType("double precision")
+                        .HasColumnName("Turbidity_NTU");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WaterQualityLogs");
+                });
+
             modelBuilder.Entity("RestApiKeyTheme", b =>
                 {
                     b.Property<Guid>("RestApiKeysId")

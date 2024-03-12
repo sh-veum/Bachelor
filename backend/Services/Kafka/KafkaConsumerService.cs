@@ -11,8 +11,9 @@ public class KafkaConsumerService : BackgroundService
     private readonly IConsumer<Ignore, string> _consumer;
     private readonly ILogger<KafkaConsumerService> _logger;
     private readonly IAppWebSocketManager _webSocketManager;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public KafkaConsumerService(IConfiguration configuration, ILogger<KafkaConsumerService> logger, IAppWebSocketManager webSocketManager)
+    public KafkaConsumerService(IConfiguration configuration, ILogger<KafkaConsumerService> logger, IAppWebSocketManager webSocketManager, IServiceScopeFactory scopeFactory)
     {
         _topics = [
             KafkaConstants.SpeciesTopic,
@@ -22,6 +23,7 @@ public class KafkaConsumerService : BackgroundService
             ];
         _logger = logger;
         _webSocketManager = webSocketManager;
+        _scopeFactory = scopeFactory;
 
         var consumerConfig = new ConsumerConfig
         {
@@ -44,6 +46,9 @@ public class KafkaConsumerService : BackgroundService
             {
                 try
                 {
+                    using var scope = _scopeFactory.CreateScope();
+                    var dbContextService = scope.ServiceProvider.GetRequiredService<DbContextService>();
+
                     var consumeResult = _consumer.Consume(stoppingToken);
                     if (consumeResult != null && !consumeResult.IsPartitionEOF)
                     {
@@ -56,6 +61,7 @@ public class KafkaConsumerService : BackgroundService
                         await _webSocketManager.SendMessageAsync(serializedMessage);
                         _logger.LogInformation($"WebSocket message sent: {serializedMessage}");
                     }
+
                 }
                 catch (OperationCanceledException)
                 {

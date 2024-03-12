@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using NetBackend.Models;
 using NetBackend.Models.Keys;
 using NetBackend.Models.User;
 
@@ -9,8 +10,10 @@ namespace NetBackend.Data.DbContexts;
 public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
 {
     public DbSet<RestApiKey> ApiKeys { get; set; }
+    public DbSet<Theme> Themes { get; set; }
     public DbSet<GraphQLApiKey> GraphQLApiKeys { get; set; }
     public DbSet<AccessKeyPermission> AccessKeyPermissions { get; set; }
+
 
     public MainDbContext(DbContextOptions<MainDbContext> options) : base(options)
     {

@@ -110,7 +110,7 @@ onUnmounted(() => {
       <TableHeader>
         <TableRow>
           <TableHead class="w-[200px]">Key Name</TableHead>
-          <TableHead class="w-[400px]">Permissions</TableHead>
+          <TableHead class="w-[200px]">Permissions</TableHead>
           <TableHead class="w-[200px]">Expires in (days)</TableHead>
           <TableHead class="w-[100px]">Disable</TableHead>
           <TableHead class="w-[100px]">Delete</TableHead>
@@ -118,7 +118,7 @@ onUnmounted(() => {
       </TableHeader>
       <TableBody>
         <TableRow v-for="(graphQLKey, index) in graphQLKeys" :key="index">
-          <TableCell>{{ graphQLKey.keyName }}</TableCell>
+          <TableCell class="text-xl">{{ graphQLKey.keyName }}</TableCell>
           <TableCell>
             <Accordion type="single" collapsible>
               <AccordionItem :value="`${index}`">
