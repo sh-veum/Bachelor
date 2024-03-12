@@ -4,7 +4,7 @@ namespace MockSensors.Sensors;
 
 public class WaterQualitySensor
 {
-    private readonly IProducer<Null, string> _producer;
+    private readonly IProducer<string, string> _producer;
     private readonly string _topic;
     private CancellationTokenSource? _cancellationTokenSource;
     private readonly ILogger<WaterQualitySensor> _logger;
@@ -12,7 +12,7 @@ public class WaterQualitySensor
     public WaterQualitySensor(IConfiguration configuration, string topic, ILogger<WaterQualitySensor> logger)
     {
         var producerConfig = new ProducerConfig { BootstrapServers = configuration["Kafka:BootstrapServers"] };
-        _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
+        _producer = new ProducerBuilder<string, string>(producerConfig).Build();
         _topic = topic;
         _logger = logger;
     }
@@ -24,7 +24,7 @@ public class WaterQualitySensor
 
     public void Start()
     {
-        _logger.LogInformation("Starting water quality sensor");
+        _logger.LogInformation("Starting water quality sensor: " + _topic);
         _cancellationTokenSource = new CancellationTokenSource();
         var token = _cancellationTokenSource.Token;
         var rnd = new Random();
@@ -45,7 +45,7 @@ public class WaterQualitySensor
 
                 var waterQualityMetric = $"pH: {currentPH:0.00}, Turbidity: {currentTurbidity:0.00} NTU, Temperature: {currentTemperature}C";
 
-                _producer.Produce(_topic, new Message<Null, string> { Value = waterQualityMetric },
+                _producer.Produce(_topic, new Message<string, string> { Key = DateTime.Now.ToString(), Value = waterQualityMetric },
                     (deliveryReport) =>
                     {
                         if (deliveryReport.Error.Code != ErrorCode.NoError)
@@ -59,11 +59,10 @@ public class WaterQualitySensor
                     });
 
                 _producer.Flush(TimeSpan.FromSeconds(1));
-                Thread.Sleep(1000);
 
                 try
                 {
-                    Task.Delay(1000, token).Wait(token);
+                    Task.Delay(5000, token).Wait(token);
                 }
                 catch (OperationCanceledException)
                 {
@@ -81,7 +80,7 @@ public class WaterQualitySensor
             return;
         }
 
-        _logger.LogInformation("Stopping water quality sensor");
+        _logger.LogInformation("Stopping water quality sensor " + _topic);
         _cancellationTokenSource.Cancel();
     }
 }

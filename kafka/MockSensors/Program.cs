@@ -8,9 +8,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-string sensorName = "MySensor"; // Replace this with your actual value
-builder.Services.AddSingleton(sensorName);
-builder.Services.AddSingleton<WaterQualitySensor>();
+builder.Services.AddSingleton<WaterQualitySensorManager>();
 
 var app = builder.Build();
 
@@ -21,21 +19,31 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Retrieve the sensor instance from DI
-var sensor = app.Services.GetRequiredService<WaterQualitySensor>();
+var sensorManager = app.Services.GetRequiredService<WaterQualitySensorManager>();
 
-app.MapGet("/startSensor", () =>
+app.MapGet("/startSensor/{id}", (string id) =>
 {
-    sensor.Start(); // Start without creating a new instance
-    return Results.Ok("Sensor started");
+    if (sensorManager.TryStartSensor(id))
+    {
+        return Results.Ok($"Sensor {id} started");
+    }
+    else
+    {
+        return Results.BadRequest($"Sensor {id} is already running");
+    }
 });
 
-app.MapGet("/stopSensor", () =>
+app.MapGet("/stopSensor/{id}", (string id) =>
 {
-    sensor.Stop(); // Stop the sensor
-    return Results.Ok("Sensor stopped");
+    if (sensorManager.TryStopSensor(id))
+    {
+        return Results.Ok($"Sensor {id} stopped");
+    }
+    else
+    {
+        return Results.BadRequest($"Sensor {id} was not found");
+    }
 });
-
 
 // app.UseHttpsRedirection();
 

@@ -30,8 +30,12 @@ http://localhost:8080/
 
 ### MockSensor
 
-To start the sensor, go to:
+To start and stop the sensor, go to:
 
 ```
 http://localhost:8089/startSensor
+```
+
+```
+http://localhost:8089/stopSensor
 ```
