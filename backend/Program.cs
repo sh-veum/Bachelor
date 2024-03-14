@@ -88,6 +88,7 @@ builder.Services.AddIdentityCore<UserModel>()
     .AddEntityFrameworkStores<MainDbContext>()
     .AddApiEndpoints();
 
+
 // Services
 builder.Services.AddScoped<IDbContextService, DbContextService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -99,7 +100,12 @@ builder.Services.AddSingleton<ICryptoService, CryptoService>();
 builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
 builder.Services.AddSingleton<IAppWebSocketManager, AppWebSocketManager>();
 
-builder.Services.AddHostedService<KafkaConsumerService>();
+// Water Quality Consumer
+builder.Services.AddSingleton<WaterQualityConsumerService>();
+builder.Services.AddSingleton<IWaterQualityConsumerService>(sp => sp.GetRequiredService<WaterQualityConsumerService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<WaterQualityConsumerService>());
+
+// builder.Services.AddHostedService<KafkaConsumerService>();
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using MockSensors.Constants;
 using MockSensors.Dto;
 
 namespace MockSensors.Sensors;
@@ -18,7 +19,7 @@ public class WaterQualitySensorManager
 
     public bool TryStartSensor(string id)
     {
-        var topic = $"water-quality-updates-{id}";
+        var topic = $"{TopicConstants.WaterQualityUpdates}-{id}";
         var sensor = new WaterQualitySensor(_configuration, topic, _logger);
         var added = _sensors.TryAdd(id, sensor);
         if (added)

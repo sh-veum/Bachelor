@@ -26,7 +26,7 @@ public class SensorController : ControllerBase
     {
         try
         {
-            var (user, error) = await _userService.GetUserAsync(HttpContext);
+            var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
             if (error != null) return error;
 
             var userId = user.Id;
@@ -55,7 +55,7 @@ public class SensorController : ControllerBase
     {
         try
         {
-            var (user, error) = await _userService.GetUserAsync(HttpContext);
+            var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
             if (error != null) return error;
 
             var userId = user.Id;

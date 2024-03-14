@@ -32,7 +32,7 @@ public class ApiKeyMutation
     {
         var httpContext = _httpContextAccessor.HttpContext ?? throw new Exception("HttpContext is null.");
 
-        var (user, error) = await userService.GetUserAsync(httpContext);
+        var (user, error) = await userService.GetUserByHttpContextAsync(httpContext);
         if (user == null || error != null)
         {
             throw new Exception("User not found.");

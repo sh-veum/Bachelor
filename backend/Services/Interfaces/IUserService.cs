@@ -5,5 +5,6 @@ namespace NetBackend.Services.Interfaces;
 
 public interface IUserService
 {
-    Task<(UserModel user, ActionResult error)> GetUserAsync(HttpContext httpContext);
+    Task<(UserModel user, ActionResult error)> GetUserByHttpContextAsync(HttpContext httpContext);
+    Task<(UserModel user, ActionResult error)> GetUserByIdAsync(string userId);
 }

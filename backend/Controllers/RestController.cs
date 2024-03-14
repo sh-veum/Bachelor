@@ -33,7 +33,7 @@ public class RestController : ControllerBase
     {
         try
         {
-            var userResult = await _userService.GetUserAsync(HttpContext);
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
             // Create Api Key
@@ -76,7 +76,7 @@ public class RestController : ControllerBase
     {
         try
         {
-            var userResult = await _userService.GetUserAsync(HttpContext);
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
             var result = await _restKeyService.RemoveRestAccessKey(accessKeyDto.EncryptedKey);
@@ -149,7 +149,7 @@ public class RestController : ControllerBase
     {
         try
         {
-            var userResult = await _userService.GetUserAsync(HttpContext);
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
             var restApiKey = await DecryptAndValidateApiKey(accessKeyDto.EncryptedKey, user.Id);
@@ -195,7 +195,7 @@ public class RestController : ControllerBase
     {
         try
         {
-            var userResult = await _userService.GetUserAsync(HttpContext);
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
             var apiKeysDto = new List<RestApiKeyDto>();
@@ -255,7 +255,7 @@ public class RestController : ControllerBase
     {
         try
         {
-            var userResult = await _userService.GetUserAsync(HttpContext);
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
             var themes = await _restKeyService.GetThemesByUserId(user.Id);
@@ -289,7 +289,7 @@ public class RestController : ControllerBase
     {
         try
         {
-            var userResult = await _userService.GetUserAsync(HttpContext);
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
             var theme = new Theme
@@ -332,7 +332,7 @@ public class RestController : ControllerBase
     {
         try
         {
-            var userResult = await _userService.GetUserAsync(HttpContext);
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
             var theme = new Theme

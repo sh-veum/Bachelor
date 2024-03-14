@@ -1,3 +1,4 @@
+using NetBackend.Constants;
 using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Services;
@@ -6,11 +7,13 @@ public class SensorService : ISensorService
 {
     private readonly ILogger<SensorService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IWaterQualityConsumerService _waterQualityConsumerService;
 
-    public SensorService(ILogger<SensorService> logger, IHttpClientFactory httpClientFactory)
+    public SensorService(ILogger<SensorService> logger, IHttpClientFactory httpClientFactory, IWaterQualityConsumerService waterQualityConsumerService)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _waterQualityConsumerService = waterQualityConsumerService;
     }
 
     public async Task<(bool success, string message)> StartWaterQualitySensorAsync(string sensorId)
@@ -23,6 +26,11 @@ public class SensorService : ISensorService
         if (response.IsSuccessStatusCode)
         {
             _logger.LogInformation($"Sensor {sensorId} started successfully.");
+
+            var newTopic = $"{KafkaConstants.WaterQualityLogTopic}-{sensorId}";
+
+            _logger.LogInformation($"Subscribing to topic: {newTopic}");
+            _waterQualityConsumerService.SubscribeToTopic(newTopic);
             return (true, responseMessage);
         }
         else

@@ -1898,17 +1898,16 @@ namespace NetBackend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Key")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("Key_Timestamp");
-
                     b.Property<double>("Ph")
                         .HasColumnType("double precision");
 
                     b.Property<double>("Temperature")
                         .HasColumnType("double precision")
                         .HasColumnName("Temperature_C");
+
+                    b.Property<DateTimeOffset>("TimeStamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("Timestamp");
 
                     b.Property<double>("Turbidity")
                         .HasColumnType("double precision")

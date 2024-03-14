@@ -8,8 +8,8 @@ public class WaterQualityLog
     [Key]
     public int Id { get; set; }
 
-    [Column("Key_Timestamp")]
-    public required string Key { get; set; }
+    [Column("Timestamp")]
+    public required DateTimeOffset TimeStamp { get; set; }
     public required double Ph { get; set; }
 
     // Turbidity in Nephelometric Turbidity Units (NTU)

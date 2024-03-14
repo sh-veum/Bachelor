@@ -140,7 +140,7 @@ public class Query
         [Service] IUserService userService)
     {
         var httpContext = _httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null.");
-        var userResult = await userService.GetUserAsync(httpContext);
+        var userResult = await userService.GetUserByHttpContextAsync(httpContext);
         var user = userResult.user;
 
         var apiKeys = await restKeyService.GetRestApiKeysByUserId(user.Id);
@@ -180,7 +180,7 @@ public class Query
         var httpContext = _httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null.");
 
         _logger.LogInformation("Getting user...");
-        var userResult = await userService.GetUserAsync(httpContext);
+        var userResult = await userService.GetUserByHttpContextAsync(httpContext);
         var user = userResult.user;
         _logger.LogInformation("Got user: {user}", user.Email ?? "error fetching user email");
 
@@ -219,7 +219,7 @@ public class Query
             var httpContext = _httpContextAccessor.HttpContext;
             if (httpContext == null) return (null, null);
 
-            var (user, error) = await userService.GetUserAsync(httpContext);
+            var (user, error) = await userService.GetUserByHttpContextAsync(httpContext);
             if (error != null) return (null, error);
 
             var dbContext = await dbContextService.GetUserDatabaseContext(user);

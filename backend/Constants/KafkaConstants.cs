@@ -6,4 +6,5 @@ public static class KafkaConstants
     public const string OrgTopic = "org-updates";
     public const string RestKeyTopic = "rest-key-updates";
     public const string GraphQLKeyTopic = "graphql-key-updates";
+    public const string WaterQualityLogTopic = "water-quality-updates";
 }

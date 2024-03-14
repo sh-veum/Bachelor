@@ -31,7 +31,7 @@ public class GraphQLController : ControllerBase
     {
         try
         {
-            var userResult = await _userService.GetUserAsync(HttpContext);
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
             var apiKey = await DecryptAndValidateApiKey(accessKeyDto.EncryptedKey, user.Id);
@@ -75,7 +75,7 @@ public class GraphQLController : ControllerBase
     {
         try
         {
-            var userResult = await _userService.GetUserAsync(HttpContext);
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
             var result = await _graphQlKeyService.RemoveGraphQLAccessKey(accessKeyDto.EncryptedKey);
@@ -139,7 +139,7 @@ public class GraphQLController : ControllerBase
     {
         try
         {
-            var userResult = await _userService.GetUserAsync(HttpContext);
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
             var apiKeysDto = new List<GraphQLApiKeyDto>();

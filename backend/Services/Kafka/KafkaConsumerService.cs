@@ -39,13 +39,17 @@ public class KafkaConsumerService : BackgroundService
     {
         _consumer.Subscribe(_topics);
         _logger.LogInformation($"Subscribed to topics: {string.Join(", ", _topics)}");
+        _logger.LogInformation($"StoppingToken: {stoppingToken}");
 
         Task.Run(async () =>
         {
+            _logger.LogInformation("Kafka consumer service started");
             while (!stoppingToken.IsCancellationRequested)
             {
+                _logger.LogInformation("Kafka consumer before trying to consume message");
                 try
                 {
+                    _logger.LogInformation("Kafka consumer trying to consume message");
                     using var scope = _scopeFactory.CreateScope();
                     var dbContextService = scope.ServiceProvider.GetRequiredService<IDbContextService>();
 
