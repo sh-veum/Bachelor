@@ -47,7 +47,7 @@ public class KafkaConsumerService : BackgroundService
                 try
                 {
                     using var scope = _scopeFactory.CreateScope();
-                    var dbContextService = scope.ServiceProvider.GetRequiredService<DbContextService>();
+                    var dbContextService = scope.ServiceProvider.GetRequiredService<IDbContextService>();
 
                     var consumeResult = _consumer.Consume(stoppingToken);
                     if (consumeResult != null && !consumeResult.IsPartitionEOF)

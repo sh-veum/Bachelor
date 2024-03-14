@@ -94,6 +94,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBaseKeyService, BaseKeyService>();
 builder.Services.AddScoped<IGraphQLKeyService, GraphQLKeyService>();
 builder.Services.AddScoped<IRestKeyService, RestKeyService>();
+builder.Services.AddScoped<ISensorService, SensorService>();
 builder.Services.AddSingleton<ICryptoService, CryptoService>();
 builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
 builder.Services.AddSingleton<IAppWebSocketManager, AppWebSocketManager>();
@@ -106,7 +107,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: "AllowSpecificOrigin",
                       policy =>
                       {
-                          policy.WithOrigins(FrontendConstants.FrontEndURL)
+                          policy.WithOrigins(UrlConstants.FrontEndURL)
                                 .AllowAnyHeader()
                                 .AllowAnyMethod();
                       });
@@ -117,6 +118,11 @@ builder.Services
     .AddQueryType<Query>()
     .AddMutationType<ApiKeyMutation>()
     .AddType<AccessKeyPermissionInputType>();
+
+builder.Services.AddHttpClient("MockSensorClient", client =>
+{
+    client.BaseAddress = new Uri(UrlConstants.MockSensorURL);
+});
 
 var app = builder.Build();
 
