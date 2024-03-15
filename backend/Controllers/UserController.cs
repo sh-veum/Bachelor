@@ -41,6 +41,7 @@ public class UserController : ControllerBase
 
             var userDto = new UserInfoDto
             {
+                Id = user.Id,
                 Email = user.Email,
                 UserName = user.UserName,
                 AssignedDatabase = user.DatabaseName,

@@ -4,6 +4,7 @@ import { ref, computed } from 'vue'
 const authToken = ref(localStorage.getItem('authToken'))
 const refreshToken = ref(localStorage.getItem('refreshToken'))
 const userRole = ref(localStorage.getItem('userRole'))
+export const userId = ref(localStorage.getItem('userId'))
 
 export function useAuth() {
   const isLoggedIn = computed(() => authToken.value !== null)
@@ -30,10 +31,12 @@ export function useAuth() {
     authToken.value = null
     refreshToken.value = null
     userRole.value = null
+    userId.value = null
     localStorage.removeItem('authToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('userRole')
     localStorage.removeItem('hasRefreshedTokens')
+    localStorage.removeItem('userId')
   }
 
   const register = async (email: string, password: string) => {
@@ -59,6 +62,9 @@ export function useAuth() {
           headers: { Authorization: `Bearer ${authToken.value}` }
         })
         if (response.status === 200) {
+          userId.value = response.data.id
+          localStorage.setItem('userId', response.data.id)
+
           userRole.value = response.data.role
           localStorage.setItem('userRole', response.data.role)
         }
