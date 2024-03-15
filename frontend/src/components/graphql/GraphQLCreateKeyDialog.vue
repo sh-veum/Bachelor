@@ -18,6 +18,7 @@ import { useMutation } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { fetchAvailableClassTables, fetchAvailableQueries } from '@/lib/graphQL'
 import type { ClassTable, Query } from '@/components/interfaces/GraphQLSchema'
+import type { GraphQLKey } from '@/components/interfaces/GraphQLSchema'
 
 const keyName = ref('')
 const availableClassTables = ref<ClassTable[]>([])
@@ -31,11 +32,14 @@ const hasSelectedFields = computed(() => {
   return Object.values(selectedFields.value).some((fields) => fields.length > 0)
 })
 
+const emit = defineEmits(['submit'])
+
 const isKeyCreatedDialogOpen = ref(false)
 const createdKey = ref('')
 
 const fetchOptions = async () => {
   // TODO: REMEMBER TO REMOVE THIS DELAY
+  // should maybe fetch the options in onMounted instead of right when the dialog is opened?
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
   try {
@@ -94,14 +98,16 @@ const createKey = async () => {
   }))
 
   try {
-    const response = await createGraphQLKey({
+    await createGraphQLKey({
       keyName: keyName.value,
       permissions
+    }).then((response) => {
+      if (response && response.data && response.data.createGraphQLAccessKey) {
+        createdKey.value = response.data.createGraphQLAccessKey.encryptedKey
+        isKeyCreatedDialogOpen.value = true
+        emit('submit')
+      }
     })
-    if (response && response.data && response.data.createGraphQLAccessKey) {
-      createdKey.value = response.data.createGraphQLAccessKey.encryptedKey
-      isKeyCreatedDialogOpen.value = true
-    }
   } catch (e) {
     console.error('Error creating GraphQL access key:', e)
   }

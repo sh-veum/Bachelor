@@ -20,19 +20,18 @@ import type { GraphQLKey } from '../interfaces/GraphQLSchema'
 import { fetchGraphQLKeys, toggleApiKey, deleteGraphQLApiKey } from '@/lib/graphQL'
 import type { UUID } from 'crypto'
 
-const graphQLKeys = ref<GraphQLKey[]>([])
+import { defineProps, toRef } from 'vue'
+
+const props = defineProps<{
+  graphQLKeys: GraphQLKey[]
+}>()
 
 // Initialize a ref for the WebSocket
 const webSocket = ref<WebSocket | null>(null)
 const receivedMessage = ref(null)
 
-const fetchData = async () => {
-  try {
-    graphQLKeys.value = await fetchGraphQLKeys()
-  } catch (error) {
-    console.error('Failed to fetch data:', error)
-  }
-}
+// Convert the graphQLKeys prop to a reactive ref
+const graphQLKeys = toRef(props, 'graphQLKeys')
 
 const toggleKeyEnabledStatus = async (id: UUID, isEnabled: boolean) => {
   try {
@@ -93,7 +92,6 @@ const cleanupWebSocket = () => {
 
 onMounted(() => {
   setupWebSocket()
-  fetchData()
 })
 
 onUnmounted(() => {
@@ -103,7 +101,6 @@ onUnmounted(() => {
 
 <template>
   <div>
-    <Button @click="fetchData">Re-Load Table</Button>
     <span v-if="receivedMessage" class="text-red-500 ml-4 font-bold">{{ receivedMessage }}</span>
     <Table>
       <TableCaption>GraphQL Keys Overview</TableCaption>
