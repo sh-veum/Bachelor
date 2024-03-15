@@ -112,10 +112,23 @@ const executeAllQueries = () => {
   }))
 
   onResult((result) => {
-    responseData.value = JSON.stringify(result.data, null, 2)
+    if (result.data) {
+      const cleanedData = removeTypename(JSON.parse(JSON.stringify(result.data)))
+      responseData.value = JSON.stringify(cleanedData, null, 2)
+    } else {
+      responseData.value = 'No data in query'
+    }
   })
 
   load()
+}
+
+const removeTypename = (value: any) => {
+  if (value && typeof value === 'object') {
+    delete value.__typename
+    Object.values(value).forEach((val) => removeTypename(val))
+  }
+  return value
 }
 </script>
 
