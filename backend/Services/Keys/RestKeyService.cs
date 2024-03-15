@@ -189,6 +189,6 @@ public class RestKeyService : IRestKeyService
     public Task<(IApiKey?, IActionResult?)> DecryptRestAccessKey(string encryptedKey) => _baseKeyService.DecryptAccessKey(encryptedKey);
 
     public Task<(IApiKey?, IActionResult?)> DecryptRestAccessKeyUserCheck(string encryptedKey, string currentUserId) => _baseKeyService.DecryptAccessKeyUserCheck(encryptedKey, currentUserId);
-
-    public Task<IActionResult> DeleteRestApiKeyById(Guid id, string typePart) => _baseKeyService.DeleteApiKeyById(id, typePart);
+    // TODO: change this too if you decide to use a constant
+    public Task<IActionResult> DeleteRestApiKeyById(Guid id) => _baseKeyService.DeleteApiKeyById(id, "restapikey");
 }

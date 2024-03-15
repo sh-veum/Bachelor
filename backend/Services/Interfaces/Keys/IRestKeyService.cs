@@ -21,5 +21,5 @@ public interface IRestKeyService
     Task<IActionResult> RemoveRestAccessKey(string encryptedKey);
     Task<(IApiKey?, IActionResult?)> DecryptRestAccessKey(string encryptedKey);
     Task<(IApiKey?, IActionResult?)> DecryptRestAccessKeyUserCheck(string encryptedKey, string currentUserId);
-    Task<IActionResult> DeleteRestApiKeyById(Guid id, string typePart);
+    Task<IActionResult> DeleteRestApiKeyById(Guid id);
 }

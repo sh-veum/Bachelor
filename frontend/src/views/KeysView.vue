@@ -110,17 +110,21 @@ const createAccessKey = async (keyName: string, themes: Theme[]) => {
   }
 }
 
-const deleteAccessKey = async (encryptedKey: Key) => {
-  console.log('Not yet implemented')
-  // try {
-  //   await axios.post('http://localhost:8088/api/key/delete-accesskey', { EncryptedKey: encryptedKey.id });
-  //   console.log('Access key deleted');
-  //   keys.value = keys.value.filter((key) => key.id !== encryptedKey.id);
-  // }
-  // catch (error) {
-  //   console.error('Error deleting access key:', (error as any).response.data);
-  //   // Handle error
-  // }
+const deleteAccessKey = async (id: string) => {
+  try {
+    await axios
+      .delete(`http://localhost:8088/api/rest/delete-accesskey?id=${id}`, {})
+      .then((response) => {
+        // update the list of keys in frontend
+        console.log('Key deleted:', response)
+        const keyIndex = keys.value.findIndex((key) => key.id === id)
+        if (keyIndex !== -1) {
+          keys.value.splice(keyIndex, 1)
+        }
+      })
+  } catch (error) {
+    console.error('Failed to delete key:', error)
+  }
 }
 
 const fetchKeys = async () => {
@@ -145,7 +149,7 @@ const fetchThemes = async () => {
 
 const toggleKeyEnabledStatus = async (id: string, isEnabled: boolean) => {
   try {
-    await axios.patch('http://localhost:8088/api/key/toggle-apikey', {
+    await axios.patch('http://localhost:8088/api/rest/toggle-apikey', {
       id: id,
       keyType: 'rest',
       isEnabled: isEnabled
@@ -384,7 +388,9 @@ onUnmounted(() => {
           </Button>
         </TableCell>
         <TableCell class="text-center"
-          ><Button variant="destructive" @click="deleteAccessKey(key)"> Delete </Button></TableCell
+          ><Button variant="destructive" @click="deleteAccessKey(key.id)">
+            Delete
+          </Button></TableCell
         >
       </TableRow>
     </TableBody>

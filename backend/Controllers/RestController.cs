@@ -69,17 +69,17 @@ public class RestController : ControllerBase
         }
     }
 
-    [HttpPost("delete-accesskey")]
+    [HttpDelete("delete-accesskey")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> DeleteAccessKey([FromBody] AccessKeyDto accessKeyDto)
+    public async Task<IActionResult> DeleteAccessKey([FromQuery] Guid id)
     {
         try
         {
             var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
             var user = userResult.user;
 
-            var result = await _restKeyService.RemoveRestAccessKey(accessKeyDto.EncryptedKey);
+            var result = await _restKeyService.DeleteRestApiKeyById(id);
             if (result == null)
             {
                 return BadRequest("Failed to delete API key.");
