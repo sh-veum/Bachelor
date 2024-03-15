@@ -34,7 +34,7 @@ const fetchQueryInfo = async (accessKey: string) => {
   ) {
     try {
       const response = await axios.post(
-        'http://localhost:8088/api/key/accesskey-graphql-permissions',
+        'http://localhost:8088/api/graphql/accesskey-graphql-permissions',
         {
           encryptedKey: accessKey
         }
