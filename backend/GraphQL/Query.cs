@@ -6,7 +6,6 @@ using NetBackend.Models;
 using NetBackend.Models.Dto.Keys;
 using NetBackend.Services.Interfaces;
 using NetBackend.Services.Interfaces.Keys;
-using NetBackend.Services.Keys;
 using NetBackend.Tools;
 
 namespace NetBackend.GraphQL;
@@ -101,6 +100,26 @@ public class Query
             }
 
             return dbContext?.GetOrganizations();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting organizations");
+            return null;
+        }
+    }
+
+    public async Task<IQueryable<WaterQualityLog>?> GetWaterQualityLogs(
+        [Service(ServiceKind.Synchronized)] IDbContextService dbContextService,
+        [Service] IUserService userService)
+    {
+        try
+        {
+            var userResult = await GetContextFromUser(userService, dbContextService);
+            if (userResult.Error != null) return null;
+
+            BaseDbContext? dbContext = userResult.DbContext as BaseDbContext;
+
+            return dbContext?.GetWaterQualityLogs();
         }
         catch (Exception ex)
         {

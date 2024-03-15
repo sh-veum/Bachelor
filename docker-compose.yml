@@ -1,5 +1,5 @@
 # To also start the sensor
-version: "3"
+version: "3.0"
 
 networks:
   dev:

@@ -1,7 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NetBackend.Constants;
+using NetBackend.Data;
+using NetBackend.Models;
 using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Controllers.SensorController;
@@ -13,12 +16,14 @@ public class SensorController : ControllerBase
     private readonly ILogger<SensorController> _logger;
     private readonly ISensorService _sensorService;
     private readonly IUserService _userService;
+    private readonly IDbContextService _dbContextService;
 
-    public SensorController(ILogger<SensorController> logger, ISensorService sensorService, IUserService userService)
+    public SensorController(ILogger<SensorController> logger, ISensorService sensorService, IUserService userService, IDbContextService dbContextService)
     {
         _logger = logger;
         _sensorService = sensorService;
         _userService = userService;
+        _dbContextService = dbContextService;
     }
 
     [HttpPost("waterQuality/startSensor")]
@@ -75,6 +80,29 @@ public class SensorController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while stopping Water Quality Sensor.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpGet("waterQuality/logs")]
+    public async Task<IActionResult> GetWaterQualityLogs()
+    {
+        try
+        {
+            var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
+            if (error != null) return error;
+
+            var userId = user.Id;
+
+            DbContext dbContext = await _dbContextService.GetUserDatabaseContext(user);
+
+            var logs = await dbContext.Set<WaterQualityLog>().ToListAsync();
+
+            return Ok(logs);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting Water Quality Sensor logs.");
             return BadRequest(ex.Message);
         }
     }

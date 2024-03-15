@@ -3,7 +3,6 @@ using NetBackend.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using NetBackend.Models.User;
 using Microsoft.AspNetCore.Identity;
-using NetBackend.Models.Keys;
 
 namespace NetBackend.Data;
 
