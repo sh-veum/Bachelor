@@ -129,4 +129,27 @@ public class SensorController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
+
+    [HttpGet("activeSensors")]
+    [Authorize(Roles = RoleConstants.AdminRole)]
+    public async Task<IActionResult> GetActiveSensors()
+    {
+        try
+        {
+            var (success, message) = await _sensorService.GetActiveSensors();
+            if (success)
+            {
+                return Ok(message);
+            }
+            else
+            {
+                return BadRequest(message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while stopping Water Quality Sensor.");
+            return BadRequest(ex.Message);
+        }
+    }
 }

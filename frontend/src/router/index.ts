@@ -80,6 +80,24 @@ const router = createRouter({
           next()
         }
       }
+    },
+    {
+      path: '/kafka',
+      name: 'Kafka Test',
+      component: () => import('../views/KafkaTestView.vue')
+    },
+    {
+      path: '/kafka/create-key',
+      name: 'Kafka Create Key',
+      component: () => import('../views/KafkaCreateKeyView.vue'),
+      beforeEnter: (to, from, next) => {
+        const { isLoggedIn } = useAuth()
+        if (!isLoggedIn.value) {
+          next('/login')
+        } else {
+          next()
+        }
+      }
     }
   ]
 })

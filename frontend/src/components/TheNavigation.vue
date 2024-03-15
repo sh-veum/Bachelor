@@ -33,7 +33,7 @@ const handleLogout = async () => {
                 Test an accesskey
               </NavigationListItem>
               <NavigationListItem v-if="isLoggedIn" href="/rest/create-key" title="REST API keys">
-                Create, edit and delete your accesskeys
+                Create, edit and delete your REST accesskeys
               </NavigationListItem>
               <NavigationListItem v-if="isLoggedIn" href="/theme-edit" title="Theme edit">
                 Sort endpoints into themes for accesskeys
@@ -56,12 +56,32 @@ const handleLogout = async () => {
                 href="/graphql/create-key"
                 title="GraphQL Create Key"
               >
-                Create, edit and delete your accesskeys
+                Create, edit and delete your GraphQL accesskeys
               </NavigationListItem>
             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
         <NavigationListItem class="space-y-0" v-else href="/graphql" title="GraphQL Test">
+          <!-- Test an accesskey using GraphQL -->
+        </NavigationListItem>
+        <NavigationMenuItem v-if="isLoggedIn">
+          <NavigationMenuTrigger>Kafka</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul class="grid gap-3 p-4 w-max md:grid-cols-2">
+              <NavigationListItem href="/kafka" title="Kafka Test">
+                Test a kafka access key
+              </NavigationListItem>
+              <NavigationListItem
+                v-if="isLoggedIn"
+                href="/kafka/create-key"
+                title="Kafka Create Key"
+              >
+                Create, edit and delete your Kafka accesskeys
+              </NavigationListItem>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+        <NavigationListItem class="space-y-0" v-else href="/kafka" title="Kafka Test">
           <!-- Test an accesskey using GraphQL -->
         </NavigationListItem>
       </NavigationMenuList>

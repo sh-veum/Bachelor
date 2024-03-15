@@ -74,4 +74,22 @@ public class SensorService : ISensorService
             return false;
         }
     }
+
+    public async Task<(bool success, string message)> GetActiveSensors()
+    {
+        var client = _httpClientFactory.CreateClient("MockSensorClient");
+        var response = await client.GetAsync("sensors/waterQuality/activeSensors");
+        var responseMessage = await response.Content.ReadAsStringAsync();
+
+        if (response.IsSuccessStatusCode)
+        {
+            _logger.LogInformation("Sensors retrieved successfully.");
+            return (true, responseMessage);
+        }
+        else
+        {
+            _logger.LogError($"Failed to retrieve sensors. Response: {response.StatusCode}");
+            return (false, responseMessage);
+        }
+    }
 }
