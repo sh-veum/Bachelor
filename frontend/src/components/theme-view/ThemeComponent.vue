@@ -8,6 +8,7 @@ import { ChevronsUp } from 'lucide-vue-next'
 import { MoreHorizontal } from 'lucide-vue-next'
 import axios from 'axios'
 import Separator from '../ui/separator/Separator.vue'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 
 interface Theme {
   id: string
@@ -69,26 +70,47 @@ const handleDeprecate = async (theme: Theme) => {
           </Button>
         </CollapsibleTrigger>
 
-        <Button variant="ghost" size="sm" class="w-9 p-0" @click="handleEdit">
-          <Pencil class="h-4 w-4" />
-        </Button>
-        <span class="sr-only">Pencil</span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="sm" class="w-9 p-0" @click="handleEdit">
+                <Pencil class="h-4 w-4" />
+              </Button>
+              <span class="sr-only">Pencil</span>
+            </TooltipTrigger>
+            <TooltipContent>Edit</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
-        <Button
-          v-if="!theme.isDeprecated"
-          variant="ghost"
-          size="sm"
-          class="w-9 p-0"
-          @click="handleDeprecate(theme)"
-        >
-          <PowerOff class="h-4 w-4 text-destructive" />
-        </Button>
-        <span v-if="!theme.isDeprecated" class="sr-only">Pencil</span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                v-if="!theme.isDeprecated"
+                variant="ghost"
+                size="sm"
+                class="w-9 p-0"
+                @click="handleDeprecate(theme)"
+              >
+                <PowerOff class="h-4 w-4 text-destructive" />
+              </Button>
+              <span v-if="!theme.isDeprecated" class="sr-only">Pencil</span>
+            </TooltipTrigger>
+            <TooltipContent>Deprecate</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
-        <Button variant="ghost" size="sm" class="w-9 p-0" @click="handleDelete">
-          <Trash2 class="h-4 w-4 text-destructive" />
-        </Button>
-        <span class="sr-only">Trash</span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="sm" class="w-9 p-0" @click="handleDelete">
+                <Trash2 class="h-4 w-4 text-destructive" />
+              </Button>
+              <span class="sr-only">Trash</span>
+            </TooltipTrigger>
+            <TooltipContent>Delete</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
     <!-- <Separator /> -->
