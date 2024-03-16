@@ -66,6 +66,7 @@ const themes = ref<Theme[]>([])
 const createIsOpen = ref(false)
 const copyIsOpen = ref(false)
 const encryptedKey = ref('something')
+const copySuccess = ref(false)
 
 const formSchema = toTypedSchema(
   z.object({
@@ -167,6 +168,10 @@ const fetchData = async () => {
 
 const copyLink = () => {
   navigator.clipboard.writeText(encryptedKey.value)
+  copySuccess.value = true
+  setTimeout(() => {
+    copySuccess.value = false
+  }, 1000)
 }
 
 onMounted(() => {
@@ -201,11 +206,13 @@ onMounted(() => {
           <Input id="link" :model-value="encryptedKey" readonly />
         </div>
         <Button type="submit" size="sm" class="px-3">
-          <!-- TODO: change copy icon to green checkmark and use a popover with "key copied" text ? -->
-          <!-- Example: -->
-          <!-- https://github.com/docker/awesome-compose/blob/master/official-documentation-samples/django/README.md -->
           <span class="sr-only">Copy</span>
-          <Copy @click="copyLink" class="w-4 h-4" />
+          <div v-if="copySuccess">
+            <Check class="w-4 h-4 text-green-500" />
+          </div>
+          <div v-else>
+            <Copy @click="copyLink" class="w-4 h-4" />
+          </div>
         </Button>
       </div>
       <DialogFooter class="sm:justify-start">
