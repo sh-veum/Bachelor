@@ -11,21 +11,39 @@ export function useAuth() {
   const isRegistered = ref(false)
   const isAdmin = computed(() => userRole.value === 'ADMIN')
   const registrationErrors = ref({})
+  const loginErrors = ref({})
+
 
   const login = async (email: string, password: string) => {
-    const response = await axios.post('http://localhost:8088/login', { email, password })
-    if (response.status === 200) {
-      authToken.value = response.data.accessToken
-      refreshToken.value = response.data.refreshToken
-      if (authToken.value !== null) {
-        localStorage.setItem('authToken', authToken.value)
+    try {
+      const response = await axios.post('http://localhost:8088/login', { email, password })
+      if (response.status === 200) {
+        authToken.value = response.data.accessToken
+        refreshToken.value = response.data.refreshToken
+        if (authToken.value !== null) {
+          localStorage.setItem('authToken', authToken.value)
+        }
+        if (refreshToken.value !== null) {
+          localStorage.setItem('refreshToken', refreshToken.value)
+        }
+        loginErrors.value = {}  // Reset login errors on successful login
+        await fetchUserInfo()
       }
-      if (refreshToken.value !== null) {
-        localStorage.setItem('refreshToken', refreshToken.value)
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        if (error.response.status === 401) { 
+          loginErrors.value = { credentials: ['Email and password do not match.'] }
+        } else if (error.response.status === 400) {
+          loginErrors.value = error.response.data.errors || {}
+        } else {
+          loginErrors.value = { UnexpectedError: ['An unexpected error occurred.'] }
+        }
+      } else {
+        loginErrors.value = { NetworkError: ['Could not connect to the server.'] }
       }
-      await fetchUserInfo()
     }
   }
+  
 
   const logout = async () => {
     authToken.value = null
@@ -117,6 +135,7 @@ export function useAuth() {
     isRegistered,
     isAdmin,
     refreshUserCredentials,
-    registrationErrors
+    registrationErrors,
+    loginErrors
   }
 }

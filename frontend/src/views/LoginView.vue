@@ -6,10 +6,12 @@ import { useAuth } from '@/lib/useAuth'
 
 const email = ref('')
 const password = ref('')
+const attemptedLogin = ref(false)
 
-const { isLoggedIn, login, logout, isAdmin } = useAuth()
+const { isLoggedIn, login, logout, isAdmin, loginErrors  } = useAuth()
 
 const handleLogin = async () => {
+  attemptedLogin.value = true
   await login(email.value, password.value)
 }
 
@@ -49,6 +51,15 @@ const handleLogout = async () => {
         </div>
         <div v-else class="px-5">
           <p class="text-red-500 font-bold">Is not admin</p>
+        </div>
+        <div v-if="attemptedLogin" class="px-5">
+          <ul v-if="Object.keys(loginErrors).length > 0">
+            <li v-for="(errorMessages, index) in Object.values(loginErrors)" :key="index">
+              <p v-for="message in errorMessages" :key="message" class="text-red-500">
+                - {{ message }}
+              </p>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
