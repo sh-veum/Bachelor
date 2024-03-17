@@ -92,19 +92,13 @@ const stopLiveFeed = () => {
 }
 
 const updateResponseData = (message: string) => {
-  console.log('MESSAGE :', message)
-
   const logDetails = message.match(
     /TimeStamp: ([^,]+), pH: ([\d.]+), Turbidity: ([\d.]+) NTU, Temperature: ([\d.]+)C/
   )
-
   if (logDetails) {
     const [, timeStamp, ph, turbidity, temperature] = logDetails
-
     const date = new Date(timeStamp)
-
     const formattedTimeStamp = date.toISOString().replace(/T/, ' ').replace(/\..+/, '')
-
     const newLog: WaterQualityLog = {
       id: waterQualityLogs.value.length + 1,
       timeStamp: formattedTimeStamp,
@@ -112,14 +106,12 @@ const updateResponseData = (message: string) => {
       turbidity: parseFloat(turbidity),
       temperature: parseFloat(temperature)
     }
-    waterQualityLogs.value.push(newLog)
+    waterQualityLogs.value.unshift(newLog)
+
+    currentPage.value = 1
   } else {
     console.error('Failed to parse message:', message)
   }
-}
-
-const updatePaginationOnNewItem = () => {
-  currentPage.value = totalPages.value
 }
 
 watch(selectedSortOrder, (newSortOrder: string) => {
@@ -168,7 +160,7 @@ onMounted(() => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow v-for="logs in paginatedLogs" :key="logs.id" class="h-20">
+        <TableRow v-for="logs in paginatedLogs" :key="logs.id">
           <TableCell>{{ logs.id }}</TableCell>
           <TableCell>{{ logs.timeStamp }}</TableCell>
           <TableCell>{{ logs.ph }}</TableCell>
