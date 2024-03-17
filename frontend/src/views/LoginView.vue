@@ -61,6 +61,10 @@ const handleLogout = async () => {
             </li>
           </ul>
         </div>
+        <div class="text-center mt-4">
+          <span>Don't have an account? </span>
+          <router-link to="/register" class="text-blue-500 hover:underline">Register here</router-link>
+        </div>
       </div>
     </div>
   </section>

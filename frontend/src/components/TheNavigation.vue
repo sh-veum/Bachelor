@@ -106,11 +106,6 @@ const handleLogout = async () => {
             Login
           </NavigationMenuLink>
         </NavigationMenuItem>
-        <NavigationMenuItem v-if="!isLoggedIn">
-          <NavigationMenuLink href="/register" :class="navigationMenuTriggerStyle()">
-            Register
-          </NavigationMenuLink>
-        </NavigationMenuItem>
       </div>
     </NavigationMenu>
     <Separator />
