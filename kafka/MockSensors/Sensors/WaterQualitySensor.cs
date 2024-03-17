@@ -43,7 +43,7 @@ public class WaterQualitySensor
                 currentTurbidity = Math.Clamp(currentTurbidity, 0, 100); // Adjust max value as appropriate
                 currentTemperature = Math.Clamp(currentTemperature, -5, 35);
 
-                var waterQualityMetric = $"TimeStamp: {DateTime.Now:o}, pH: {currentPH:0.00}, Turbidity: {currentTurbidity:0.00} NTU, Temperature: {currentTemperature}C";
+                var waterQualityMetric = $"TimeStamp: {DateTime.Now:o}, pH: {currentPH:0.00}, Turbidity: {currentTurbidity:0.00} NTU, Temperature: {currentTemperature:0.000}C";
 
                 _producer.Produce(_topic, new Message<string, string> { Key = DateTime.Now.ToString("o"), Value = waterQualityMetric },
                     (deliveryReport) =>
