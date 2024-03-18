@@ -13,6 +13,7 @@ public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
     public DbSet<Theme> Themes { get; set; }
     public DbSet<GraphQLApiKey> GraphQLApiKeys { get; set; }
     public DbSet<AccessKeyPermission> AccessKeyPermissions { get; set; }
+    public DbSet<KafkaKey> KafkaKeys { get; set; }
 
 
     public MainDbContext(DbContextOptions<MainDbContext> options) : base(options)
@@ -45,6 +46,11 @@ public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
 
         modelBuilder.Entity<UserModel>()
             .HasMany(u => u.Themes)
+            .WithOne(k => k.User)
+            .HasForeignKey(k => k.UserId);
+
+        modelBuilder.Entity<UserModel>()
+            .HasMany(u => u.KafkaKeys)
             .WithOne(k => k.User)
             .HasForeignKey(k => k.UserId);
     }

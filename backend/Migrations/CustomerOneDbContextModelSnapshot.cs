@@ -211,6 +211,43 @@ namespace NetBackend.Migrations
                     b.ToTable("GraphQLApiKey");
                 });
 
+            modelBuilder.Entity("NetBackend.Models.Keys.KafkaKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpiresIn")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("KeyHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("KeyName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<List<string>>("Topics")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("KafkaKey");
+                });
+
             modelBuilder.Entity("NetBackend.Models.Keys.RestApiKey", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2004,6 +2041,17 @@ namespace NetBackend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("NetBackend.Models.Keys.KafkaKey", b =>
+                {
+                    b.HasOne("NetBackend.Models.User.UserModel", "User")
+                        .WithMany("KafkaKeys")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("NetBackend.Models.Keys.RestApiKey", b =>
                 {
                     b.HasOne("NetBackend.Models.User.UserModel", "User")
@@ -2051,6 +2099,8 @@ namespace NetBackend.Migrations
                     b.Navigation("ApiKey");
 
                     b.Navigation("GraphQLApiKey");
+
+                    b.Navigation("KafkaKeys");
 
                     b.Navigation("Themes");
                 });

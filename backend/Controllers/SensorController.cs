@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using NetBackend.Constants;
 using NetBackend.Data;
 using NetBackend.Models;
+using NetBackend.Models.Dto;
 using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Controllers.SensorController;
@@ -27,7 +28,7 @@ public class SensorController : ControllerBase
     }
 
     [HttpPost("waterQuality/startSensor")]
-    public async Task<IActionResult> StartWaterQualitySensor()
+    public async Task<IActionResult> StartWaterQualitySensor([FromBody] StartSensorRequestDto? request)
     {
         try
         {
@@ -38,7 +39,11 @@ public class SensorController : ControllerBase
 
             _logger.LogInformation("Starting sensor for user {UserId}", userId);
 
-            var (success, message) = await _sensorService.StartWaterQualitySensorAsync(userId.ToString());
+            var sendHistoricalData = request?.SendHistoricalData ?? false;
+
+            _logger.LogInformation("SendHistoricalData: {SendHistoricalData}", sendHistoricalData);
+
+            var (success, message) = await _sensorService.StartWaterQualitySensorAsync(userId.ToString(), sendHistoricalData);
             if (success)
             {
                 return Ok(message);

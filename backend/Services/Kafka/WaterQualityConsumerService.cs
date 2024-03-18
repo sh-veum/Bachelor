@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using Confluent.Kafka;
+using Microsoft.EntityFrameworkCore;
 using NetBackend.Constants;
 using NetBackend.Models;
 using NetBackend.Services.Interfaces;
@@ -99,15 +100,46 @@ public class WaterQualityConsumerService : BackgroundService, IWaterQualityConsu
         }, stoppingToken);
     }
 
-    public void SubscribeToTopic(string newTopic)
+    // public void SubscribeToTopic(string newTopic)
+    // {
+    //     if (_activeTopics.TryAdd(newTopic, true))
+    //     {
+    //         _consumer.Subscribe(_activeTopics.Keys);
+    //         _logger.LogInformation($"Subscribed to new topic: {newTopic}");
+    //         InterruptAndRestartConsumeLoop();
+    //     }
+    // }
+
+    public void SubscribeToTopic(string newTopic, bool sendHistoricalData = false)
     {
-        if (_activeTopics.TryAdd(newTopic, true))
+        _logger.LogInformation($"Subscribing to topic: {newTopic}, sendHistoricalData: {sendHistoricalData}");
+
+        // Always attempt to add the topic to the dictionary of active topics
+        var isNewSubscription = _activeTopics.TryAdd(newTopic, true);
+
+        // Subscribe to the topic if it's a new subscription
+        if (isNewSubscription)
         {
             _consumer.Subscribe(_activeTopics.Keys);
             _logger.LogInformation($"Subscribed to new topic: {newTopic}");
-            InterruptAndRestartConsumeLoop(); // Adjusted method name for clarity
+        }
+
+        // Check if historical data needs to be sent regardless of whether the subscription is new
+        if (sendHistoricalData)
+        {
+            _logger.LogInformation($"Sending historical data for topic: {newTopic}");
+            // Asynchronously handle historical data to avoid blocking
+            Task.Run(() => SendHistoricalDataToClient(newTopic));
+        }
+
+        // Only interrupt and restart the consume loop if this is a new subscription
+        // This avoids unnecessary restarts if you're only fetching historical data for an existing topic
+        if (isNewSubscription)
+        {
+            InterruptAndRestartConsumeLoop();
         }
     }
+
 
     private void InterruptAndRestartConsumeLoop()
     {
@@ -140,7 +172,7 @@ public class WaterQualityConsumerService : BackgroundService, IWaterQualityConsu
             var turbidityStr = ExtractValue(message, "Turbidity:", "NTU");
             var temperatureStr = ExtractValue(message, "Temperature:", "C");
 
-            _logger.LogInformation($"Extracted values BEFORE tryParse: Timestamp: {timestampStr}, pH: {phStr}, Turbidity: {turbidityStr}, Temperature: {temperatureStr}");
+            // _logger.LogInformation($"Extracted values BEFORE tryParse: Timestamp: {timestampStr}, pH: {phStr}, Turbidity: {turbidityStr}, Temperature: {temperatureStr}");
 
             if (!DateTimeOffset.TryParse(timestampStr, out var timestamp))
             {
@@ -166,7 +198,7 @@ public class WaterQualityConsumerService : BackgroundService, IWaterQualityConsu
                 return;
             }
 
-            _logger.LogInformation($"Extracted values AFTER tryParse: Timestamp: {timestamp}, pH: {ph}, Turbidity: {turbidity}, Temperature: {temperature}");
+            // _logger.LogInformation($"Extracted values AFTER tryParse: Timestamp: {timestamp}, pH: {ph}, Turbidity: {turbidity}, Temperature: {temperature}");
 
             DateTime timeStampUtc = timestamp.UtcDateTime;
 
@@ -181,8 +213,8 @@ public class WaterQualityConsumerService : BackgroundService, IWaterQualityConsu
             };
 
             // Now use timestamp which is a DateTimeOffset
-            var sensorId = ExtractSensorIdFromTopic(topic);
-            _logger.LogInformation($"SensorId: {sensorId}");
+            var userId = ExtractUserIdFromTopic(topic);
+            _logger.LogInformation($"SensorId: {userId}");
 
             using (var scope = _scopeFactory.CreateScope())
             {
@@ -190,7 +222,7 @@ public class WaterQualityConsumerService : BackgroundService, IWaterQualityConsu
                 var mainDbContext = await dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
                 var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-                var (user, error) = await userService.GetUserByIdAsync(sensorId);
+                var (user, error) = await userService.GetUserByIdAsync(userId);
 
                 var dbContext = await dbContextService.GetUserDatabaseContext(user);
                 dbContext.Set<WaterQualityLog>().Add(logEntry);
@@ -205,10 +237,10 @@ public class WaterQualityConsumerService : BackgroundService, IWaterQualityConsu
         }
     }
 
-    private static string ExtractSensorIdFromTopic(string topic)
+    private static string ExtractUserIdFromTopic(string topic)
     {
         // Define the prefix to remove from the topic to extract the sensor ID
-        string prefix = "water-quality-updates-";
+        string prefix = $"{KafkaConstants.WaterQualityLogTopic}-";
         if (topic.StartsWith(prefix))
         {
             return topic.Substring(prefix.Length);
@@ -235,5 +267,52 @@ public class WaterQualityConsumerService : BackgroundService, IWaterQualityConsu
 
         // For numeric values, continue removing any trailing non-numeric characters
         return new string(value.TakeWhile(c => char.IsDigit(c) || c == '.' || c == '-').ToArray()).Trim();
+    }
+
+    private async Task SendHistoricalDataToClient(string topic)
+    {
+        try
+        {
+            var historicalData = await FetchHistoricalDataForTopic(topic);
+            _logger.LogInformation($"Amount of logs sent to frontend: {historicalData.Count()}");
+
+            foreach (var data in historicalData)
+            {
+                string message = $"TimeStamp: {data.TimeStamp:o}, pH: {data.Ph}, Turbidity: {data.Turbidity} NTU, Temperature: {data.Temperature}C";
+
+                var webSocketMessage = new
+                {
+                    topic = topic,
+                    message = message
+                };
+
+                var serializedMessage = JsonSerializer.Serialize(webSocketMessage);
+                await _webSocketManager.SendMessageAsync(serializedMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to send historical data for topic {topic}. Error: {ex.Message}");
+        }
+    }
+    private async Task<IEnumerable<WaterQualityLog>> FetchHistoricalDataForTopic(string topic)
+    {
+        var userId = ExtractUserIdFromTopic(topic);
+
+        List<WaterQualityLog> historicalData = [];
+
+        using (var scope = _scopeFactory.CreateScope())
+        {
+            var dbContextService = scope.ServiceProvider.GetRequiredService<IDbContextService>();
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+
+            var (user, error) = await userService.GetUserByIdAsync(userId);
+
+            DbContext dbContext = await dbContextService.GetUserDatabaseContext(user);
+
+            historicalData = await dbContext.Set<WaterQualityLog>().ToListAsync();
+        }
+
+        return historicalData;
     }
 }
