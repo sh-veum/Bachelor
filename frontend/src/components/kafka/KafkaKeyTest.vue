@@ -49,6 +49,8 @@ const itemsPerPage = 10
 const totalItems = computed(() => waterQualityLogs.value.length)
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage))
 
+const isLive = computed(() => selectedSortOrder.value === 'live')
+
 const paginatedLogs = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
   const end = start + itemsPerPage
@@ -124,6 +126,14 @@ watch(selectedSortOrder, (newSortOrder: string) => {
   }
 })
 
+const handleLogsUpdated = (logs: WaterQualityLog[]) => {
+  waterQualityLogs.value = logs
+}
+
+const clearLogs = () => {
+  waterQualityLogs.value = []
+}
+
 onMounted(() => {
   fetchData(selectedSortOrder.value)
 })
@@ -132,7 +142,13 @@ onMounted(() => {
 <template>
   <div class="w-[800px]">
     <div class="flex justify-between items-center">
-      <TheWaterQualitySensorButton />
+      <div class="flex justify-center items-center gap-4">
+        <TheWaterQualitySensorButton
+          @waterquality-logs-updated="handleLogsUpdated"
+          @clear-waterquality-logs="clearLogs"
+          :isLive="isLive"
+        />
+      </div>
       <div class="w-[250px]">
         <Select v-model="selectedSortOrder">
           <SelectTrigger>
