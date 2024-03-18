@@ -44,7 +44,15 @@ const isOpen = ref(false)
 
     <CollapsibleContent class="space-y-2">
       <div v-for="theme in apiKey.themes" :key="theme.id" class="py-3 font-mono text-sm">
-        {{ theme.themeName }}
+        <div>{{ theme.themeName }}</div>
+        <ul v-if="isOpen && theme.accessibleEndpoints.length" class="pl-4 mt-2">
+          <li v-for="endpoint in theme.accessibleEndpoints" :key="endpoint" class="py-1">
+            {{ endpoint }}
+          </li>
+        </ul>
+        <div v-else-if="isOpen && !theme.accessibleEndpoints.length" class="pl-4 mt-2 text-gray-500">
+          No accessible endpoints.
+        </div>
       </div>
     </CollapsibleContent>
   </Collapsible>
