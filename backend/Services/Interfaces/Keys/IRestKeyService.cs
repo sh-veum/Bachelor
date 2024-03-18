@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Netbackend.Models.Dto.Keys;
 using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
 using NetBackend.Models.User;
@@ -22,4 +23,5 @@ public interface IRestKeyService
     Task<(IApiKey?, IActionResult?)> DecryptRestAccessKey(string encryptedKey);
     Task<(IApiKey?, IActionResult?)> DecryptRestAccessKeyUserCheck(string encryptedKey, string currentUserId);
     Task<IActionResult> DeleteRestApiKeyById(Guid id);
+    Task<(DbContext?, IActionResult?)> ResolveDbContextAsync(AccessKeyDto? model, HttpContext httpContext);
 }

@@ -40,28 +40,15 @@ public class AquaCultureListsController : ControllerBase
     {
         try
         {
-            DbContext? dbContext = null;
-
-            // If there is no access key, use the bearer key to get the database context
-            if (model == null || model?.EncryptedKey == null || model?.EncryptedKey == "string" || model?.EncryptedKey == "")
+            var (dbContext, errorResult) = await _restKeyService.ResolveDbContextAsync(model, HttpContext);
+            if (errorResult != null)
             {
-                var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
-                if (error != null) return error;
-
-                dbContext = await _databaseContextService.GetUserDatabaseContext(user);
+                return errorResult;
             }
-            // If there is sent an access key, use it to get the database context
-            else if (model != null)
+            else if (dbContext is null)
             {
-                // Get the database context using the access key
-                (dbContext, var errorResult) = await _restKeyService.ProcessRESTAccessKey(model.EncryptedKey, HttpContext);
-                if (errorResult != null) return errorResult;
-
-                if (dbContext is null) return BadRequest("Database context is null.");
+                return BadRequest("Database context is null.");
             }
-
-
-            if (dbContext is null) return BadRequest("Database context is null.");
 
             // Fetch all licensees
             var allLicenses = await dbContext.Set<Organization>()
@@ -82,27 +69,15 @@ public class AquaCultureListsController : ControllerBase
     {
         try
         {
-            DbContext? dbContext = null;
-
-            // If there is sent an access key, use it to get the database context
-            if (model == null || model?.EncryptedKey == null || model?.EncryptedKey == "string" || model?.EncryptedKey == "")
+            var (dbContext, errorResult) = await _restKeyService.ResolveDbContextAsync(model, HttpContext);
+            if (errorResult != null)
             {
-                // If there is no access key, use the bearer key to get the database context
-                var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
-                if (error != null) return error;
-
-                dbContext = await _databaseContextService.GetUserDatabaseContext(user);
+                return errorResult;
             }
-            else if (model != null)
+            else if (dbContext is null)
             {
-                // Get the database context using the access key
-                (dbContext, var errorResult) = await _restKeyService.ProcessRESTAccessKey(model.EncryptedKey, HttpContext);
-                if (errorResult != null) return errorResult;
-
-                if (dbContext is null) return BadRequest("Database context is null.");
+                return BadRequest("Database context is null.");
             }
-
-            if (dbContext is null) return BadRequest("Database context is null.");
 
             // Fetch all species
             var allSpecies = await dbContext.Set<Species>()

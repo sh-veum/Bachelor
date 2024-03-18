@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Netbackend.Models.Dto.Keys;
 using NetBackend.Constants;
 using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
@@ -15,15 +16,18 @@ public class RestKeyService : IRestKeyService
     private readonly ILogger<RestKeyService> _logger;
     private readonly IDbContextService _dbContextService;
     private readonly IBaseKeyService _baseKeyService;
+    private readonly IUserService _userService;
 
     public RestKeyService(
         ILogger<RestKeyService> logger,
         IDbContextService dbContextService,
-        IBaseKeyService baseKeyService)
+        IBaseKeyService baseKeyService,
+        IUserService userService)
     {
         _logger = logger;
         _dbContextService = dbContextService;
         _baseKeyService = baseKeyService;
+        _userService = userService;
     }
     public async Task<RestApiKey> CreateRESTApiKey(UserModel user, string keyName, List<Guid> themeIds)
     {
@@ -178,6 +182,37 @@ public class RestKeyService : IRestKeyService
         await mainDbContext.SaveChangesAsync();
 
         return new OkResult();
+    }
+
+    public async Task<(DbContext?, IActionResult?)> ResolveDbContextAsync(AccessKeyDto? model, HttpContext httpContext)
+    {
+        DbContext? dbContext = null;
+
+        if (model == null || string.IsNullOrWhiteSpace(model.EncryptedKey) || model.EncryptedKey == "string")
+        {
+            var (user, error) = await _userService.GetUserByHttpContextAsync(httpContext);
+            if (error != null)
+            {
+                return (null, error);
+            }
+
+            dbContext = await _dbContextService.GetUserDatabaseContext(user);
+        }
+        else
+        {
+            (dbContext, IActionResult? errorResult) = await ProcessRESTAccessKey(model.EncryptedKey, httpContext);
+            if (errorResult != null)
+            {
+                return (null, errorResult);
+            }
+        }
+
+        if (dbContext == null)
+        {
+            return (null, new BadRequestObjectResult("Database context is null."));
+        }
+
+        return (dbContext, null);
     }
 
     public Task<IActionResult> ToggleRestApiKey(Guid apiKeyId, bool isEnabled) => _baseKeyService.ToggleApiKeyEnabledStatus<RestApiKey>(apiKeyId, isEnabled);

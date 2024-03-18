@@ -15,7 +15,6 @@ using NetBackend.Services.Interfaces.Keys;
 using NetBackend.Services.Kafka;
 using NetBackend.Services.Keys;
 using NetBackend.Services.WebSocket;
-using NetBackend.Types;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -122,8 +121,7 @@ builder.Services.AddCors(options =>
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<Query>()
-    .AddMutationType<ApiKeyMutation>()
-    .AddType<AccessKeyPermissionInputType>();
+    .AddMutationType<ApiKeyMutation>();
 
 builder.Services.AddHttpClient("MockSensorClient", client =>
 {

@@ -18,7 +18,6 @@ import { useMutation } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { fetchAvailableClassTables, fetchAvailableQueries } from '@/lib/graphQL'
 import type { ClassTable, Query } from '@/components/interfaces/GraphQLSchema'
-import type { GraphQLKey } from '@/components/interfaces/GraphQLSchema'
 
 const keyName = ref('')
 const availableClassTables = ref<ClassTable[]>([])

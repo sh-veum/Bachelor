@@ -5,7 +5,6 @@ using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
 using NetBackend.Services.Interfaces;
 using NetBackend.Services.Interfaces.Keys;
-using NetBackend.Types;
 
 namespace NetBackend.GraphQL.Mutations;
 
@@ -27,7 +26,7 @@ public class ApiKeyMutation
              [Service] IGraphQLKeyService graphQLKeyService,
              [Service] IUserService userService,
              string keyName,
-             List<AccessKeyPermissionInput> permissions)
+             List<GraphQLAccessKeyPermissionDto> permissions)
     {
         var httpContext = _httpContextAccessor.HttpContext ?? throw new Exception("HttpContext is null.");
 
