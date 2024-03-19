@@ -4,14 +4,14 @@ using MockSensors.Dto;
 
 namespace MockSensors.Sensors;
 
-public class WaterQualitySensorManager
+public class BoatSensorManager
 {
     private readonly IConfiguration _configuration;
-    private readonly ILogger<WaterQualitySensor> _logger;
-    private readonly ConcurrentDictionary<string, WaterQualitySensor> _sensors = new();
+    private readonly ILogger<BoatSensor> _logger;
+    private readonly ConcurrentDictionary<string, BoatSensor> _sensors = new();
     private readonly HashSet<string> _allSensorIds = [];
 
-    public WaterQualitySensorManager(IConfiguration configuration, ILogger<WaterQualitySensor> logger)
+    public BoatSensorManager(IConfiguration configuration, ILogger<BoatSensor> logger)
     {
         _configuration = configuration;
         _logger = logger;
@@ -19,8 +19,8 @@ public class WaterQualitySensorManager
 
     public bool TryStartSensor(string id)
     {
-        var topic = $"{TopicConstants.WaterQualityUpdates}-{id}";
-        var sensor = new WaterQualitySensor(_configuration, topic, _logger);
+        var topic = $"{TopicConstants.BoatLocationUpdates}-{id}";
+        var sensor = new BoatSensor(_configuration, topic, _logger);
         var added = _sensors.TryAdd(id, sensor);
         if (added)
         {
@@ -46,7 +46,6 @@ public class WaterQualitySensorManager
             return SensorStopResult.NotFound;
         }
     }
-
 
     public IEnumerable<SensorDto> GetActiveSensors()
     {

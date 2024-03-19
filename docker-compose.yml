@@ -154,7 +154,7 @@ services:
     networks:
       - dev
     build:
-      context: ./kafka/MockSensors
+      context: ./kafka/MockSensors/
       dockerfile: Dockerfile
     ports:
       - "8089:80"

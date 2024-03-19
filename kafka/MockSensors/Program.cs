@@ -9,6 +9,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<WaterQualitySensorManager>();
+builder.Services.AddSingleton<BoatSensorManager>();
 
 var app = builder.Build();
 
