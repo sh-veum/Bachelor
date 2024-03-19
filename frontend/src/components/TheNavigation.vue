@@ -22,7 +22,7 @@ const handleLogout = async () => {
 
 <template>
   <div>
-    <NavigationMenu class="justify-between p-1 bg-background">
+    <NavigationMenu class="justify-between p-1 bg-background h-12">
       <!-- Left-aligned items -->
       <NavigationMenuList>
         <NavigationMenuItem v-if="isLoggedIn">
