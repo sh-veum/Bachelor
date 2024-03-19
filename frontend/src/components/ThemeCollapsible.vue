@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { ChevronsUpDown } from 'lucide-vue-next'
 import { ChevronsDown } from 'lucide-vue-next'
 import { ChevronsUp } from 'lucide-vue-next'
+import ThemeComponent from './theme-view/ThemeComponent.vue'
 
 interface Theme {
   id: string
@@ -32,9 +33,12 @@ const isOpen = ref(false)
 <template>
   <Collapsible v-model:open="isOpen" class="space-y-2">
     <CollapsibleTrigger as-child>
-      <Button variant="ghost" size="sm" class="w-full p-0 hover:bg-zinc-50">
+      <Button variant="ghost" size="sm" class="w-full p-0 hover:bg-zinc-50 hover:underline">
         <div class="flex items-center space-x-4 justify-between w-full">
-          <h4 class="text-sm py-3">{{ apiKey.themes.length }} themes</h4>
+          <h4 v-if="apiKey.themes.length > 1" class="text-sm py-3">
+            {{ apiKey.themes.length }} themes
+          </h4>
+          <h4 v-else class="text-sm py-3">{{ apiKey.themes.length }} theme</h4>
           <ChevronsDown v-if="isOpen == false" class="h-4 w-4" />
           <ChevronsUp v-if="isOpen == true" class="h-4 w-4" />
           <span class="sr-only">Toggle</span>
@@ -44,15 +48,7 @@ const isOpen = ref(false)
 
     <CollapsibleContent class="space-y-2">
       <div v-for="theme in apiKey.themes" :key="theme.id" class="py-3 font-mono text-sm">
-        <div>{{ theme.themeName }}</div>
-        <ul v-if="isOpen && theme.accessibleEndpoints.length" class="pl-4 mt-2">
-          <li v-for="endpoint in theme.accessibleEndpoints" :key="endpoint" class="py-1">
-            {{ endpoint }}
-          </li>
-        </ul>
-        <div v-else-if="isOpen && !theme.accessibleEndpoints.length" class="pl-4 mt-2 text-gray-500">
-          No accessible endpoints.
-        </div>
+        <ThemeComponent :actions="false" :theme="theme" />
       </div>
     </CollapsibleContent>
   </Collapsible>

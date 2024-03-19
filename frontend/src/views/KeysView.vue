@@ -336,7 +336,7 @@ onMounted(() => {
       <TableRow>
         <TableHead class="w-[200px]">Name</TableHead>
         <TableHead>Themes</TableHead>
-        <TableHead>Expires in (days)</TableHead>
+        <TableHead class="w-[200px]">Expires in (days)</TableHead>
         <TableHead class="w-[200px] text-center">Disable</TableHead>
         <TableHead class="w-[200px] text-center">Delete</TableHead>
       </TableRow>
@@ -345,10 +345,8 @@ onMounted(() => {
       <TableRow v-for="key in keys" :key="key.id">
         <TableCell>{{ key.keyName }}</TableCell>
         <TableCell>
-          <ThemeCollapsible v-if="key.themes.length > 1" :apiKey="key" />
-          <div v-else class="py-3 font-mono text-sm">
-            {{ key.themes[0]?.themeName ?? 'No themes' }}
-          </div>
+          <ThemeCollapsible v-if="key.themes.length > 0" :apiKey="key" />
+          <div v-else class="py-3 font-mono text-sm">No themes</div>
         </TableCell>
         <TableCell>{{ key.expiresIn }}</TableCell>
         <TableCell class="text-center">

@@ -53,6 +53,7 @@ onMounted(fetchData)
       <ThemeComponent
         v-for="theme in themes"
         :theme="theme"
+        :actions="true"
         @delete="fetchData"
         @edit="handleEdit"
         class="py-4"
