@@ -42,29 +42,29 @@ services:
       #   graphql-key-updates:1:1
 
   # Used because KAFKA_CREATE_TOPICS doesn't work for some reason
-  init-kafka:
-    image: confluentinc/cp-kafka:latest
-    container_name: init-kafka
-    networks:
-      - dev
-    depends_on:
-      - kafka
-    entrypoint: ["/bin/sh", "-c"]
-    command: |
-      "
-      # blocks until kafka is reachable
-      kafka-topics --bootstrap-server kafka:29092 --list
+  # init-kafka:
+  #   image: confluentinc/cp-kafka:latest
+  #   container_name: init-kafka
+  #   networks:
+  #     - dev
+  #   depends_on:
+  #     - kafka
+  #   entrypoint: ["/bin/sh", "-c"]
+  #   command: |
+  #     "
+  #     # blocks until kafka is reachable
+  #     kafka-topics --bootstrap-server kafka:29092 --list
 
-      echo -e 'Creating kafka topics'
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic species-updates --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic org-updates --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic rest-key-updates --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic graphql-key-updates --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic water-quality-updates --replication-factor 1 --partitions 1
+  #     echo -e 'Creating kafka topics'
+  #     kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic species-updates --replication-factor 1 --partitions 1
+  #     kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic org-updates --replication-factor 1 --partitions 1
+  #     kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic rest-key-updates --replication-factor 1 --partitions 1
+  #     kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic graphql-key-updates --replication-factor 1 --partitions 1
+  #     kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic water-quality-updates --replication-factor 1 --partitions 1
 
-      echo -e 'Successfully created the following topics:'
-      kafka-topics --bootstrap-server kafka:29092 --list
-      "
+  #     echo -e 'Successfully created the following topics:'
+  #     kafka-topics --bootstrap-server kafka:29092 --list
+  #     "
 
   kafka-ui:
     container_name: kafka-ui
@@ -154,7 +154,7 @@ services:
     networks:
       - dev
     build:
-      context: ./kafka/MockSensors
+      context: ./kafka/MockSensors/
       dockerfile: Dockerfile
     ports:
       - "8089:80"

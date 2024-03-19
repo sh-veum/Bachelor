@@ -2,27 +2,20 @@ using Confluent.Kafka;
 
 namespace MockSensors.Sensors;
 
-public class WaterQualitySensor
+public class WaterQualitySensor : SensorBase
 {
-    private readonly IProducer<string, string> _producer;
-    private readonly string _topic;
-    private CancellationTokenSource? _cancellationTokenSource;
-    private readonly ILogger<WaterQualitySensor> _logger;
-
-    public WaterQualitySensor(IConfiguration configuration, string topic, ILogger<WaterQualitySensor> logger)
-    {
-        var producerConfig = new ProducerConfig { BootstrapServers = configuration["Kafka:BootstrapServers"] };
-        _producer = new ProducerBuilder<string, string>(producerConfig).Build();
-        _topic = topic;
-        _logger = logger;
-    }
-
     // Starting values for pH, turbidity, and temperature.
     private double currentPH = 7.0; // Neutral pH value as a starting point
     private double currentTurbidity = 10.0; // Arbitrary starting turbidity
     private double currentTemperature = 20.0; // Assuming a moderate starting temperature
 
-    public void Start()
+    public WaterQualitySensor(IConfiguration configuration, string topic, ILogger<WaterQualitySensor> logger)
+       : base(logger, topic, configuration)
+    {
+        _logger.LogInformation($"Water quality sensor initialized with starting values: pH: {currentPH}, Turbidity: {currentTurbidity} NTU, Temperature: {currentTemperature}°C");
+    }
+
+    public override void Start()
     {
         _logger.LogInformation("Starting water quality sensor: " + _topic);
         _cancellationTokenSource = new CancellationTokenSource();
@@ -72,7 +65,7 @@ public class WaterQualitySensor
         }, token);
     }
 
-    public void Stop()
+    public override void Stop()
     {
         if (_cancellationTokenSource == null || _cancellationTokenSource.IsCancellationRequested)
         {

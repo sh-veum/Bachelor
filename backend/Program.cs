@@ -100,9 +100,13 @@ builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
 builder.Services.AddSingleton<IAppWebSocketManager, AppWebSocketManager>();
 
 // Water Quality Consumer
-builder.Services.AddSingleton<WaterQualityConsumerService>();
-builder.Services.AddSingleton<IWaterQualityConsumerService>(sp => sp.GetRequiredService<WaterQualityConsumerService>());
-builder.Services.AddHostedService(sp => sp.GetRequiredService<WaterQualityConsumerService>());
+// builder.Services.AddSingleton<WaterQualityConsumerService>();
+// builder.Services.AddSingleton<IWaterQualityConsumerService>(sp => sp.GetRequiredService<WaterQualityConsumerService>());
+// builder.Services.AddHostedService(sp => sp.GetRequiredService<WaterQualityConsumerService>());
+
+builder.Services.AddSingleton<SensorConsumerService>();
+builder.Services.AddSingleton<ISensorConsumerService>(sp => sp.GetRequiredService<SensorConsumerService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<SensorConsumerService>());
 
 // builder.Services.AddHostedService<KafkaConsumerService>();
 

@@ -1,9 +1,11 @@
+using NetBackend.Models.Enums;
+
 namespace NetBackend.Services.Interfaces;
 
 public interface ISensorService
 {
-    Task<(bool success, string message)> StartWaterQualitySensorAsync(string sensorId, bool sendHistoricalData);
-    Task<(bool success, string message)> StopWaterQualitySensorAsync(string sensorId);
-    Task<bool> StopAllSensorsAsync();
-    Task<(bool success, string message)> GetActiveSensors();
+    Task<(bool success, string message)> StartSensorAsync(string sensorId, SensorType sensorType, bool sendHistoricalData);
+    Task<(bool success, string message)> StopSensorAsync(string sensorId, SensorType sensorType);
+    Task<bool> StopAllSensorsAsync(SensorType sensorType);
+    Task<(bool success, string message)> GetActiveSensors(SensorType sensorType);
 }

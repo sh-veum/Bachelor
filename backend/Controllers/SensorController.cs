@@ -6,6 +6,7 @@ using NetBackend.Constants;
 using NetBackend.Data;
 using NetBackend.Models;
 using NetBackend.Models.Dto;
+using NetBackend.Models.Enums;
 using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Controllers.SensorController;
@@ -27,98 +28,37 @@ public class SensorController : ControllerBase
         _dbContextService = dbContextService;
     }
 
-    [HttpPost("waterQuality/startSensor")]
-    public async Task<IActionResult> StartWaterQualitySensor([FromBody] StartSensorRequestDto? request)
+    [HttpPost("{sensorType}/startSensor")]
+    public async Task<IActionResult> StartSensor([FromBody] StartSensorRequestDto request, SensorType sensorType)
     {
-        try
-        {
-            var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
-            if (error != null) return error;
+        var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
+        if (error != null) return error;
 
-            var userId = user.Id;
+        _logger.LogInformation("Starting {SensorType} sensor for user {UserId}", sensorType, user.Id);
 
-            _logger.LogInformation("Starting sensor for user {UserId}", userId);
-
-            var sendHistoricalData = request?.SendHistoricalData ?? false;
-
-            _logger.LogInformation("SendHistoricalData: {SendHistoricalData}", sendHistoricalData);
-
-            var (success, message) = await _sensorService.StartWaterQualitySensorAsync(userId.ToString(), sendHistoricalData);
-            if (success)
-            {
-                return Ok(message);
-            }
-            else
-            {
-                return BadRequest(message);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while starting Water Quality Sensor.");
-            return BadRequest(ex.Message);
-        }
+        var (success, message) = await _sensorService.StartSensorAsync(user.Id.ToString(), sensorType, request.SendHistoricalData);
+        return success ? Ok(message) : BadRequest(message);
     }
 
-    [HttpPost("waterQuality/stopSensor")]
-    public async Task<IActionResult> StopWaterQualitySensor()
+    [HttpPost("{sensorType}/stopSensor")]
+    public async Task<IActionResult> StopSensor(SensorType sensorType)
     {
-        try
-        {
-            var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
-            if (error != null) return error;
+        var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
+        if (error != null) return error;
 
-            var userId = user.Id;
+        _logger.LogInformation("Stopping {SensorType} sensor for user {UserId}", sensorType, user.Id);
 
-            _logger.LogInformation("Stopping sensor for user {UserId}", userId);
-
-            var (success, message) = await _sensorService.StopWaterQualitySensorAsync(userId.ToString());
-            if (success)
-            {
-                return Ok(message);
-            }
-            else
-            {
-                return BadRequest(message);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while stopping Water Quality Sensor.");
-            return BadRequest(ex.Message);
-        }
+        var (success, message) = await _sensorService.StopSensorAsync(user.Id.ToString(), sensorType);
+        return success ? Ok(message) : BadRequest(message);
     }
 
-    [HttpGet("waterQuality/logs")]
-    public async Task<IActionResult> GetWaterQualityLogs()
-    {
-        try
-        {
-            var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
-            if (error != null) return error;
-
-            var userId = user.Id;
-
-            DbContext dbContext = await _dbContextService.GetUserDatabaseContext(user);
-
-            var logs = await dbContext.Set<WaterQualityLog>().ToListAsync();
-
-            return Ok(logs);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while getting Water Quality Sensor logs.");
-            return BadRequest(ex.Message);
-        }
-    }
-
-    [HttpPost("stopAll")]
+    [HttpPost("{sensorType}/stopAll")]
     [Authorize(Roles = RoleConstants.AdminRole)]
-    public async Task<IActionResult> StopAllSensors()
+    public async Task<IActionResult> StopAllSensors(SensorType sensorType)
     {
         try
         {
-            var result = await _sensorService.StopAllSensorsAsync();
+            var result = await _sensorService.StopAllSensorsAsync(sensorType);
             if (result)
             {
                 return Ok("Sensors stopped successfully.");
@@ -135,13 +75,13 @@ public class SensorController : ControllerBase
         }
     }
 
-    [HttpGet("activeSensors")]
+    [HttpGet("{sensorType}/activeSensors")]
     [Authorize(Roles = RoleConstants.AdminRole)]
-    public async Task<IActionResult> GetActiveSensors()
+    public async Task<IActionResult> GetActiveSensors(SensorType sensorType)
     {
         try
         {
-            var (success, message) = await _sensorService.GetActiveSensors();
+            var (success, message) = await _sensorService.GetActiveSensors(sensorType);
             if (success)
             {
                 return Ok(message);
@@ -154,6 +94,39 @@ public class SensorController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while stopping Water Quality Sensor.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+
+    [HttpGet("{sensorType}/logs")]
+    public async Task<IActionResult> GetLogs(SensorType sensorType)
+    {
+        try
+        {
+            var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
+            if (error != null) return error;
+
+            DbContext dbContext = await _dbContextService.GetUserDatabaseContext(user);
+
+            if (sensorType == SensorType.waterQuality)
+            {
+                var logs = await dbContext.Set<WaterQualityLog>().ToListAsync();
+                return Ok(logs);
+            }
+            else if (sensorType == SensorType.boat)
+            {
+                var logs = await dbContext.Set<BoatLocationLog>().ToListAsync();
+                return Ok(logs);
+            }
+            else
+            {
+                return BadRequest("Invalid sensor type.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error occurred while getting logs for {sensorType}.");
             return BadRequest(ex.Message);
         }
     }

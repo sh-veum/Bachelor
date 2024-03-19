@@ -1,15 +1,16 @@
 using System.Collections.Concurrent;
 using MockSensors.Constants;
 using MockSensors.Dto;
+using MockSensors.Enums;
 
-namespace MockSensors.Sensors;
+namespace MockSensors.Sensors.Managers;
 
-public class WaterQualitySensorManager
+public class WaterQualitySensorManager : ISensorManager
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<WaterQualitySensor> _logger;
     private readonly ConcurrentDictionary<string, WaterQualitySensor> _sensors = new();
-    private readonly HashSet<string> _allSensorIds = new();
+    private readonly HashSet<string> _allSensorIds = [];
 
     public WaterQualitySensorManager(IConfiguration configuration, ILogger<WaterQualitySensor> logger)
     {
@@ -24,7 +25,7 @@ public class WaterQualitySensorManager
         var added = _sensors.TryAdd(id, sensor);
         if (added)
         {
-            _allSensorIds.Add(id); // Track sensor ID upon successful start
+            _allSensorIds.Add(id);
             sensor.Start();
         }
         return added;

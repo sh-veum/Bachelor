@@ -76,7 +76,7 @@ const toggleSensor = async () => {
         }
       })
 
-      ctx.emit('waterquality-logs-updated', logs)
+      emit('waterquality-logs-updated', logs)
     }
   } catch (error) {
     console.error('Error toggling the sensor state:', error)
@@ -84,13 +84,13 @@ const toggleSensor = async () => {
     isLoading.value = false
   }
 }
+const emit = defineEmits(['waterquality-logs-updated', 'clear-waterquality-logs'])
 
 const handleSwitchChange = (value: boolean) => {
   fetchAllData.value = value
   console.log('Fetch all data:', fetchAllData.value)
 }
 
-const emit = defineEmits(['waterquality-logs-updated', 'clear-waterquality-logs'])
 
 onMounted(() => {
   checkSensorStatus()

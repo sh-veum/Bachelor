@@ -1,4 +1,4 @@
-using MockSensors.Sensors;
+using MockSensors.Sensors.Managers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +9,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<WaterQualitySensorManager>();
+builder.Services.AddSingleton<BoatSensorManager>();
 
 var app = builder.Build();
 
