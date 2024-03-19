@@ -155,6 +155,28 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("NetBackend.Models.BoatLocationLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("TimeStamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BoatLocationLogs");
+                });
+
             modelBuilder.Entity("NetBackend.Models.Keys.AccessKeyPermission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1943,8 +1965,7 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .HasColumnName("Temperature_C");
 
                     b.Property<DateTimeOffset>("TimeStamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("Timestamp");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<double>("Turbidity")
                         .HasColumnType("double precision")

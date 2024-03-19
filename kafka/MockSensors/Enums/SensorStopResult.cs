@@ -1,4 +1,4 @@
-namespace MockSensors.Sensors;
+namespace MockSensors.Enums;
 
 public enum SensorStopResult
 {

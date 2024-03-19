@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetBackend.Data.DbContexts;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NetBackend.Migrations
 {
     [DbContext(typeof(CustomerOneDbContext))]
-    partial class CustomerOneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240319163359_create-BoatLog-table")]
+    partial class createBoatLogtable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -153,28 +156,6 @@ namespace NetBackend.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("NetBackend.Models.BoatLocationLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<double>("Latitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("Longitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<DateTimeOffset>("TimeStamp")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BoatLocationLogs");
                 });
 
             modelBuilder.Entity("NetBackend.Models.Keys.AccessKeyPermission", b =>

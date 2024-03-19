@@ -1,10 +1,11 @@
 using System.Collections.Concurrent;
 using MockSensors.Constants;
 using MockSensors.Dto;
+using MockSensors.Enums;
 
-namespace MockSensors.Sensors;
+namespace MockSensors.Sensors.Managers;
 
-public class WaterQualitySensorManager
+public class WaterQualitySensorManager : ISensorManager
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<WaterQualitySensor> _logger;

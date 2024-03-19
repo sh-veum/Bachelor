@@ -1,4 +1,4 @@
-using MockSensors.Sensors;
+using MockSensors.Sensors.Managers;
 
 var builder = WebApplication.CreateBuilder(args);
 

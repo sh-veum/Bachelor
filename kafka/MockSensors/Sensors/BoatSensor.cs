@@ -2,24 +2,16 @@ using Confluent.Kafka;
 
 namespace MockSensors.Sensors;
 
-public class BoatSensor
+public class BoatSensor : SensorBase
 {
-    private readonly IProducer<string, string> _producer;
-    private readonly string _topic;
-    private CancellationTokenSource? _cancellationTokenSource;
-    private readonly ILogger<BoatSensor> _logger;
 
     // Initial and final coordinates for the boat's journey.
     private (double Latitude, double Longitude) _currentPosition;
     private readonly (double Latitude, double Longitude) _endPosition;
 
     public BoatSensor(IConfiguration configuration, string topic, ILogger<BoatSensor> logger)
+        : base(logger, topic, configuration)
     {
-        var producerConfig = new ProducerConfig { BootstrapServers = configuration["Kafka:BootstrapServers"] };
-        _producer = new ProducerBuilder<string, string>(producerConfig).Build();
-        _topic = topic;
-        _logger = logger;
-
         var rnd = new Random();
         _currentPosition = GenerateRandomPosition(rnd);
         _endPosition = GenerateRandomPosition(rnd);
@@ -35,7 +27,7 @@ public class BoatSensor
         return (latitude, longitude);
     }
 
-    public void Start()
+    public override void Start()
     {
         _logger.LogInformation($"Starting boat sensor: {_topic}");
         _cancellationTokenSource = new CancellationTokenSource();
@@ -79,7 +71,7 @@ public class BoatSensor
         }, token);
     }
 
-    public void Stop()
+    public override void Stop()
     {
         if (_cancellationTokenSource == null || _cancellationTokenSource.IsCancellationRequested)
         {
