@@ -94,6 +94,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBaseKeyService, BaseKeyService>();
 builder.Services.AddScoped<IGraphQLKeyService, GraphQLKeyService>();
 builder.Services.AddScoped<IRestKeyService, RestKeyService>();
+builder.Services.AddScoped<IKafkaKeyService, KafkaKeyService>();
 builder.Services.AddScoped<ISensorService, SensorService>();
 builder.Services.AddSingleton<ICryptoService, CryptoService>();
 builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();

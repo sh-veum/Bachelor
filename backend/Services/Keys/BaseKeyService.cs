@@ -154,6 +154,14 @@ public class BaseKeyService : IBaseKeyService
                 dbContext.Set<GraphQLApiKey>().Remove(gqlApi);
                 await dbContext.SaveChangesAsync();
                 break;
+
+            case KafkaKey kafkaKey:
+                dbContext.Set<KafkaKey>().Remove(kafkaKey);
+                await dbContext.SaveChangesAsync();
+                break;
+
+            default:
+                throw new InvalidOperationException("Invalid API key type.");
         }
     }
 
@@ -173,6 +181,9 @@ public class BaseKeyService : IBaseKeyService
             case "graphqlapikey":
                 var graphQLApiKey = await dbContext.Set<GraphQLApiKey>().Include(a => a.User).FirstOrDefaultAsync(a => a.Id == id);
                 return graphQLApiKey == null ? (null, new NotFoundObjectResult("GraphQL Api Key not found.")) : (graphQLApiKey, null);
+            case "kafkakey":
+                var kafkaKey = await dbContext.Set<KafkaKey>().Include(a => a.User).FirstOrDefaultAsync(a => a.Id == id);
+                return kafkaKey == null ? (null, new NotFoundObjectResult("Kafka Key not found.")) : (kafkaKey, null);
             default:
                 return (null, new BadRequestObjectResult($"Unknown key type: {typePart}."));
         }

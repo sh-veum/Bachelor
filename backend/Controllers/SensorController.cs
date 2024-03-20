@@ -1,54 +1,63 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Netbackend.Models.Dto.Keys;
 using NetBackend.Constants;
-using NetBackend.Data;
 using NetBackend.Models;
 using NetBackend.Models.Dto;
 using NetBackend.Models.Enums;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Interfaces.Keys;
 
-namespace NetBackend.Controllers.SensorController;
+namespace NetBackend.Controllers;
 
 [Route(ControllerConstants.SensorControllerRoute)]
-[Authorize]
 public class SensorController : ControllerBase
 {
     private readonly ILogger<SensorController> _logger;
     private readonly ISensorService _sensorService;
     private readonly IUserService _userService;
-    private readonly IDbContextService _dbContextService;
+    private readonly IKafkaKeyService _kafkaKeyService;
 
-    public SensorController(ILogger<SensorController> logger, ISensorService sensorService, IUserService userService, IDbContextService dbContextService)
+    public SensorController(ILogger<SensorController> logger, ISensorService sensorService, IUserService userService, IKafkaKeyService kafkaKeyService)
     {
         _logger = logger;
         _sensorService = sensorService;
         _userService = userService;
-        _dbContextService = dbContextService;
+        _kafkaKeyService = kafkaKeyService;
     }
 
     [HttpPost("{sensorType}/startSensor")]
-    public async Task<IActionResult> StartSensor([FromBody] StartSensorRequestDto request, SensorType sensorType)
+    public async Task<IActionResult> StartSensor([FromBody] StartSensorRequestDto request, SensorType sensorType, [FromQuery] AccessKeyDto? accessKey)
     {
-        var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
-        if (error != null) return error;
+        var userIdResult = await ResolveUserId(accessKey?.EncryptedKey);
+        if (userIdResult.Error != null)
+        {
+            return userIdResult.Error;
+        }
 
-        _logger.LogInformation("Starting {SensorType} sensor for user {UserId}", sensorType, user.Id);
+        string userId = userIdResult.UserId!;
 
-        var (success, message) = await _sensorService.StartSensorAsync(user.Id.ToString(), sensorType, request.SendHistoricalData);
+        _logger.LogInformation("Starting {SensorType} sensor for user {UserId}", sensorType, userId);
+
+        var (success, message) = await _sensorService.StartSensorAsync(userId, sensorType, request.SendHistoricalData);
         return success ? Ok(message) : BadRequest(message);
     }
 
     [HttpPost("{sensorType}/stopSensor")]
-    public async Task<IActionResult> StopSensor(SensorType sensorType)
+    public async Task<IActionResult> StopSensor(SensorType sensorType, [FromQuery] AccessKeyDto? accessKey)
     {
-        var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
-        if (error != null) return error;
+        var userIdResult = await ResolveUserId(accessKey?.EncryptedKey);
+        if (userIdResult.Error != null)
+        {
+            return userIdResult.Error;
+        }
 
-        _logger.LogInformation("Stopping {SensorType} sensor for user {UserId}", sensorType, user.Id);
+        string userId = userIdResult.UserId!;
 
-        var (success, message) = await _sensorService.StopSensorAsync(user.Id.ToString(), sensorType);
+        _logger.LogInformation("Stopping {SensorType} sensor for user {UserId}", sensorType, userId);
+
+        var (success, message) = await _sensorService.StopSensorAsync(userId.ToString(), sensorType);
         return success ? Ok(message) : BadRequest(message);
     }
 
@@ -76,9 +85,15 @@ public class SensorController : ControllerBase
     }
 
     [HttpGet("{sensorType}/activeSensors")]
-    [Authorize(Roles = RoleConstants.AdminRole)]
-    public async Task<IActionResult> GetActiveSensors(SensorType sensorType)
+    public async Task<IActionResult> GetActiveSensors(SensorType sensorType, [FromQuery] AccessKeyDto? accessKey)
     {
+        // If access key isn't connected to a user, return error
+        var error = await ResolveUserId(accessKey?.EncryptedKey);
+        if (error.Error != null)
+        {
+            return error.Error;
+        }
+
         try
         {
             var (success, message) = await _sensorService.GetActiveSensors(sensorType);
@@ -100,14 +115,25 @@ public class SensorController : ControllerBase
 
 
     [HttpGet("{sensorType}/logs")]
-    public async Task<IActionResult> GetLogs(SensorType sensorType)
+    public async Task<IActionResult> GetLogs(SensorType sensorType, [FromQuery] AccessKeyDto? accessKey)
     {
+        var error = await ResolveUserId(accessKey?.EncryptedKey);
+        if (error.Error != null)
+        {
+            return error.Error;
+        }
+
         try
         {
-            var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
-            if (error != null) return error;
-
-            DbContext dbContext = await _dbContextService.GetUserDatabaseContext(user);
+            var (dbContext, errorResult) = await _kafkaKeyService.ResolveDbContextAsync(accessKey, HttpContext);
+            if (errorResult != null)
+            {
+                return errorResult;
+            }
+            else if (dbContext is null)
+            {
+                return BadRequest("Database context is null.");
+            }
 
             if (sensorType == SensorType.waterQuality)
             {
@@ -130,4 +156,31 @@ public class SensorController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
+
+    private async Task<(string? UserId, IActionResult? Error)> ResolveUserId(string? encryptedKey)
+    {
+        try
+        {
+            if (encryptedKey != null)
+            {
+                var (kafkaKey, errorResult) = await _kafkaKeyService.DecryptKafkaAccessKey(encryptedKey);
+                if (errorResult != null) return (null, errorResult);
+                if (kafkaKey?.UserId == null) return (null, BadRequest("User ID is null."));
+                return (kafkaKey.UserId, null);
+            }
+            else
+            {
+                var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
+                if (error != null) return (null, error);
+                if (user.Id == null) return (null, BadRequest("User ID is null."));
+                return (user.Id, null);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while resolving user ID.");
+            return (null, BadRequest(ex.Message));
+        }
+    }
+
 }

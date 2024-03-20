@@ -6,6 +6,9 @@ using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
 using NetBackend.Services.Interfaces;
 using NetBackend.Services.Interfaces.Keys;
+using NetBackend.Tools;
+
+namespace NetBackend.Controllers;
 
 [ApiController]
 [Route(ControllerConstants.GraphQLControllerRoute)]
@@ -24,7 +27,7 @@ public class GraphQLController : ControllerBase
         _kafkaProducerService = kafkaProducerService;
     }
 
-    [HttpPost("decrypt-graphql-accesskey")]
+    [HttpPost("decrypt-accesskey")]
     [Authorize(Roles = RoleConstants.AdminRole)]
     [ProducesResponseType(typeof(GraphQLApiKeyDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> DecryptGraphQlAccessKey([FromBody] AccessKeyDto accessKeyDto)
@@ -36,7 +39,7 @@ public class GraphQLController : ControllerBase
 
             var apiKey = await DecryptAndValidateApiKey(accessKeyDto.EncryptedKey, user.Id);
 
-            var expiresInDays = CalculateExpiresInDays(apiKey);
+            var expiresInDays = CalculateExpiresIn.CalculateExpiresInDays(apiKey);
 
             var permissions = await _graphQlKeyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
 
@@ -134,7 +137,7 @@ public class GraphQLController : ControllerBase
 
     [HttpGet("get-keys-by-user")]
     [Authorize]
-    [ProducesResponseType(typeof(List<IApiKeyDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<GraphQLApiKeyDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetApiKeysByUser()
     {
         try
@@ -188,13 +191,6 @@ public class GraphQLController : ControllerBase
             _logger.LogError(ex, "Error occurred while disabling the API key.");
             return BadRequest(ex.Message);
         }
-    }
-
-    private static int CalculateExpiresInDays(IApiKey apiKey)
-    {
-        var currentTime = DateTime.UtcNow;
-        var expiresInDays = (apiKey.CreatedAt.AddDays(apiKey.ExpiresIn) - currentTime).TotalDays;
-        return expiresInDays > 0 ? (int)expiresInDays : 0;
     }
 
     private async Task<IApiKey> DecryptAndValidateApiKey(string encryptedKey, string userId)

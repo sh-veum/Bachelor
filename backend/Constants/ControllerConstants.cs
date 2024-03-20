@@ -7,5 +7,6 @@ public static class ControllerConstants
     public const string DatabaseControllerRoute = "api/database";
     public const string GraphQLControllerRoute = "api/graphql";
     public const string RestControllerRoute = "api/rest";
+    public const string KafkaControllerRoute = "api/kafka";
     public const string SensorControllerRoute = "api/sensor";
 }

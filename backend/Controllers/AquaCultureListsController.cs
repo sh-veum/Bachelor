@@ -36,11 +36,11 @@ public class AquaCultureListsController : ControllerBase
 
     [HttpPost("fishhealth/licenseelist")]
     [ProducesResponseType(typeof(OrganizationDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetLicenseeList([FromBody] AccessKeyDto? model)
+    public async Task<IActionResult> GetLicenseeList([FromBody] AccessKeyDto? accessKey)
     {
         try
         {
-            var (dbContext, errorResult) = await _restKeyService.ResolveDbContextAsync(model, HttpContext);
+            var (dbContext, errorResult) = await _restKeyService.ResolveDbContextAsync(accessKey, HttpContext);
             if (errorResult != null)
             {
                 return errorResult;
@@ -65,11 +65,11 @@ public class AquaCultureListsController : ControllerBase
 
     [HttpPost("fishhealth/species")]
     [ProducesResponseType(typeof(SpeciesDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllSpecies([FromBody] AccessKeyDto? model)
+    public async Task<IActionResult> GetAllSpecies([FromBody] AccessKeyDto? accessKey)
     {
         try
         {
-            var (dbContext, errorResult) = await _restKeyService.ResolveDbContextAsync(model, HttpContext);
+            var (dbContext, errorResult) = await _restKeyService.ResolveDbContextAsync(accessKey, HttpContext);
             if (errorResult != null)
             {
                 return errorResult;

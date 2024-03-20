@@ -9,6 +9,8 @@ using NetBackend.Services.Interfaces;
 using NetBackend.Services.Interfaces.Keys;
 using NetBackend.Tools;
 
+namespace NetBackend.Controllers;
+
 [ApiController]
 [Route(ControllerConstants.RestControllerRoute)]
 public class RestController : ControllerBase
@@ -29,7 +31,7 @@ public class RestController : ControllerBase
     [HttpPost("create-accesskey")]
     [Authorize]
     [ProducesResponseType(typeof(AccessKeyDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> CreateAccessKey([FromBody] CreateAccessKeyDto createAccessKeyDto)
+    public async Task<IActionResult> CreateAccessKey([FromBody] CreateRestAccessKeyDto createRestAccessKeyDto)
     {
         try
         {
@@ -37,12 +39,12 @@ public class RestController : ControllerBase
             var user = userResult.user;
 
             // Create Api Key
-            if (createAccessKeyDto.ThemeIds == null)
+            if (createRestAccessKeyDto.ThemeIds == null)
             {
                 return BadRequest("Themes are null.");
             }
 
-            var restApiKey = await _restKeyService.CreateRESTApiKey(user, createAccessKeyDto.KeyName, createAccessKeyDto.ThemeIds);
+            var restApiKey = await _restKeyService.CreateRESTApiKey(user, createRestAccessKeyDto.KeyName, createRestAccessKeyDto.ThemeIds);
 
             if (restApiKey == null)
             {
@@ -51,16 +53,16 @@ public class RestController : ControllerBase
             }
 
             // Encrypt and store access key
-            var accesKey = await _restKeyService.EncryptAndStoreRestAccessKey(restApiKey);
+            var accessKey = await _restKeyService.EncryptAndStoreRestAccessKey(restApiKey);
 
-            var accesKeyDto = new AccessKeyDto
+            var accessKeyDto = new AccessKeyDto
             {
-                EncryptedKey = accesKey ?? ""
+                EncryptedKey = accessKey ?? ""
             };
 
             await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic, "New Rest Access Key Created");
 
-            return Ok(accesKeyDto);
+            return Ok(accessKeyDto);
         }
         catch (Exception ex)
         {
@@ -142,7 +144,7 @@ public class RestController : ControllerBase
         }
     }
 
-    [HttpPost("decrypt-rest-accesskey")]
+    [HttpPost("decrypt-accesskey")]
     [Authorize(Roles = RoleConstants.AdminRole)]
     [ProducesResponseType(typeof(RestApiKeyDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> DecryptAccessKey([FromBody] AccessKeyDto accessKeyDto)
@@ -154,7 +156,7 @@ public class RestController : ControllerBase
 
             var restApiKey = await DecryptAndValidateApiKey(accessKeyDto.EncryptedKey, user.Id);
 
-            var expiresInDays = CalculateExpiresInDays(restApiKey);
+            var expiresInDays = CalculateExpiresIn.CalculateExpiresInDays(restApiKey);
 
             var themes = await _restKeyService.GetRESTApiKeyThemes(restApiKey.Id);
 
@@ -190,7 +192,7 @@ public class RestController : ControllerBase
 
     [HttpGet("get-keys-by-user")]
     [Authorize]
-    [ProducesResponseType(typeof(List<IApiKeyDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<RestApiKeyDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetApiKeysByUser()
     {
         try
@@ -234,7 +236,7 @@ public class RestController : ControllerBase
 
     [HttpPatch("toggle-apikey")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<ResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ToggleApiKey([FromBody] ToggleApiKeyStatusDto toggleApiKeyStatusDto)
     {
         try
@@ -397,12 +399,5 @@ public class RestController : ControllerBase
         }
 
         return apiKey;
-    }
-
-    private static int CalculateExpiresInDays(IApiKey apiKey)
-    {
-        var currentTime = DateTime.UtcNow;
-        var expiresInDays = (apiKey.CreatedAt.AddDays(apiKey.ExpiresIn) - currentTime).TotalDays;
-        return expiresInDays > 0 ? (int)expiresInDays : 0;
     }
 }

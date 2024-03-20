@@ -40,7 +40,7 @@ public class RestKeyService : IRestKeyService
             User = user,
             CreatedAt = DateTime.UtcNow,
             ExpiresIn = KeyConstants.ExpiresIn,
-            Themes = new List<Theme>(),
+            Themes = [],
             IsEnabled = true
         };
 
@@ -124,7 +124,7 @@ public class RestKeyService : IRestKeyService
         var dbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
 
         // First, get all Theme IDs associated with the RestApiKey
-        var themeIds = await dbContext.Set<RestApiKey>() // Adjust this line if you have a different way to access your DbSet
+        var themeIds = await dbContext.Set<RestApiKey>()
             .Where(ak => ak.Id == restApiKeyID)
             .SelectMany(ak => ak.Themes.Select(t => t.Id))
             .ToListAsync();
@@ -186,8 +186,7 @@ public class RestKeyService : IRestKeyService
 
     public async Task<(DbContext?, IActionResult?)> ResolveDbContextAsync(AccessKeyDto? model, HttpContext httpContext)
     {
-        DbContext? dbContext = null;
-
+        DbContext? dbContext;
         if (model == null || string.IsNullOrWhiteSpace(model.EncryptedKey) || model.EncryptedKey == "string")
         {
             var (user, error) = await _userService.GetUserByHttpContextAsync(httpContext);
