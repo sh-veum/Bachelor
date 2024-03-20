@@ -48,42 +48,48 @@ public class KafkaKeyService : IKafkaKeyService
         return kafkaKey;
     }
 
-    public async Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessKafkaAccessKey(string encryptedKey, HttpContext httpContext)
+    public async Task<(IActionResult?, KafkaKey?)> ValidateKafkaAccessKey(string encryptedKey)
     {
         var (apiKey, errorResult) = await _baseKeyService.DecryptAccessKey(encryptedKey);
-        if (errorResult != null) return (null, errorResult);
+        if (errorResult != null) return (errorResult, null);
 
         if (apiKey is not KafkaKey kafkaKey || !kafkaKey.IsEnabled)
         {
-            return (null, new BadRequestObjectResult("API key is not found or disabled."));
+            return (new BadRequestObjectResult("API key is not found or disabled."), null);
         }
 
         var expirationDate = kafkaKey.CreatedAt.AddDays(kafkaKey.ExpiresIn);
         if (DateTime.UtcNow > expirationDate)
         {
-            return (null, new UnauthorizedResult());
+            return (new UnauthorizedResult(), null);
         }
 
+        // Assuming ComputeHash.ComputeSha256Hash(encryptedKey); is available and correct
+        var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
         var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-
-        if (apiKey is KafkaKey key)
+        var iApiKey = await mainDbContext.Set<KafkaKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
+        if (iApiKey == null)
         {
-            // TODO: (If necessary) check if the user has access to the topics
-
-            // Compute hash of the encrypted key and check if it exists in the database
-            var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
-            var iApiKey = await mainDbContext.Set<KafkaKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
-            if (iApiKey == null)
-            {
-                return (null, new UnauthorizedResult());
-            }
+            return (new UnauthorizedResult(), null);
         }
 
-        if (apiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
+        if (apiKey.UserId == null) return (new BadRequestObjectResult("User ID not found in the access key."), null);
 
-        string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == apiKey.UserId)?.DatabaseName ?? "";
+        return (null, kafkaKey);
+    }
+
+    public async Task<(DbContext? dbContext, IActionResult? actionResult)> GetKafkaKeyDbContext(string encryptedKey)
+    {
+        var (actionResult, kafkaKey) = await ValidateKafkaAccessKey(encryptedKey);
+        if (actionResult != null || kafkaKey == null)
+        {
+            return (null, actionResult);
+        }
+
+        string databaseName = (await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName))
+                              .Set<UserModel>().FirstOrDefault(u => u.Id == kafkaKey.UserId)?.DatabaseName ?? "";
+
         var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
-
         return (selectedContext, null);
     }
 
@@ -130,7 +136,7 @@ public class KafkaKeyService : IKafkaKeyService
         }
         else
         {
-            (dbContext, IActionResult? errorResult) = await ProcessKafkaAccessKey(model.EncryptedKey, httpContext);
+            (dbContext, IActionResult? errorResult) = await GetKafkaKeyDbContext(model.EncryptedKey);
             if (errorResult != null)
             {
                 return (null, errorResult);

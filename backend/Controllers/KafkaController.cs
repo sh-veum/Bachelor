@@ -196,13 +196,10 @@ public class KafkaController : ControllerBase
     {
         try
         {
-            var (kafkaKey, errorResult) = await _kafkaKeyService.DecryptKafkaAccessKey(accessKeyDto.EncryptedKey);
-            if (errorResult != null)
-            {
-                return errorResult;
-            }
+            var (validationActionResult, kafkaKey) = await _kafkaKeyService.ValidateKafkaAccessKey(accessKeyDto.EncryptedKey);
+            if (validationActionResult != null) return validationActionResult;
 
-            if (kafkaKey is KafkaKey key)
+            if (kafkaKey != null)
             {
                 var topics = await _kafkaKeyService.GetKafkaKeyTopics(kafkaKey.Id);
 
@@ -213,8 +210,10 @@ public class KafkaController : ControllerBase
                 };
                 return Ok(kafkaTopicDto);
             }
-
-            return NotFound("Kafka key type mismatch.");
+            else
+            {
+                return BadRequest("Invalid Kafka key.");
+            }
         }
         catch (Exception ex)
         {

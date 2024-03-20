@@ -9,7 +9,8 @@ namespace NetBackend.Services.Interfaces.Keys;
 public interface IKafkaKeyService
 {
     Task<KafkaKey> CreateKafkaKey(UserModel user, string keyName, List<string> topics);
-    Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessKafkaAccessKey(string encryptedKey, HttpContext httpContext);
+    Task<(IActionResult?, KafkaKey?)> ValidateKafkaAccessKey(string encryptedKey);
+    Task<(DbContext? dbContext, IActionResult? actionResult)> GetKafkaKeyDbContext(string encryptedKey);
     Task<List<KafkaKey>> GetKafkaKeysByUserId(string userId);
     Task<List<string>> GetKafkaKeyTopics(Guid kafkaKeyID);
     Task<IActionResult> ToggleKafkaKey(Guid apiKeyId, bool isEnabled);

@@ -163,8 +163,9 @@ public class SensorController : ControllerBase
         {
             if (encryptedKey != null)
             {
-                var (kafkaKey, errorResult) = await _kafkaKeyService.DecryptKafkaAccessKey(encryptedKey);
-                if (errorResult != null) return (null, errorResult);
+                var (validationActionResult, kafkaKey) = await _kafkaKeyService.ValidateKafkaAccessKey(encryptedKey);
+                if (validationActionResult != null) return (null, validationActionResult);
+
                 if (kafkaKey?.UserId == null) return (null, BadRequest("User ID is null."));
                 return (kafkaKey.UserId, null);
             }
