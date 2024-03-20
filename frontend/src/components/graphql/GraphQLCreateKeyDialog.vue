@@ -37,10 +37,6 @@ const isKeyCreatedDialogOpen = ref(false)
 const createdKey = ref('')
 
 const fetchOptions = async () => {
-  // TODO: REMEMBER TO REMOVE THIS DELAY
-  // should maybe fetch the options in onMounted instead of right when the dialog is opened?
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
   try {
     const [classTablesResponse, queriesResponse] = await Promise.all([
       fetchAvailableClassTables(),
@@ -66,7 +62,10 @@ const toggleSelectedField = (tableName: string, propertyName: string) => {
 }
 
 const CREATE_GRAPHQL_KEY_MUTATION = gql`
-  mutation CreateGraphQLAccessKey($keyName: String!, $permissions: [AccessKeyPermissionInput!]!) {
+  mutation CreateGraphQLAccessKey(
+    $keyName: String!
+    $permissions: [GraphQLAccessKeyPermissionDtoInput!]!
+  ) {
     createGraphQLAccessKey(keyName: $keyName, permissions: $permissions) {
       encryptedKey
     }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, defineEmits, defineProps } from 'vue'
+import { ref, defineEmits, defineProps, toRef, watch } from 'vue'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
 import { userId } from '@/lib/useAuth'
@@ -11,25 +11,26 @@ interface Sensor {
   active: boolean
 }
 
-interface WaterQualityLog {
-  id: number
-  timeStamp: string
-  ph: number
-  turbidity: number
-  temperature: number
-}
-
 const sensorRunning = ref(false)
 const isLoading = ref(true)
 const fetchAllData = ref(false)
 
 const props = defineProps({
-  isLive: Boolean
+  isLive: Boolean,
+  selectedTopicType: String,
+  accessKey: String
 })
 
+const selectedTopicType = toRef(props, 'selectedTopicType')
+const accessKey = toRef(props, 'accessKey')
+
 const checkSensorStatus = async () => {
+  if (selectedTopicType.value === '') return
+
   try {
-    const response = await axios.get('http://localhost:8088/api/sensor/activeSensors')
+    const response = await axios.get(
+      `http://localhost:8088/api/sensor/${selectedTopicType.value}/activeSensors?id=${accessKey.value}`
+    )
     const sensors = response.data
     // Check if any of the sensors' IDs match the userId
     sensorRunning.value = sensors.some(
@@ -43,13 +44,17 @@ const checkSensorStatus = async () => {
 }
 
 const toggleSensor = async () => {
+  if (selectedTopicType.value === '') return
+
+  console.log('Toggling sensor state...')
+
   isLoading.value = true
   let data = {}
 
   // Determine the appropriate URL and payload based on the sensor's current state
   const url = sensorRunning.value
-    ? 'http://localhost:8088/api/sensor/waterQuality/stopSensor'
-    : 'http://localhost:8088/api/sensor/waterQuality/startSensor'
+    ? `http://localhost:8088/api/sensor/${selectedTopicType.value}/stopSensor?id=${accessKey.value}`
+    : `http://localhost:8088/api/sensor/${selectedTopicType.value}/startSensor?id=${accessKey.value}`
 
   // When starting the sensor, include the SendHistoricalData flag in the request body
   if (!sensorRunning.value) {
@@ -58,41 +63,28 @@ const toggleSensor = async () => {
     }
 
     if (fetchAllData.value) {
-      emit('clear-waterquality-logs')
+      emit('clear-logs')
     }
   }
 
   try {
-    const response = await axios.post(url, data)
+    await axios.post(url, data)
     sensorRunning.value = !sensorRunning.value
-
-    if (!sensorRunning.value) {
-      let logs: WaterQualityLog[] = response.data.map((log: WaterQualityLog) => {
-        const date = new Date(log.timeStamp)
-        const formattedTimeStamp = date.toISOString().replace(/T/, ' ').replace(/\..+/, '')
-        return {
-          ...log,
-          timeStamp: formattedTimeStamp
-        }
-      })
-
-      emit('waterquality-logs-updated', logs)
-    }
   } catch (error) {
     console.error('Error toggling the sensor state:', error)
   } finally {
     isLoading.value = false
   }
 }
-const emit = defineEmits(['waterquality-logs-updated', 'clear-waterquality-logs'])
+
+const emit = defineEmits(['water-logs-updated', 'boat-logs-updated', 'clear-logs'])
 
 const handleSwitchChange = (value: boolean) => {
   fetchAllData.value = value
   console.log('Fetch all data:', fetchAllData.value)
 }
 
-
-onMounted(() => {
+watch(selectedTopicType, () => {
   checkSensorStatus()
 })
 </script>

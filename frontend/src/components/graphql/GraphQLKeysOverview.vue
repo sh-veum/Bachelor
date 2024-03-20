@@ -17,9 +17,8 @@ import {
 } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import type { GraphQLKey } from '../interfaces/GraphQLSchema'
-import { fetchGraphQLKeys, toggleApiKey, deleteGraphQLApiKey } from '@/lib/graphQL'
+import { toggleApiKey, deleteGraphQLApiKey } from '@/lib/graphQL'
 import type { UUID } from 'crypto'
-
 import { defineProps, toRef } from 'vue'
 
 const props = defineProps<{
