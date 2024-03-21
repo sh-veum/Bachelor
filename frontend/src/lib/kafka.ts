@@ -107,3 +107,21 @@ export const fetchKafkaKeyTopics = async (
     return { error: 'Invalid access key format.' }
   }
 }
+
+export const subscribeToAllTopics = async (accessKey: string): Promise<void> => {
+  if (
+    accessKey &&
+    /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/g.test(accessKey)
+  ) {
+    try {
+      const response = await axios.patch('http://localhost:8088/api/kafka/subscribe-to-topics', {
+        encryptedKey: accessKey
+      })
+      console.log(response.data.message)
+    } catch (error) {
+      console.error('Failed to subscribe to all topics:', error)
+    }
+  } else {
+    console.error('Invalid access key format.')
+  }
+}

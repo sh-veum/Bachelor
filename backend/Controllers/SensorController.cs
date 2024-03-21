@@ -183,5 +183,4 @@ public class SensorController : ControllerBase
             return (null, BadRequest(ex.Message));
         }
     }
-
 }

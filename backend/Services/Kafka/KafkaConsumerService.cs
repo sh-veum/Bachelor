@@ -1,29 +1,23 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using Confluent.Kafka;
-using NetBackend.Constants;
 using NetBackend.Services.Interfaces;
 
 namespace NetBackend.Services.Kafka;
 
-public class KafkaConsumerService : BackgroundService
+public class KafkaConsumerService : BackgroundService, IKafkaConsumerService
 {
-    private readonly List<string> _topics;
-    private readonly IConsumer<Ignore, string> _consumer;
     private readonly ILogger<KafkaConsumerService> _logger;
+    private readonly IConsumer<Ignore, string> _consumer;
     private readonly IAppWebSocketManager _webSocketManager;
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ConcurrentDictionary<string, byte> _activeTopics = new();
+    private CancellationTokenSource _loopCancellationTokenSource = new();
+    private CancellationTokenSource? _stoppingCancellationTokenSource;
 
-    public KafkaConsumerService(IConfiguration configuration, ILogger<KafkaConsumerService> logger, IAppWebSocketManager webSocketManager, IServiceScopeFactory scopeFactory)
+    public KafkaConsumerService(IConfiguration configuration, ILogger<KafkaConsumerService> logger, IAppWebSocketManager webSocketManager)
     {
-        _topics = [
-            KafkaConstants.SpeciesTopic,
-            KafkaConstants.OrgTopic,
-            KafkaConstants.RestKeyTopic,
-            KafkaConstants.GraphQLKeyTopic
-            ];
         _logger = logger;
         _webSocketManager = webSocketManager;
-        _scopeFactory = scopeFactory;
 
         var consumerConfig = new ConsumerConfig
         {
@@ -37,40 +31,51 @@ public class KafkaConsumerService : BackgroundService
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _consumer.Subscribe(_topics);
-        _logger.LogInformation($"Subscribed to topics: {string.Join(", ", _topics)}");
-        _logger.LogInformation($"StoppingToken: {stoppingToken}");
+        _logger.LogInformation($"Stopping token: {stoppingToken}");
+        _stoppingCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        _logger.LogInformation($"Stopping Cancel token: {_stoppingCancellationTokenSource.Token}");
+        StartConsumeLoop(_stoppingCancellationTokenSource.Token);
+        return Task.CompletedTask;
+    }
 
+    private void StartConsumeLoop(CancellationToken stoppingToken)
+    {
         Task.Run(async () =>
         {
-            _logger.LogInformation("Kafka consumer service started");
-            while (!stoppingToken.IsCancellationRequested)
+            while (!stoppingToken.IsCancellationRequested && !_loopCancellationTokenSource.Token.IsCancellationRequested)
             {
-                _logger.LogInformation("Kafka consumer before trying to consume message");
                 try
                 {
-                    _logger.LogInformation("Kafka consumer trying to consume message");
-                    using var scope = _scopeFactory.CreateScope();
-                    var dbContextService = scope.ServiceProvider.GetRequiredService<IDbContextService>();
+                    var consumeResult = _consumer.Consume(_loopCancellationTokenSource.Token);
 
-                    var consumeResult = _consumer.Consume(stoppingToken);
                     if (consumeResult != null && !consumeResult.IsPartitionEOF)
                     {
+                        _logger.LogInformation($"Consumed message from topic {consumeResult.Topic}: Value: {consumeResult.Message.Value}");
+
                         var webSocketMessage = new
                         {
                             topic = consumeResult.Topic,
                             message = consumeResult.Message.Value
                         };
+
                         var serializedMessage = JsonSerializer.Serialize(webSocketMessage);
                         await _webSocketManager.SendMessageAsync(serializedMessage);
                         _logger.LogInformation($"WebSocket message sent: {serializedMessage}");
                     }
-
                 }
                 catch (OperationCanceledException)
                 {
-                    _logger.LogInformation("Kafka consumer cancellation requested");
-                    break;
+                    if (!stoppingToken.IsCancellationRequested)
+                    {
+                        _logger.LogInformation("Reconfiguring consumer subscriptions, restarting consume loop...");
+                        ResetLoopCancellationToken();
+                        continue; // Continue in the loop after resetting the token
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Stopping due to application shutdown.");
+                        break;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -79,7 +84,48 @@ public class KafkaConsumerService : BackgroundService
             }
             _consumer.Close();
         }, stoppingToken);
+    }
 
-        return Task.CompletedTask;
+    public void SubscribeToTopic(string newTopic)
+    {
+        _logger.LogInformation($"Trying to subscribe to topic: {newTopic}");
+
+        var isNewSubscription = _activeTopics.TryAdd(newTopic, 0);
+
+        if (isNewSubscription)
+        {
+            _consumer.Subscribe(_activeTopics.Keys);
+            _logger.LogInformation($"Subscribed to new topic: {newTopic}");
+        }
+
+        if (isNewSubscription)
+        {
+            InterruptAndRestartConsumeLoop();
+        }
+    }
+
+    private void InterruptAndRestartConsumeLoop()
+    {
+        _loopCancellationTokenSource.Cancel();
+        ResetLoopCancellationToken();
+        if (_stoppingCancellationTokenSource != null)
+        {
+            StartConsumeLoop(_stoppingCancellationTokenSource.Token);
+        }
+        else
+        {
+            _logger.LogWarning("Stopping token source is null, cannot restart consume loop.");
+        }
+    }
+
+    private void ResetLoopCancellationToken()
+    {
+        _loopCancellationTokenSource.Dispose();
+        _loopCancellationTokenSource = new CancellationTokenSource();
+    }
+
+    public List<string> GetSubscribedTopics()
+    {
+        return [.. _activeTopics.Keys];
     }
 }

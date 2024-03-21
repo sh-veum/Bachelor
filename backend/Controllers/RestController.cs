@@ -60,7 +60,7 @@ public class RestController : ControllerBase
                 EncryptedKey = accessKey ?? ""
             };
 
-            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic, "New Rest Access Key Created");
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic + "-" + user.Id, $"New REST access key with id: {restApiKey.Id} created.");
 
             return Ok(accessKeyDto);
         }
@@ -87,7 +87,7 @@ public class RestController : ControllerBase
                 return BadRequest("Failed to delete API key.");
             }
 
-            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic, "Rest Access Key Deleted");
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic + "-" + user.Id, $"REST access key with id: {id} deleted.");
 
             return Ok("API key deleted successfully.");
         }
@@ -131,6 +131,8 @@ public class RestController : ControllerBase
                             ExpectedBody = endpoint.ExpectedBodyType != null ? DtoTools.GetDtoStructure(endpoint.ExpectedBodyType) : null
                         }).ToList<object>()
                 }).ToList();
+
+                await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic + "-" + restApiKey.UserId, $"Got theme information for REST access key with id: {api.Id}.");
 
                 return Ok(validThemes);
             }
@@ -181,6 +183,8 @@ public class RestController : ControllerBase
                 return Ok(restApiKeyDto);
             }
 
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic + "-" + user.Id, $"Decrypted REST access key with id: {restApiKey.Id}.");
+
             return NotFound("REST API key type mismatch.");
         }
         catch (Exception ex)
@@ -225,6 +229,8 @@ public class RestController : ControllerBase
                 apiKeysDto.Add(restApiKeyDto);
             }
 
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic + "-" + user.Id, $"Got API keys for user: {user.Id}.");
+
             return Ok(apiKeysDto);
         }
         catch (Exception ex)
@@ -241,6 +247,11 @@ public class RestController : ControllerBase
     {
         try
         {
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
+            var user = userResult.user;
+
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic + "-" + user.Id, $"Toggled API key with id: {toggleApiKeyStatusDto.Id} to {toggleApiKeyStatusDto.IsEnabled}");
+
             return await _restKeyService.ToggleRestApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
         }
         catch (Exception ex)
@@ -274,6 +285,8 @@ public class RestController : ControllerBase
                 AccessibleEndpoints = theme.AccessibleEndpoints,
                 IsDeprecated = theme.IsDeprecated
             }).ToList();
+
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic + "-" + user.Id, $"Got themes for user: {user.Id}.");
 
             return Ok(validThemes);
         }
@@ -318,6 +331,8 @@ public class RestController : ControllerBase
                 IsDeprecated = createdTheme.IsDeprecated
             };
 
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic + "-" + user.Id, $"Created theme with id: {createdTheme.Id}.");
+
             return Ok(newThemeDto);
         }
         catch (Exception ex)
@@ -354,6 +369,8 @@ public class RestController : ControllerBase
                 return BadRequest("Failed to update theme.");
             }
 
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic + "-" + user.Id, $"Updated theme with id: {updatedTheme.Id}.");
+
             return Ok(themeDto);
         }
         catch (Exception ex)
@@ -375,6 +392,11 @@ public class RestController : ControllerBase
             {
                 return BadRequest("Failed to delete theme.");
             }
+
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
+            var user = userResult.user;
+
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic + "-" + user.Id, $"Deleted theme with id: {id}.");
 
             return Ok("Theme deleted successfully.");
         }

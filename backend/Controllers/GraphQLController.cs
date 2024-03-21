@@ -59,6 +59,8 @@ public class GraphQLController : ControllerBase
                     IsEnabled = api.IsEnabled
                 };
 
+                await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic + "-" + api.UserId, "Decrypted GraphQL Access Key");
+
                 return Ok(graphQLApiKeyDto);
             }
 
@@ -87,7 +89,7 @@ public class GraphQLController : ControllerBase
                 return BadRequest("Failed to delete API key.");
             }
 
-            await _kafkaProducerService.ProduceAsync(KafkaConstants.RestKeyTopic, "Rest Access Key Deleted");
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic + "-" + user.Id, "GraphQL Key Deleted");
 
             return Ok("API key deleted successfully.");
         }
@@ -122,6 +124,8 @@ public class GraphQLController : ControllerBase
                         QueryName = permission.QueryName,
                         AllowedFields = permission.AllowedFields ?? []
                     }).ToList();
+
+                await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic + "-" + graphQLApiKey.UserId, "Got GraphQL Permissions");
 
                 return Ok(validPermissions);
             }
@@ -167,6 +171,8 @@ public class GraphQLController : ControllerBase
                 apiKeysDto.Add(graphQLApiKeyDto);
             }
 
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic + "-" + user.Id, "Got GraphQL Keys");
+
             return Ok(apiKeysDto);
         }
         catch (Exception ex)
@@ -184,6 +190,11 @@ public class GraphQLController : ControllerBase
     {
         try
         {
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
+            var user = userResult.user;
+
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic + "-" + user.Id, $"Toggled GraphQL API Key with id {toggleApiKeyStatusDto.Id} to {toggleApiKeyStatusDto.IsEnabled}");
+
             return await _graphQlKeyService.ToggleGraphQLApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
         }
         catch (Exception ex)

@@ -49,7 +49,7 @@ public class ApiKeyMutation
         // Encrypt and store access key
         var encryptedKey = await graphQLKeyService.EncryptAndStoreGraphQLAccessKey(graphQLApiKey);
 
-        await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic, $"New key added: {graphQLApiKey.KeyName} Update the database!");
+        await _kafkaProducerService.ProduceAsync(KafkaConstants.GraphQLKeyTopic + "-" + user.Id, $"New key added: {graphQLApiKey.KeyName} Update the database!");
 
         return new AccessKeyDto
         {
@@ -60,19 +60,23 @@ public class ApiKeyMutation
     public async Task<ResponseDto> ToggleApiKey(
         [Service] IRestKeyService restKeyService,
         [Service] IGraphQLKeyService graphQLKeyService,
+        [Service] IKafkaKeyService kafkaKeyService,
         ToggleApiKeyStatusDto toggleApiKeyStatusDto)
     {
         IActionResult result;
         try
         {
-            string keyType = toggleApiKeyStatusDto.KeyType.ToUpper();
+            string keyType = toggleApiKeyStatusDto.KeyType.ToLower();
             switch (keyType)
             {
-                case "REST":
+                case "rest":
                     result = await restKeyService.ToggleRestApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
                     break;
-                case "GRAPHQL":
+                case "graphql":
                     result = await graphQLKeyService.ToggleGraphQLApiKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
+                    break;
+                case "kafka":
+                    result = await kafkaKeyService.ToggleKafkaKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
                     break;
                 default:
                     return new ResponseDto { IsSuccess = false, Message = "Invalid key type." };

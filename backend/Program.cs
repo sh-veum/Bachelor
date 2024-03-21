@@ -100,16 +100,13 @@ builder.Services.AddSingleton<ICryptoService, CryptoService>();
 builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
 builder.Services.AddSingleton<IAppWebSocketManager, AppWebSocketManager>();
 
-// Water Quality Consumer
-// builder.Services.AddSingleton<WaterQualityConsumerService>();
-// builder.Services.AddSingleton<IWaterQualityConsumerService>(sp => sp.GetRequiredService<WaterQualityConsumerService>());
-// builder.Services.AddHostedService(sp => sp.GetRequiredService<WaterQualityConsumerService>());
-
 builder.Services.AddSingleton<SensorConsumerService>();
 builder.Services.AddSingleton<ISensorConsumerService>(sp => sp.GetRequiredService<SensorConsumerService>());
 builder.Services.AddHostedService(sp => sp.GetRequiredService<SensorConsumerService>());
 
-// builder.Services.AddHostedService<KafkaConsumerService>();
+builder.Services.AddSingleton<KafkaConsumerService>();
+builder.Services.AddSingleton<IKafkaConsumerService>(sp => sp.GetRequiredService<KafkaConsumerService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<KafkaConsumerService>());
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>

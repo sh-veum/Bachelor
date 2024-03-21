@@ -17,12 +17,16 @@ public class KafkaController : ControllerBase
     private readonly ILogger<KafkaController> _logger;
     private readonly IKafkaKeyService _kafkaKeyService;
     private readonly IUserService _userService;
+    private readonly IKafkaProducerService _kafkaProducerService;
+    private readonly IKafkaConsumerService _kafkaConsumerService;
 
-    public KafkaController(ILogger<KafkaController> logger, IKafkaKeyService kafkaKeyService, IUserService userService)
+    public KafkaController(ILogger<KafkaController> logger, IKafkaKeyService kafkaKeyService, IUserService userService, IKafkaProducerService kafkaProducerService, IKafkaConsumerService kafkaConsumerService)
     {
         _logger = logger;
         _kafkaKeyService = kafkaKeyService;
         _userService = userService;
+        _kafkaProducerService = kafkaProducerService;
+        _kafkaConsumerService = kafkaConsumerService;
     }
 
     [HttpPost("create-accesskey")]
@@ -51,6 +55,8 @@ public class KafkaController : ControllerBase
                 EncryptedKey = accessKey ?? ""
             };
 
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.KafkaKeyTopic + "-" + user.Id, "Created Kafka Key with id: " + restApiKey.Id);
+
             return Ok(accessKeyDto);
         }
         catch (Exception ex)
@@ -75,6 +81,8 @@ public class KafkaController : ControllerBase
             {
                 return BadRequest("Failed to delete API key.");
             }
+
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.KafkaKeyTopic + "-" + user.Id, "Delete Kafka key with id: " + id);
 
             return Ok("API key deleted successfully.");
         }
@@ -110,6 +118,8 @@ public class KafkaController : ControllerBase
                     IsEnabled = key.IsEnabled,
                     Topics = key.Topics ?? []
                 };
+
+                await _kafkaProducerService.ProduceAsync(KafkaConstants.KafkaKeyTopic + "-" + key.UserId, "Decrypted Kafka Access Key with id: " + key.Id);
 
                 return Ok(restApiKeyDto);
             }
@@ -152,6 +162,8 @@ public class KafkaController : ControllerBase
                 kafkaKeysDto.Add(kafkaKeyDto);
             }
 
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.KafkaKeyTopic + "-" + user.Id, "Got Kafka Keys");
+
             return Ok(kafkaKeysDto);
         }
         catch (Exception ex)
@@ -168,6 +180,11 @@ public class KafkaController : ControllerBase
     {
         try
         {
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
+            var user = userResult.user;
+
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.KafkaKeyTopic + "-" + user.Id, $"Toggled Kafka Key with id: {toggleApiKeyStatusDto.Id} to {toggleApiKeyStatusDto.IsEnabled}");
+
             return await _kafkaKeyService.ToggleKafkaKey(toggleApiKeyStatusDto.Id, toggleApiKeyStatusDto.IsEnabled);
         }
         catch (Exception ex)
@@ -208,6 +225,9 @@ public class KafkaController : ControllerBase
                     SensorId = kafkaKey.UserId,
                     Topics = topics
                 };
+
+                await _kafkaProducerService.ProduceAsync(KafkaConstants.KafkaKeyTopic + "-" + kafkaKey.UserId, "Got Kafka Key Topics from key with id: " + kafkaKey.Id);
+
                 return Ok(kafkaTopicDto);
             }
             else
@@ -220,6 +240,48 @@ public class KafkaController : ControllerBase
             _logger.LogError(ex, "Error occurred while retrieving Kafka key topics.");
             return BadRequest(ex.Message);
         }
+    }
+
+    [HttpPatch("subscribe-to-topics")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SubscribeToTopics([FromBody] AccessKeyDto accessKeyDto)
+    {
+        try
+        {
+            var (validationActionResult, kafkaKey) = await _kafkaKeyService.ValidateKafkaAccessKey(accessKeyDto.EncryptedKey);
+            if (validationActionResult != null) return validationActionResult;
+
+            if (kafkaKey == null)
+            {
+                return BadRequest("Invalid Kafka key.");
+            }
+
+            var topics = typeof(KafkaConstants)
+                .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy)
+                .Where(fi => fi.IsLiteral && !fi.IsInitOnly)
+                .Select(fi => fi.GetValue(null)?.ToString())
+                .Where(topic => topic != KafkaConstants.BoatLogTopic && topic != KafkaConstants.WaterQualityLogTopic);
+
+            foreach (var baseTopic in topics)
+            {
+                var userSpecificTopic = $"{baseTopic}-{kafkaKey.UserId}";
+                _kafkaConsumerService.SubscribeToTopic(userSpecificTopic);
+            }
+
+            return Ok("User topics updated successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while subscribing to topics.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPatch("get-subscribed-topics")]
+    [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
+    public List<string> GetSubscribedTopics()
+    {
+        return _kafkaConsumerService.GetSubscribedTopics();
     }
 
     private async Task<IApiKey> DecryptAndValidateApiKey(string encryptedKey, string userId)

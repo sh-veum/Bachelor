@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Text.Json;
 using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore;
@@ -54,7 +53,6 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
                 try
                 {
                     var consumeResult = _consumer.Consume(_loopCancellationTokenSource.Token);
-                    _logger.LogInformation($"Consume value: {consumeResult.Message.Value}");
 
                     if (consumeResult != null && !consumeResult.IsPartitionEOF)
                     {

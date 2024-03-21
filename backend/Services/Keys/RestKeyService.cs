@@ -60,24 +60,41 @@ public class RestKeyService : IRestKeyService
         return apiKey;
     }
 
-    public async Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessRESTAccessKey(string encryptedKey, HttpContext httpContext)
+    public async Task<(IActionResult?, RestApiKey?)> ValidateRestAccessKey(string encryptedKey)
     {
-        var (restApiKey, errorResult) = await _baseKeyService.DecryptAccessKey(encryptedKey);
-        if (errorResult != null) return (null, errorResult);
+        var (apiKey, errorResult) = await _baseKeyService.DecryptAccessKey(encryptedKey);
+        if (errorResult != null) return (errorResult, null);
 
-        if (restApiKey == null)
+        if (apiKey is not RestApiKey restApiKey || !restApiKey.IsEnabled)
         {
-            return (null, new BadRequestObjectResult("API key not found."));
+            return (new BadRequestObjectResult("API key is not found or disabled."), null);
         }
-
-        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
-
-        if (!restApiKey.IsEnabled) return (null, new BadRequestObjectResult("API key is disabled."));
 
         var expirationDate = restApiKey.CreatedAt.AddDays(restApiKey.ExpiresIn);
         if (DateTime.UtcNow > expirationDate)
         {
-            return (null, new BadRequestObjectResult("API key has expired."));
+            return (new UnauthorizedResult(), null);
+        }
+
+        var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
+        var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
+        var iApiKey = await mainDbContext.Set<RestApiKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
+        if (iApiKey == null)
+        {
+            return (new UnauthorizedResult(), null);
+        }
+
+        if (apiKey.UserId == null) return (new BadRequestObjectResult("User ID not found in the access key."), null);
+
+        return (null, restApiKey);
+    }
+
+    public async Task<(DbContext? dbContext, IActionResult? actionResult, string? userId)> ProcessAndGetDbContextAndUserIdFromKey(string encryptedKey, HttpContext httpContext)
+    {
+        var (actionResult, restApiKey) = await ValidateRestAccessKey(encryptedKey);
+        if (actionResult != null || restApiKey == null)
+        {
+            return (null, actionResult, null);
         }
 
         if (restApiKey is RestApiKey api)
@@ -88,24 +105,26 @@ public class RestKeyService : IRestKeyService
             if (!string.IsNullOrEmpty(httpContext?.Request.Path.Value) &&
                 !allAccessibleEndpoints.Contains(httpContext.Request.Path.Value))
             {
-                return (null, new UnauthorizedResult());
+                return (null, new UnauthorizedResult(), null);
             }
 
             // Compute hash of the encrypted key and check if it exists in the database
             var keyHash = ComputeHash.ComputeSha256Hash(encryptedKey);
+            var mainDbContext = await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName);
             var iApiKey = await mainDbContext.Set<RestApiKey>().FirstOrDefaultAsync(ak => ak.KeyHash == keyHash);
             if (iApiKey == null)
             {
-                return (null, new UnauthorizedResult());
+                return (null, new UnauthorizedResult(), null);
             }
         }
 
-        if (restApiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."));
+        if (restApiKey.UserId == null) return (null, new BadRequestObjectResult("User ID not found in the access key."), null);
 
-        string databaseName = mainDbContext.Set<UserModel>().FirstOrDefault(u => u.Id == restApiKey.UserId)?.DatabaseName ?? "";
+        string databaseName = (await _dbContextService.GetDatabaseContextByName(DatabaseConstants.MainDbName))
+                              .Set<UserModel>().FirstOrDefault(u => u.Id == restApiKey.UserId)?.DatabaseName ?? "";
+
         var selectedContext = await _dbContextService.GetDatabaseContextByName(databaseName);
-
-        return (selectedContext, null);
+        return (selectedContext, null, restApiKey.UserId);
     }
 
     public async Task<List<RestApiKey>> GetRestApiKeysByUserId(string userId)
@@ -184,34 +203,36 @@ public class RestKeyService : IRestKeyService
         return new OkResult();
     }
 
-    public async Task<(DbContext?, IActionResult?)> ResolveDbContextAsync(AccessKeyDto? model, HttpContext httpContext)
+    public async Task<(DbContext?, IActionResult?, string? userId)> ResolveDbContextAndUserId(AccessKeyDto? model, HttpContext httpContext)
     {
         DbContext? dbContext;
+        string? userId;
         if (model == null || string.IsNullOrWhiteSpace(model.EncryptedKey) || model.EncryptedKey == "string")
         {
             var (user, error) = await _userService.GetUserByHttpContextAsync(httpContext);
             if (error != null)
             {
-                return (null, error);
+                return (null, error, null);
             }
 
+            userId = user.Id;
             dbContext = await _dbContextService.GetUserDatabaseContext(user);
         }
         else
         {
-            (dbContext, IActionResult? errorResult) = await ProcessRESTAccessKey(model.EncryptedKey, httpContext);
+            (dbContext, IActionResult? errorResult, userId) = await ProcessAndGetDbContextAndUserIdFromKey(model.EncryptedKey, httpContext);
             if (errorResult != null)
             {
-                return (null, errorResult);
+                return (null, errorResult, null);
             }
         }
 
         if (dbContext == null)
         {
-            return (null, new BadRequestObjectResult("Database context is null."));
+            return (null, new BadRequestObjectResult("Database context is null."), null);
         }
 
-        return (dbContext, null);
+        return (dbContext, null, userId);
     }
 
     public Task<IActionResult> ToggleRestApiKey(Guid apiKeyId, bool isEnabled) => _baseKeyService.ToggleApiKeyEnabledStatus<RestApiKey>(apiKeyId, isEnabled);

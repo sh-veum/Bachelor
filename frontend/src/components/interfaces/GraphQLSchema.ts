@@ -1,3 +1,5 @@
+import type { UUID } from 'crypto'
+
 export interface FieldType {
   name: string
   type: {
@@ -38,7 +40,7 @@ export interface Query {
 }
 
 export interface GraphQLKey {
-  id: number
+  id: UUID
   keyName: string
   expiresIn: number
   isEnabled: boolean

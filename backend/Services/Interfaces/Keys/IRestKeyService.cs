@@ -10,7 +10,8 @@ namespace NetBackend.Services.Interfaces.Keys;
 public interface IRestKeyService
 {
     Task<RestApiKey> CreateRESTApiKey(UserModel user, string keyName, List<Guid> themeIds);
-    Task<(DbContext? dbContext, IActionResult? actionResult)> ProcessRESTAccessKey(string encryptedKey, HttpContext httpContext);
+    Task<(IActionResult?, RestApiKey?)> ValidateRestAccessKey(string encryptedKey);
+    Task<(DbContext? dbContext, IActionResult? actionResult, string? userId)> ProcessAndGetDbContextAndUserIdFromKey(string encryptedKey, HttpContext httpContext);
     Task<List<RestApiKey>> GetRestApiKeysByUserId(string userId);
     Task<List<Theme>> GetRESTApiKeyThemes(Guid restApiKeyID);
     Task<List<Theme>> GetThemesByUserId(string userId);
@@ -23,5 +24,5 @@ public interface IRestKeyService
     Task<(IApiKey?, IActionResult?)> DecryptRestAccessKey(string encryptedKey);
     Task<(IApiKey?, IActionResult?)> DecryptRestAccessKeyUserCheck(string encryptedKey, string currentUserId);
     Task<IActionResult> DeleteRestApiKeyById(Guid id);
-    Task<(DbContext?, IActionResult?)> ResolveDbContextAsync(AccessKeyDto? model, HttpContext httpContext);
+    Task<(DbContext?, IActionResult?, string? userId)> ResolveDbContextAndUserId(AccessKeyDto? model, HttpContext httpContext);
 }

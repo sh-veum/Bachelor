@@ -4,12 +4,16 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ref } from 'vue'
 import { Lock, RotateCcw } from 'lucide-vue-next'
+import { subscribeToAllTopics } from '@/lib/kafka'
 
 const accessKey = ref('')
 const isLocked = ref(false)
 
 const toggleLock = () => {
   isLocked.value = !isLocked.value
+  if (isLocked.value) {
+    subscribeToAllTopics(accessKey.value)
+  }
 }
 
 const emits = defineEmits(['kafka-check-accesskey'])

@@ -40,7 +40,7 @@ public class AquaCultureListsController : ControllerBase
     {
         try
         {
-            var (dbContext, errorResult) = await _restKeyService.ResolveDbContextAsync(accessKey, HttpContext);
+            var (dbContext, errorResult, userId) = await _restKeyService.ResolveDbContextAndUserId(accessKey, HttpContext);
             if (errorResult != null)
             {
                 return errorResult;
@@ -49,6 +49,8 @@ public class AquaCultureListsController : ControllerBase
             {
                 return BadRequest("Database context is null.");
             }
+
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.OrgTopic + "-" + userId, "Got Organizations");
 
             // Fetch all licensees
             var allLicenses = await dbContext.Set<Organization>()
@@ -69,7 +71,7 @@ public class AquaCultureListsController : ControllerBase
     {
         try
         {
-            var (dbContext, errorResult) = await _restKeyService.ResolveDbContextAsync(accessKey, HttpContext);
+            var (dbContext, errorResult, userId) = await _restKeyService.ResolveDbContextAndUserId(accessKey, HttpContext);
             if (errorResult != null)
             {
                 return errorResult;
@@ -88,8 +90,7 @@ public class AquaCultureListsController : ControllerBase
                 })
                 .ToListAsync();
 
-            // Just to easily test if kafka works
-            await _kafkaProducerService.ProduceAsync(KafkaConstants.SpeciesTopic, "Got Species");
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.SpeciesTopic + "-" + userId, "Got Species");
 
             return Ok(allSpecies);
         }
@@ -125,7 +126,7 @@ public class AquaCultureListsController : ControllerBase
             dbContext.Set<Species>().Add(newSpecies);
             await dbContext.SaveChangesAsync();
 
-            await _kafkaProducerService.ProduceAsync(KafkaConstants.SpeciesTopic, $"New species added: {speciesName}. Update the database!");
+            await _kafkaProducerService.ProduceAsync(KafkaConstants.SpeciesTopic + "-" + user.Id, $"New species added: {speciesName}. Update the database!");
 
             var newSpeciesDto = new SpeciesDto
             {

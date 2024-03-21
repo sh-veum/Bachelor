@@ -31,12 +31,12 @@ class WebSocketService {
 
   private handleMessage(event: MessageEvent) {
     console.log('received message', event.data)
-    const message = JSON.parse(event.data)
-    const messageContent = message.message
-    const handlers = this.messageHandlers[message.topic]
-    if (handlers) {
-      // Pass the correct message content
-      handlers.forEach((handler) => handler(messageContent))
+    const parsedMessage = JSON.parse(event.data)
+
+    // Ensure parsedMessage includes 'topic' and 'message'
+    const handlers = this.messageHandlers[parsedMessage.topic]
+    if (handlers && parsedMessage.topic) {
+      handlers.forEach((handler) => handler(parsedMessage))
     }
   }
 
