@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { ChevronsUpDown } from 'lucide-vue-next'
 import { ChevronsDown } from 'lucide-vue-next'
 import { ChevronsUp } from 'lucide-vue-next'
-import ThemeComponent from './theme-view/ThemeComponent.vue'
+import ThemeComponent from '@/components/rest/ThemeComponent.vue'
 
 interface Theme {
   id: string

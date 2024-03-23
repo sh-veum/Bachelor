@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import ThemeCollapsible from '@/components/ThemeCollapsible.vue'
+import ThemeCollapsible from '@/components/rest/ThemeCollapsible.vue'
 import { ref, onMounted } from 'vue'
 import Label from '@/components/ui/label/Label.vue'
 

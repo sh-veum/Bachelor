@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import ThemeDialog from '@/components/theme-view/ThemeDialog.vue'
-import ThemeComponent from '@/components/theme-view/ThemeComponent.vue'
+import ThemeDialog from '@/components/rest/ThemeDialog.vue'
+import ThemeComponent from '@/components/rest/ThemeComponent.vue'
 import { Button } from '@/components/ui/button'
 
 import { ref, onMounted } from 'vue'

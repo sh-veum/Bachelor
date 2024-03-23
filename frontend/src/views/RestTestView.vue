@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import TheRestApiOverview from '@/components/TheRestApiOverview.vue'
+import TheRestApiOverview from '@/components/rest/TheRestApiOverview.vue'
 import { Input } from '@/components/ui/input'
 
 const accessKey = ref('')
