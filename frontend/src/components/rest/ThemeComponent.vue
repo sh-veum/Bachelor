@@ -9,15 +9,9 @@ import { MoreHorizontal } from 'lucide-vue-next'
 import axios from 'axios'
 import Separator from '../ui/separator/Separator.vue'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
+import type { UUID } from 'crypto'
+import type { Theme } from '../interfaces/RestSchema'
 
-interface Theme {
-  id: string
-  themeName: string
-  accessibleEndpoints: string[]
-  isDeprecated: boolean
-}
-
-//TODO: use a shared interface for theme
 const props = defineProps<{
   theme: Theme
   actions: boolean
@@ -36,6 +30,7 @@ const deleteTheme = async (themeId: string) => {
 }
 
 const handleDelete = () => {
+  // TODO: emit the deleted theme and remove it from the list
   deleteTheme(props.theme.id).then(() => emit('delete'))
 }
 

@@ -44,22 +44,7 @@ import { cn } from '@/lib/utils'
 import ThemeCollapsible from '@/components/rest/ThemeCollapsible.vue'
 import { ref, onMounted } from 'vue'
 import Label from '@/components/ui/label/Label.vue'
-
-interface Theme {
-  id: string
-  themeName: string
-  accessibleEndpoints: string[]
-  isDeprecated: boolean
-}
-
-interface Key {
-  id: string
-  keyName: string
-  createdBy: string
-  expiresIn: number
-  isEnabled: boolean
-  themes: Theme[]
-}
+import type { Key, Theme } from '@/components/interfaces/RestSchema'
 
 const keys = ref<Key[]>([])
 const themes = ref<Theme[]>([])

@@ -6,22 +6,8 @@ import { ChevronsUpDown } from 'lucide-vue-next'
 import { ChevronsDown } from 'lucide-vue-next'
 import { ChevronsUp } from 'lucide-vue-next'
 import ThemeComponent from '@/components/rest/ThemeComponent.vue'
-
-interface Theme {
-  id: string
-  themeName: string
-  accessibleEndpoints: string[]
-  isDeprecated: boolean
-}
-
-interface Key {
-  id: string
-  keyName: string
-  createdBy: string
-  expiresIn: number
-  isEnabled: boolean
-  themes: Theme[]
-}
+import type { UUID } from 'crypto'
+import type { Key } from '../interfaces/RestSchema'
 
 defineProps<{
   apiKey: Key

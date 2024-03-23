@@ -30,23 +30,19 @@ import { cn } from '@/lib/utils'
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
 import { ref, onMounted, watch, watchEffect } from 'vue'
 import axios from 'axios'
+import type { UUID } from 'crypto'
+import type { Theme } from '../interfaces/RestSchema'
 
-// TODO: use a shared interface for theme
 const props = defineProps<{
   isOpen: boolean
-  theme?: {
-    id: string
-    themeName: string
-    accessibleEndpoints: string[]
-    isDeprecated: boolean
-  }
+  theme?: Theme
 }>()
 
 const emit = defineEmits(['submit'])
 
 const endpoints = ref<string[]>([])
 
-const fetchData = async () => {
+const fetchEndpoints = async () => {
   try {
     //TODO: find a way to make the url more dynamic?
     const endpointsResponse = await axios.get(
@@ -121,7 +117,7 @@ watch(
   }
 )
 
-onMounted(fetchData)
+onMounted(fetchEndpoints)
 </script>
 
 <template>

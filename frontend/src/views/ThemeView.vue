@@ -5,20 +5,13 @@ import { Button } from '@/components/ui/button'
 
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-
-//TODO: move interface and fetching to a separate file and resuse them in the other components
-interface Theme {
-  id: string
-  themeName: string
-  accessibleEndpoints: string[]
-  isDeprecated: boolean
-}
+import type { Theme } from '@/components/interfaces/RestSchema'
 
 const themes = ref<Theme[]>([])
 const editingTheme = ref<Theme | undefined>(undefined)
 const isOpen = ref(false)
 
-const fetchData = async () => {
+const fetchThemes = async () => {
   try {
     //TODO: should the url be more dynamic?
     const themesResponse = await axios.get('http://localhost:8088/api/rest/get-themes-by-user')
@@ -35,10 +28,10 @@ const handleEdit = (theme: Theme) => {
 
 const handleSubmit = () => {
   isOpen.value = false
-  fetchData()
+  fetchThemes()
 }
 
-onMounted(fetchData)
+onMounted(fetchThemes)
 </script>
 
 <template>
@@ -54,11 +47,12 @@ onMounted(fetchData)
         v-for="theme in themes"
         :theme="theme"
         :actions="true"
-        @delete="fetchData"
+        @delete="fetchThemes"
         @edit="handleEdit"
         class="py-4"
         :key="theme.id"
       />
+      <div v-if="themes.length === 0" class="text-center mt-4">No themes to show</div>
     </div>
   </div>
 </template>
