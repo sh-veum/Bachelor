@@ -28,9 +28,9 @@ const router = createRouter({
       }
     },
     {
-      path: '/theme-edit',
-      name: 'theme-edit',
-      component: () => import('../views/ThemeEditView.vue'),
+      path: '/theme',
+      name: 'theme',
+      component: () => import('../views/ThemeView.vue'),
       beforeEnter: (to, from, next) => {
         const { isLoggedIn } = useAuth()
         if (!isLoggedIn.value) {

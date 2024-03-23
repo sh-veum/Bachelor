@@ -35,7 +35,7 @@ const handleLogout = async () => {
               <NavigationListItem v-if="isLoggedIn" href="/rest/create-key" title="REST API keys">
                 Create, edit and delete your REST accesskeys
               </NavigationListItem>
-              <NavigationListItem v-if="isLoggedIn" href="/theme-edit" title="Theme edit">
+              <NavigationListItem v-if="isLoggedIn" href="/theme" title="Theme edit">
                 Sort endpoints into themes for accesskeys
               </NavigationListItem>
             </ul>
