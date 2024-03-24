@@ -13,6 +13,7 @@ const { isLoggedIn, login, logout, isAdmin, loginErrors } = useAuth()
 const handleLogin = async () => {
   attemptedLogin.value = true
   await login(email.value, password.value)
+  // TODO: Redirect the user to a different page or give some type of feedback
 }
 
 const handleLogout = async () => {
@@ -36,18 +37,6 @@ const handleLogout = async () => {
       <form @submit.prevent="handleLogout" class="py-2 px-5">
         <Button type="submit" class="w-full">Logout</Button>
       </form>
-      <div v-if="isLoggedIn" class="px-5">
-        <p class="text-green-500 font-bold">Logged in</p>
-      </div>
-      <div v-else class="px-5">
-        <p class="text-red-500 font-bold">No user logged in</p>
-      </div>
-      <div v-if="isAdmin" class="px-5">
-        <p class="text-green-500 font-bold">Is admin</p>
-      </div>
-      <div v-else class="px-5">
-        <p class="text-red-500 font-bold">Is not admin</p>
-      </div>
       <div v-if="attemptedLogin" class="px-5">
         <ul v-if="Object.keys(loginErrors).length > 0">
           <li v-for="(errorMessages, index) in Object.values(loginErrors)" :key="index">

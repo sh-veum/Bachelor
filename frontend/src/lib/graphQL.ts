@@ -69,7 +69,7 @@ interface AvailableQueriesResponse {
 
 interface GraphQLKeysResponse {
   graphQLApiKeysByUser: {
-    id: number
+    id: UUID
     keyName: string
     expiresIn: number
     isEnabled: boolean

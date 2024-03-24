@@ -30,6 +30,7 @@ const webSocket = ref<WebSocket | null>(null)
 const receivedMessage = ref(null)
 
 // Convert the graphQLKeys prop to a reactive ref
+// TODO: maybe change to https://vuejs.org/guide/components/v-model
 const graphQLKeys = toRef(props, 'graphQLKeys')
 
 const toggleKeyEnabledStatus = async (id: UUID, isEnabled: boolean) => {

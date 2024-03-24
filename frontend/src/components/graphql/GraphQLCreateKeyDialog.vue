@@ -36,6 +36,7 @@ const emit = defineEmits(['submit'])
 const isKeyCreatedDialogOpen = ref(false)
 const createdKey = ref('')
 
+// TODO: run in onMounted or similar
 const fetchOptions = async () => {
   try {
     const [classTablesResponse, queriesResponse] = await Promise.all([

@@ -13,6 +13,7 @@ const { register, isRegistered, registrationErrors } = useAuth()
 const handleSubmit = async () => {
   attemptedRegister.value = true
   await register(email.value, password.value)
+  // TODO: Redirect the user to a different page or give some type of feedback
 }
 </script>
 
