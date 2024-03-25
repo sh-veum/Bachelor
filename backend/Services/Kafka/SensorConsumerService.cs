@@ -15,9 +15,15 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
     private readonly IConsumer<Ignore, string> _consumer;
     private readonly IAppWebSocketManager _webSocketManager;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IConfiguration _configuration;
     private readonly ConcurrentDictionary<string, SensorType> _activeTopics;
     private CancellationTokenSource _loopCancellationTokenSource = new();
     private CancellationTokenSource? _stoppingCancellationTokenSource;
+    private volatile bool _isTemporaryConsumerActive = false;
+    private ConcurrentQueue<(string Topic, string Message, long Offset)> _realTimeMessageQueue = new();
+    private ConcurrentDictionary<TopicPartition, long> _latestProcessedOffsets = new();
+
+
 
     public SensorConsumerService(IConfiguration configuration, ILogger<SensorConsumerService> logger, IAppWebSocketManager webSocketManager, IServiceScopeFactory scopeFactory)
     {
@@ -25,11 +31,12 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
         _webSocketManager = webSocketManager;
         _scopeFactory = scopeFactory;
         _activeTopics = new ConcurrentDictionary<string, SensorType>();
+        _configuration = configuration;
 
         var consumerConfig = new ConsumerConfig
         {
-            BootstrapServers = configuration["Kafka:BootstrapServers"],
-            GroupId = configuration["Kafka:GroupId"],
+            BootstrapServers = _configuration["Kafka:BootstrapServers"],
+            GroupId = _configuration["Kafka:GroupId"],
             AutoOffsetReset = AutoOffsetReset.Earliest
         };
         _consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build();
@@ -52,30 +59,49 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
             {
                 try
                 {
-                    var consumeResult = _consumer.Consume(_loopCancellationTokenSource.Token);
-
-                    if (consumeResult != null && !consumeResult.IsPartitionEOF)
+                    // Second try for when the topic is not available yet
+                    try
                     {
-                        if (consumeResult.Message.Value != null)
+                        var consumeResult = _consumer.Consume(_loopCancellationTokenSource.Token);
+
+                        if (consumeResult != null && !consumeResult.IsPartitionEOF)
                         {
-                            await HandleMessage(consumeResult.Message.Value, consumeResult.Topic);
+                            var currentOffset = consumeResult.TopicPartitionOffset.Offset.Value;
+                            var topicPartition = consumeResult.TopicPartition;
+                            var shouldProcessMessage = !_latestProcessedOffsets.TryGetValue(topicPartition, out var latestProcessedOffset) || currentOffset > latestProcessedOffset;
+
+                            if (shouldProcessMessage && !_isTemporaryConsumerActive)
+                            {
+                                if (_isTemporaryConsumerActive)
+                                {
+                                    // Enqueue the message along with its offset
+                                    _logger.LogInformation($"Enqueuing message for topic {consumeResult.Topic} with message {consumeResult.Message.Value} and offset {currentOffset}");
+                                    _realTimeMessageQueue.Enqueue((consumeResult.Topic, consumeResult.Message.Value, currentOffset));
+                                }
+                                else
+                                {
+                                    _logger.LogInformation($"Consume Loop Sending Topic: {consumeResult.Topic}, Message: {consumeResult.Message.Value}, Offset: {currentOffset}");
+                                    // Directly handle and send the message if not processing historical data
+                                    await HandleMessage(consumeResult.Message.Value, consumeResult.Topic);
+                                    await SendMessageToWebSocket(consumeResult.Topic, consumeResult.Message.Value, currentOffset);
+                                }
+                            }
                         }
-                        else
+
+                        // After historical data has been sent and _isTemporaryConsumerActive is false, process messages from the queue.
+                        while (!_isTemporaryConsumerActive && _realTimeMessageQueue.TryDequeue(out var queuedMessage))
                         {
-                            _logger.LogWarning("Consume result or message value is null.");
+                            _logger.LogInformation($"Dequeuing message for topic {queuedMessage.Topic} with message {queuedMessage.Message} and offset {queuedMessage.Offset}");
+                            await HandleMessage(queuedMessage.Message, queuedMessage.Topic); // Handle the dequeued message.
+                            await SendMessageToWebSocket(queuedMessage.Topic, queuedMessage.Message, queuedMessage.Offset); // Send the message to WebSocket.
                         }
-
-                        _logger.LogInformation($"Consumed message from topic {consumeResult.Topic}: Value: {consumeResult.Message.Value}");
-
-                        var webSocketMessage = new
-                        {
-                            topic = consumeResult.Topic,
-                            message = consumeResult.Message.Value
-                        };
-
-                        var serializedMessage = JsonSerializer.Serialize(webSocketMessage);
-                        await _webSocketManager.SendMessageAsync(serializedMessage);
-                        _logger.LogInformation($"WebSocket message sent: {serializedMessage}");
+                    }
+                    catch (ConsumeException ex) when (ex.Error.Reason.Contains("Unknown topic or partition"))
+                    {
+                        _logger.LogWarning($"Topic not available yet, waiting before retrying. Error: {ex.Message}");
+                        await Task.Delay(TimeSpan.FromSeconds(5)); // Wait for 5 seconds before retrying
+                        ResetLoopCancellationToken();
+                        continue;
                     }
                 }
                 catch (OperationCanceledException)
@@ -83,8 +109,9 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
                     if (!stoppingToken.IsCancellationRequested)
                     {
                         _logger.LogInformation("Reconfiguring consumer subscriptions, restarting consume loop...");
+                        // await Task.Delay(TimeSpan.FromSeconds(5)); // Wait for 5 seconds before retrying
                         ResetLoopCancellationToken();
-                        continue; // Continue in the loop after resetting the token
+                        continue; // Continue in the loop after resetting the token.
                     }
                     else
                     {
@@ -97,6 +124,8 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
                     _logger.LogError($"Error consuming Kafka message: {ex.Message}");
                 }
             }
+
+            _logger.LogInformation("Closing main consumer...");
             _consumer.Close();
         }, stoppingToken);
     }
@@ -105,34 +134,34 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
     {
         _logger.LogInformation($"Subscribing to topic: {newTopic}, sendHistoricalData: {sendHistoricalData}");
 
-        var isNewSubscription = _activeTopics.TryAdd(newTopic, sensorType);
-
-        if (isNewSubscription)
-        {
-            _consumer.Subscribe(_activeTopics.Keys);
-            _logger.LogInformation($"Subscribed to new topic: {newTopic}");
-        }
-
         if (sendHistoricalData)
         {
             _logger.LogInformation($"Sending historical data for topic: {newTopic}");
 
-            if (sensorType == SensorType.waterQuality)
-            {
-                Task.Run(() => SendHistoricalDataToClient(newTopic, KafkaConstants.WaterQualityLogTopic));
-            }
-            else if (sensorType == SensorType.boat)
-            {
-                Task.Run(() => SendHistoricalDataToClient(newTopic, KafkaConstants.BoatLogTopic));
-            }
-            else
-            {
-                _logger.LogWarning($"Unhandled sensor type: {sensorType} for topic {newTopic}.");
-            }
+            // if (sensorType == SensorType.waterQuality)
+            // {
+            //     Task.Run(() => SendHistoricalDataToClient(newTopic, KafkaConstants.WaterQualityLogTopic));
+            // }
+            // else if (sensorType == SensorType.boat)
+            // {
+            //     Task.Run(() => SendHistoricalDataToClient(newTopic, KafkaConstants.BoatLogTopic));
+            // }
+            // else
+            // {
+            //     _logger.LogWarning($"Unhandled sensor type: {sensorType} for topic {newTopic}.");
+            // }
+
+            Task.Run(() => SendHistoricalDataToClientUsingNewConsumer(newTopic));
         }
+
+        var isNewSubscription = _activeTopics.TryAdd(newTopic, sensorType);
 
         if (isNewSubscription)
         {
+            _logger.LogInformation($"activeTopics: {_activeTopics.Keys}");
+
+            _consumer.Subscribe(_activeTopics.Keys);
+            _logger.LogInformation($"Subscribed to new topic: {newTopic}");
             InterruptAndRestartConsumeLoop();
         }
     }
@@ -327,7 +356,8 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
 
         throw new ArgumentException($"Topic '{topic}' does not start with the expected prefix '{prefix}'.", nameof(topic));
     }
-    private async Task SendHistoricalDataToClient(string topic, string topicPrefix)
+
+    private async Task SendHistoricalDataFromDBToClient(string topic, string topicPrefix, long offset)
     {
         try
         {
@@ -338,7 +368,7 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
                 foreach (var log in historicalData)
                 {
                     string message = $"TimeStamp: {log.TimeStamp:o}, pH: {log.Ph}, Turbidity: {log.Turbidity} NTU, Temperature: {log.Temperature}C";
-                    await SendMessageAsync(topic, message);
+                    await SendMessageToWebSocket(topic, message, offset);
                 }
             }
             else if (topicPrefix == KafkaConstants.BoatLogTopic)
@@ -348,7 +378,7 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
                 foreach (var log in historicalData)
                 {
                     string message = $"TimeStamp: {log.TimeStamp:o}, Latitude: {log.Latitude}, Longitude: {log.Longitude}";
-                    await SendMessageAsync(topic, message);
+                    await SendMessageToWebSocket(topic, message, offset);
                 }
             }
         }
@@ -358,12 +388,73 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
         }
     }
 
-    private async Task SendMessageAsync(string topic, string message)
+    private async Task SendHistoricalDataToClientUsingNewConsumer(string topic)
+    {
+        _logger.LogInformation($"Making new consumer for topic: {topic}");
+        _isTemporaryConsumerActive = true;
+
+        var tempConsumerConfig = new ConsumerConfig
+        {
+            BootstrapServers = _configuration["Kafka:BootstrapServers"],
+            GroupId = Guid.NewGuid().ToString(), // Unique GroupId for each temporary consumer
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            EnablePartitionEof = true
+        };
+
+        using (var temporaryConsumer = new ConsumerBuilder<Ignore, string>(tempConsumerConfig).Build())
+        {
+            temporaryConsumer.Subscribe(topic);
+
+            try
+            {
+                var partitionOffsets = new Dictionary<TopicPartition, long>();
+
+                _logger.LogInformation($"Trying to consume historical data for topic: {topic}");
+                while (true)
+                {
+                    var consumeResult = temporaryConsumer.Consume(10000); // Adjust the timeout as needed
+                    if (consumeResult == null || consumeResult.IsPartitionEOF)
+                    {
+                        if (consumeResult != null)
+                        {
+                            partitionOffsets[consumeResult.TopicPartition] = consumeResult.Offset.Value;
+                        }
+                        break;
+                    }
+
+                    if (consumeResult.Message?.Value != null)
+                    {
+                        _logger.LogInformation($"Temp Topic: {topic}, Temp Message: {consumeResult.Message.Value}, Temp Offset: {consumeResult.TopicPartitionOffset.Offset.Value}");
+                        await SendMessageToWebSocket(topic, consumeResult.Message.Value, consumeResult.TopicPartitionOffset.Offset.Value);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Consume result message or message value is null.");
+                    }
+                }
+
+                // After consuming historical data, update the latest processed offsets for each partition
+                foreach (var po in partitionOffsets)
+                {
+                    _latestProcessedOffsets.AddOrUpdate(po.Key, po.Value, (key, oldValue) => Math.Max(oldValue, po.Value));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error while sending historical data for topic {topic}. Error: {ex.Message}");
+            }
+        }
+
+        _isTemporaryConsumerActive = false;
+    }
+
+    private async Task SendMessageToWebSocket(string topic, string message, long offset)
     {
         var webSocketMessage = new
         {
             topic,
-            message
+            message,
+            offset
         };
         var serializedMessage = JsonSerializer.Serialize(webSocketMessage);
         await _webSocketManager.SendMessageAsync(serializedMessage);

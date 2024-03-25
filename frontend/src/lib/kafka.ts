@@ -2,6 +2,7 @@ import axios from 'axios'
 
 export interface WaterQualityLog {
   id: number
+  offset: number
   timeStamp: string
   ph: number
   turbidity: number
@@ -10,6 +11,7 @@ export interface WaterQualityLog {
 
 export interface BoatLocationLog {
   id: number
+  offset: number
   timeStamp: string
   latitude: number
   longitude: number

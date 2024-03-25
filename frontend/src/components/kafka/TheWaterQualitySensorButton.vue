@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineEmits, defineProps, toRef, watch } from 'vue'
+import { ref, defineEmits, defineProps, toRef, watch, onMounted } from 'vue'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
 import { userId } from '@/lib/useAuth'
@@ -21,10 +21,12 @@ const props = defineProps({
   accessKey: String
 })
 
+const isLive = toRef(props, 'isLive')
 const selectedTopicType = toRef(props, 'selectedTopicType')
 const accessKey = toRef(props, 'accessKey')
 
 const checkSensorStatus = async () => {
+  console.log('Checking sensor status...')
   if (selectedTopicType.value === '') return
 
   try {
@@ -81,10 +83,13 @@ const emit = defineEmits(['water-logs-updated', 'boat-logs-updated', 'clear-logs
 
 const handleSwitchChange = (value: boolean) => {
   fetchAllData.value = value
-  console.log('Fetch all data:', fetchAllData.value)
 }
 
 watch(selectedTopicType, () => {
+  checkSensorStatus()
+})
+
+onMounted(() => {
   checkSensorStatus()
 })
 </script>
@@ -102,7 +107,7 @@ watch(selectedTopicType, () => {
       <Switch
         :checked="fetchAllData"
         @update:checked="handleSwitchChange"
-        :disabled="!props.isLive"
+        :disabled="!isLive"
         id="fetchAllData"
       />
       <Label for="fetchAllData" class="text-sm w-max">Fetch all data</Label>

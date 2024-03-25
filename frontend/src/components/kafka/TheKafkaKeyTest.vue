@@ -37,7 +37,7 @@ const accessKeySensorId = ref<string>('')
 const kafkaErrorMessage = ref<string | null>(null)
 const waterQualityLogs = ref<WaterQualityLog[]>([])
 const boatLocationLogs = ref<BoatLocationLog[]>([])
-const selectedSortOrder = ref('oldest')
+const selectedSortOrder = ref('live')
 const currentPage = ref(1)
 const itemsPerPage = 10
 const selectedTopic = ref('')
@@ -106,9 +106,9 @@ const startStopLiveFeed = (start = true) => {
 }
 
 const updateResponseData = (message: any) => {
-  const { topic, message: msg } = message
+  const { topic, message: msg, offset: o } = message
 
-  console.log(`Received message: ${msg}` + ' from topic: ' + topic)
+  //   console.log(`Received message: ${msg}` + ' from topic: ' + topic)
 
   if (topic.startsWith(`${selectedTopic.value}-`)) {
     if (selectedTopic.value === 'water-quality-updates') {
@@ -121,6 +121,7 @@ const updateResponseData = (message: any) => {
         const formattedTimeStamp = date.toISOString().replace(/T/, ' ').replace(/\..+/, '')
         const newLog: WaterQualityLog = {
           id: waterQualityLogs.value.length + 1,
+          offset: o,
           timeStamp: formattedTimeStamp,
           ph: parseFloat(ph),
           turbidity: parseFloat(turbidity),
@@ -136,6 +137,7 @@ const updateResponseData = (message: any) => {
         const formattedTimeStamp = date.toISOString().replace(/T/, ' ').replace(/\..+/, '')
         const newLog: BoatLocationLog = {
           id: boatLocationLogs.value.length + 1,
+          offset: o,
           timeStamp: formattedTimeStamp,
           latitude: parseFloat(latitude),
           longitude: parseFloat(longitude)
@@ -243,6 +245,9 @@ onBeforeUnmount(() => {
       <div class="flex justify-between items-center my-2">
         <div class="flex justify-center items-center gap-4">
           <TheWaterQualitySensorButton
+            v-if="
+              selectedTopic === 'water-quality-updates' || selectedTopic === 'boat-location-updates'
+            "
             @water-logs-updated="handleWaterQualityLogsUpdated"
             @boat-logs-updated="handleBoatLocationLogsUpdated"
             @clear-logs="clearLogs"
@@ -258,8 +263,22 @@ onBeforeUnmount(() => {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="oldest">Oldest Values (REST)</SelectItem>
-                <SelectItem value="newest">Newest Values (REST)</SelectItem>
+                <SelectItem
+                  v-if="
+                    selectedTopic === 'water-quality-updates' ||
+                    selectedTopic === 'boat-location-updates'
+                  "
+                  value="oldest"
+                  >Oldest Values (REST)</SelectItem
+                >
+                <SelectItem
+                  v-if="
+                    selectedTopic === 'water-quality-updates' ||
+                    selectedTopic === 'boat-location-updates'
+                  "
+                  value="newest"
+                  >Newest Values (REST)</SelectItem
+                >
                 <SelectItem value="live">Live Feed</SelectItem>
               </SelectGroup>
             </SelectContent>

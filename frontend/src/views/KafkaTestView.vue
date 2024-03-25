@@ -6,7 +6,9 @@ import { ref } from 'vue'
 import { Lock, RotateCcw } from 'lucide-vue-next'
 import { subscribeToAllTopics } from '@/lib/kafka'
 
-const accessKey = ref('')
+const accessKey = ref(
+  'l6qRuvJ6QTuP3O4SGB5R0pLeZvEXEsHXOcrDdXsB7QDhWkG9DPi16QJPmqNiKu1Fvmz8Gzc1asrIR+BoNuIPtQ=='
+)
 const isLocked = ref(false)
 
 const toggleLock = () => {
