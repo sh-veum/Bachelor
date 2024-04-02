@@ -166,10 +166,6 @@ onMounted(() => {
 
 <template>
   <Dialog v-model:open="copyIsOpen">
-    <!-- TODO: remove this dialog trigger (its only here for testing purposes) -->
-    <DialogTrigger as-child>
-      <Button variant="outline"> Test key copy </Button>
-    </DialogTrigger>
     <!-- Prevent user from closing dialog by clicking outside of it -->
     <DialogContent
       @interact-outside="
