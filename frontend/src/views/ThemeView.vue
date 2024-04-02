@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import type { Theme } from '@/components/interfaces/RestSchema'
+import type { UUID } from 'crypto'
 
 const themes = ref<Theme[]>([])
 const editingTheme = ref<Theme | undefined>(undefined)
@@ -31,6 +32,10 @@ const handleSubmit = () => {
   fetchThemes()
 }
 
+const handleDelete = (themeId: UUID) => {
+  themes.value = themes.value.filter((theme) => theme.id !== themeId)
+}
+
 onMounted(fetchThemes)
 </script>
 
@@ -47,7 +52,7 @@ onMounted(fetchThemes)
         v-for="theme in themes"
         :theme="theme"
         :actions="true"
-        @delete="fetchThemes"
+        @delete="handleDelete"
         @edit="handleEdit"
         class="py-4"
         :key="theme.id"

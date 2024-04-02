@@ -17,11 +17,14 @@ const props = defineProps<{
   actions: boolean
 }>()
 
-const emit = defineEmits(['edit', 'delete'])
+const emit = defineEmits<{
+  delete: [themeId: UUID]
+  edit: [theme: Theme]
+}>()
 
 const isOpen = ref(true)
 
-const deleteTheme = async (themeId: string) => {
+const deleteTheme = async (themeId: UUID) => {
   try {
     await axios.delete(`http://localhost:8088/api/rest/delete-theme?id=${themeId}`, {})
   } catch (error) {
@@ -30,8 +33,7 @@ const deleteTheme = async (themeId: string) => {
 }
 
 const handleDelete = () => {
-  // TODO: emit the deleted theme and remove it from the list
-  deleteTheme(props.theme.id).then(() => emit('delete'))
+  deleteTheme(props.theme.id).then(() => emit('delete', props.theme.id))
 }
 
 const handleEdit = () => {
