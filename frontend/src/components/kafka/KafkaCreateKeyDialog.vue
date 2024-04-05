@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogClose,
@@ -9,13 +11,10 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
-import { computed, ref } from 'vue'
 import { createKafkaKey, getAvailableKafkatopics } from '@/lib/kafka'
-import { Copy, Check } from 'lucide-vue-next'
-import { Label } from '@/components/ui/label'
+import { computed, ref } from 'vue'
+import CreatedKeyDialog from '../CreatedKeyDialog.vue'
 
 const keyName = ref('')
 const availableTopics = ref<string[]>([])
@@ -25,7 +24,6 @@ const fieldsErrorMessage = ref('')
 
 const isKeyCreatedDialogOpen = ref(false)
 const createdKey = ref('')
-const copySuccess = ref(false)
 
 const hasSelectedTopics = computed(() => selectedTopics.value.size > 0)
 
@@ -70,18 +68,6 @@ const createKey = async () => {
     console.error('Error creating Kafka key:', error)
   }
 }
-
-const copyLink = () => {
-  navigator.clipboard.writeText(createdKey.value)
-  copySuccess.value = true
-  setTimeout(() => {
-    copySuccess.value = false
-  }, 1000)
-}
-
-const closeKeyCreatedDialog = () => {
-  isKeyCreatedDialogOpen.value = false
-}
 </script>
 
 <template>
@@ -125,32 +111,5 @@ const closeKeyCreatedDialog = () => {
       </DialogFooter>
     </DialogContent>
   </Dialog>
-  <Dialog v-model:open="isKeyCreatedDialogOpen">
-    <DialogContent class="p-4">
-      <DialogHeader>
-        <DialogTitle class="text-center">Key created successfully!</DialogTitle>
-        <DialogDescription class="text-red-500 font-bold italic text-center">
-          Store the key, you won't be able to see it again when you close the dialog
-        </DialogDescription>
-      </DialogHeader>
-      <div class="flex items-center space-x-2">
-        <div class="grid flex-1 gap-2">
-          <Label for="link" class="sr-only"> Link </Label>
-          <Input id="link" :model-value="createdKey" readonly />
-        </div>
-        <Button type="submit" size="sm" class="px-3">
-          <span class="sr-only">Copy</span>
-          <div v-if="copySuccess">
-            <Check class="w-4 h-4 text-green-500" />
-          </div>
-          <div v-else>
-            <Copy @click="copyLink" class="w-4 h-4" />
-          </div>
-        </Button>
-      </div>
-      <DialogFooter class="mt-4">
-        <Button @click="closeKeyCreatedDialog">Close</Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+  <CreatedKeyDialog v-model:is-open="isKeyCreatedDialogOpen" :encrypted-key="createdKey" />
 </template>

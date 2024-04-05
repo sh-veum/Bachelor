@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import GraphQLTablesSkeleton from '@/components/graphql/GraphQLTablesSkeleton.vue'
+import type { ClassTable, Query } from '@/components/interfaces/GraphQLSchema'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogClose,
@@ -9,15 +13,12 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
-import GraphQLTablesSkeleton from '@/components/graphql/GraphQLTablesSkeleton.vue'
-import { ref, computed } from 'vue'
+import { fetchAvailableClassTables, fetchAvailableQueries } from '@/lib/graphQL'
 import { useMutation } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
-import { fetchAvailableClassTables, fetchAvailableQueries } from '@/lib/graphQL'
-import type { ClassTable, Query } from '@/components/interfaces/GraphQLSchema'
+import { computed, ref } from 'vue'
+import CreatedKeyDialog from '../CreatedKeyDialog.vue'
 
 const keyName = ref('')
 const availableClassTables = ref<ClassTable[]>([])
@@ -111,10 +112,6 @@ const createKey = async () => {
     console.error('Error creating GraphQL access key:', e)
   }
 }
-
-const closeKeyCreatedDialog = () => {
-  isKeyCreatedDialogOpen.value = false
-}
 </script>
 
 <template>
@@ -169,23 +166,5 @@ const closeKeyCreatedDialog = () => {
       </DialogFooter>
     </DialogContent>
   </Dialog>
-  <Dialog v-model:open="isKeyCreatedDialogOpen">
-    <DialogContent class="p-4">
-      <DialogHeader>
-        <DialogTitle>Key Created Successfully</DialogTitle>
-      </DialogHeader>
-      <div class="overflow-auto">
-        <p class="mt-4">Your encrypted key is:</p>
-        <br />
-        <p class="font-bold break-words">{{ createdKey }}</p>
-        <br />
-        <p class="text-red-500 font-bold italic break-words">
-          Store the key, you won't be able to see it again when you close the dialog
-        </p>
-      </div>
-      <DialogFooter class="mt-4">
-        <Button @click="closeKeyCreatedDialog">Close</Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+  <CreatedKeyDialog v-model:is-open="isKeyCreatedDialogOpen" :encrypted-key="createdKey" />
 </template>

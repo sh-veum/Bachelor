@@ -45,13 +45,13 @@ import ThemeCollapsible from '@/components/rest/ThemeCollapsible.vue'
 import { ref, onMounted } from 'vue'
 import Label from '@/components/ui/label/Label.vue'
 import type { Key, Theme } from '@/components/interfaces/RestSchema'
+import CreatedKeyDialog from '@/components/CreatedKeyDialog.vue'
 
 const keys = ref<Key[]>([])
 const themes = ref<Theme[]>([])
 const createIsOpen = ref(false)
 const copyIsOpen = ref(false)
-const encryptedKey = ref('something')
-const copySuccess = ref(false)
+const encryptedKey = ref('')
 
 const formSchema = toTypedSchema(
   z.object({
@@ -71,6 +71,7 @@ const { handleSubmit, setValues, values } = useForm({
 const onSubmit = handleSubmit((values) => {
   const selectedThemes = themes.value.filter((theme) => values.themes.includes(theme.id))
   createAccessKey(values.name, selectedThemes).then(() => {
+    // TODO: should the endpoint return the created key as well as the encrypted key?
     fetchKeys()
   })
   createIsOpen.value = false
@@ -151,58 +152,13 @@ const fetchData = async () => {
   await fetchThemes()
 }
 
-const copyLink = () => {
-  navigator.clipboard.writeText(encryptedKey.value)
-  copySuccess.value = true
-  setTimeout(() => {
-    copySuccess.value = false
-  }, 1000)
-}
-
 onMounted(() => {
   fetchData()
 })
 </script>
 
 <template>
-  <Dialog v-model:open="copyIsOpen">
-    <!-- Prevent user from closing dialog by clicking outside of it -->
-    <DialogContent
-      @interact-outside="
-        (event) => {
-          return event.preventDefault()
-        }
-      "
-      class="sm:max-w-md"
-    >
-      <DialogHeader>
-        <DialogTitle class="text-center">Key created successfully!</DialogTitle>
-        <DialogDescription class="text-red-500 font-bold italic text-center">
-          Store the key, you won't be able to see it again when you close the dialog
-        </DialogDescription>
-      </DialogHeader>
-      <div class="flex items-center space-x-2">
-        <div class="grid flex-1 gap-2">
-          <Label for="link" class="sr-only"> Link </Label>
-          <Input id="link" :model-value="encryptedKey" readonly />
-        </div>
-        <Button type="submit" size="sm" class="px-3">
-          <span class="sr-only">Copy</span>
-          <div v-if="copySuccess">
-            <Check class="w-4 h-4 text-green-500" />
-          </div>
-          <div v-else>
-            <Copy @click="copyLink" class="w-4 h-4" />
-          </div>
-        </Button>
-      </div>
-      <DialogFooter class="sm:justify-start">
-        <DialogClose as-child>
-          <Button type="button" variant="secondary"> Close </Button>
-        </DialogClose>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+  <CreatedKeyDialog v-model:is-open="copyIsOpen" :encrypted-key="encryptedKey" />
 
   <div class="flex justify-between">
     <h1 class="text-3xl font-semibold mb-8 px-2">Your API keys</h1>
