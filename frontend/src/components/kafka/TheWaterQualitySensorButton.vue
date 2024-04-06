@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineEmits, defineProps, toRef, watch } from 'vue'
+import { ref, defineEmits, defineProps, toRef, watch, onMounted } from 'vue'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
 import { userId } from '@/lib/useAuth'
@@ -21,15 +21,18 @@ const props = defineProps({
   accessKey: String
 })
 
+const isLive = toRef(props, 'isLive')
 const selectedTopicType = toRef(props, 'selectedTopicType')
 const accessKey = toRef(props, 'accessKey')
 
 const checkSensorStatus = async () => {
+  console.log('Checking sensor status...')
   if (selectedTopicType.value === '') return
 
   try {
-    const response = await axios.get(
-      `http://localhost:8088/api/sensor/${selectedTopicType.value}/activeSensors?id=${accessKey.value}`
+    const response = await axios.post(
+      `http://localhost:8088/api/sensor/${selectedTopicType.value}/activeSensors`,
+      { encryptedKey: accessKey.value }
     )
     const sensors = response.data
     // Check if any of the sensors' IDs match the userId
@@ -39,6 +42,10 @@ const checkSensorStatus = async () => {
   } catch (error) {
     console.error('Failed to fetch sensor status:', error)
   } finally {
+    console.log(
+      'Sensor status checked',
+      sensorRunning.value ? 'Sensor is running' : 'Sensor is not running'
+    )
     isLoading.value = false // Loading is complete
   }
 }
@@ -53,18 +60,18 @@ const toggleSensor = async () => {
 
   // Determine the appropriate URL and payload based on the sensor's current state
   const url = sensorRunning.value
-    ? `http://localhost:8088/api/sensor/${selectedTopicType.value}/stopSensor?id=${accessKey.value}`
-    : `http://localhost:8088/api/sensor/${selectedTopicType.value}/startSensor?id=${accessKey.value}`
+    ? `http://localhost:8088/api/sensor/${selectedTopicType.value}/stopSensor`
+    : `http://localhost:8088/api/sensor/${selectedTopicType.value}/startSensor?SendHistoricalData=${fetchAllData.value}`
 
   // When starting the sensor, include the SendHistoricalData flag in the request body
   if (!sensorRunning.value) {
-    data = {
-      SendHistoricalData: fetchAllData.value
-    }
-
     if (fetchAllData.value) {
       emit('clear-logs')
     }
+  }
+
+  data = {
+    encryptedKey: accessKey.value
   }
 
   try {
@@ -81,10 +88,13 @@ const emit = defineEmits(['water-logs-updated', 'boat-logs-updated', 'clear-logs
 
 const handleSwitchChange = (value: boolean) => {
   fetchAllData.value = value
-  console.log('Fetch all data:', fetchAllData.value)
 }
 
 watch(selectedTopicType, () => {
+  checkSensorStatus()
+})
+
+onMounted(() => {
   checkSensorStatus()
 })
 </script>
@@ -102,7 +112,7 @@ watch(selectedTopicType, () => {
       <Switch
         :checked="fetchAllData"
         @update:checked="handleSwitchChange"
-        :disabled="!props.isLive"
+        :disabled="!isLive"
         id="fetchAllData"
       />
       <Label for="fetchAllData" class="text-sm w-max">Fetch all data</Label>

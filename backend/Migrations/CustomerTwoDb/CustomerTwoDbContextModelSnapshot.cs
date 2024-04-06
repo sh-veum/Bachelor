@@ -169,6 +169,9 @@ namespace NetBackend.Migrations.CustomerTwoDb
                     b.Property<double>("Longitude")
                         .HasColumnType("double precision");
 
+                    b.Property<long>("Offset")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTimeOffset>("TimeStamp")
                         .HasColumnType("timestamp with time zone");
 
@@ -1956,6 +1959,9 @@ namespace NetBackend.Migrations.CustomerTwoDb
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("Offset")
+                        .HasColumnType("bigint");
 
                     b.Property<double>("Ph")
                         .HasColumnType("double precision");

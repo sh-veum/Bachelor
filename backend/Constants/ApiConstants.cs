@@ -7,23 +7,27 @@ public static class ApiConstants
 {
     public static readonly List<RestApiEndpointDto> DefaultApiEndpoints =
     [
-        new() {
+        new()
+        {
             Path = "/api/aquaculturelist/fishhealth/licenseelist",
             Method = "POST",
             ExpectedBodyType = typeof(OrganizationDto)
         },
-        new() {
+        new()
+        {
             Path = "/api/aquaculturelist/fishhealth/species",
             Method = "POST",
             ExpectedBodyType = typeof(SpeciesDto)
         },
         // Placeholder to show more themes:
-        new() {
+        new()
+        {
             Path = "/api/rest/accesskey-themes",
             Method = "POST",
             ExpectedBodyType = typeof(ThemeDto)
         },
-        new() {
+        new()
+        {
             Path = "/api/rest/accesskey-rest-endpoints",
             Method = "POST",
             ExpectedBodyType = typeof(RestApiEndpointSchema)

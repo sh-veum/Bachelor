@@ -23,7 +23,7 @@ const waterQualityLogs = toRef(props, 'paginatedWaterQualityLogs')
     <TableCaption>Log list</TableCaption>
     <TableHeader>
       <TableRow>
-        <TableHead class="w-[100px]">Id</TableHead>
+        <TableHead class="w-[50px]">Offset</TableHead>
         <TableHead class="w-[200px]">TimeStamp</TableHead>
         <TableHead class="w-[200px]">pH value</TableHead>
         <TableHead class="w-[200px]">Turbidity (NTU)</TableHead>
@@ -31,8 +31,8 @@ const waterQualityLogs = toRef(props, 'paginatedWaterQualityLogs')
       </TableRow>
     </TableHeader>
     <TableBody>
-      <TableRow v-for="logs in waterQualityLogs" :key="logs.id">
-        <TableCell>{{ logs.id }}</TableCell>
+      <TableRow v-for="logs in waterQualityLogs" :key="logs.offset">
+        <TableCell>{{ logs.offset }}</TableCell>
         <TableCell>{{ logs.timeStamp }}</TableCell>
         <TableCell>{{ logs.ph }}</TableCell>
         <TableCell>{{ logs.turbidity }}</TableCell>

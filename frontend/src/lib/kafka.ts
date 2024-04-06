@@ -2,6 +2,7 @@ import axios from 'axios'
 
 export interface WaterQualityLog {
   id: number
+  offset: number
   timeStamp: string
   ph: number
   turbidity: number
@@ -9,13 +10,12 @@ export interface WaterQualityLog {
 }
 
 export interface BoatLocationLog {
-  id: number
+  offset: number
   timeStamp: string
   latitude: number
   longitude: number
 }
 export interface KafkaKey {
-  id: string
   keyName: string
   createdBy: string
   expiresIn: number
@@ -117,7 +117,7 @@ export const subscribeToAllTopics = async (accessKey: string): Promise<void> => 
       const response = await axios.patch('http://localhost:8088/api/kafka/subscribe-to-topics', {
         encryptedKey: accessKey
       })
-      console.log(response.data.message)
+      console.log('Message: ' + response.data.message)
     } catch (error) {
       console.error('Failed to subscribe to all topics:', error)
     }
