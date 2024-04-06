@@ -19,19 +19,15 @@ import { Button } from '@/components/ui/button'
 import type { GraphQLKey } from '../interfaces/GraphQLSchema'
 import { toggleApiKey, deleteGraphQLApiKey } from '@/lib/graphQL'
 import type { UUID } from 'crypto'
-import { defineProps, toRef } from 'vue'
-
-const props = defineProps<{
-  graphQLKeys: GraphQLKey[]
-}>()
 
 // Initialize a ref for the WebSocket
 const webSocket = ref<WebSocket | null>(null)
 const receivedMessage = ref(null)
 
-// Convert the graphQLKeys prop to a reactive ref
-// TODO: maybe change to https://vuejs.org/guide/components/v-model
-const graphQLKeys = toRef(props, 'graphQLKeys')
+const graphQLKeys = defineModel('graphQLKeys', {
+  type: Array as () => GraphQLKey[],
+  default: []
+})
 
 const toggleKeyEnabledStatus = async (id: UUID, isEnabled: boolean) => {
   try {
