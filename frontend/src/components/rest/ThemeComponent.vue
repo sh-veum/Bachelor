@@ -60,15 +60,6 @@ const handleDeprecate = async (theme: Theme) => {
         <span v-if="theme.isDeprecated" class="text-red-500">(deprecated)</span>
       </h4>
       <div v-if="actions">
-        <!-- TODO: not needed, as i think it looks better when all are opened anyway -->
-        <!-- <CollapsibleTrigger as-child>
-          <Button variant="ghost" size="sm" class="w-9 p-0">
-            <ChevronsDown v-if="isOpen == false" class="h-4 w-4" />
-            <ChevronsUp v-if="isOpen == true" class="h-4 w-4" />
-            <span class="sr-only">Toggle</span>
-          </Button>
-        </CollapsibleTrigger> -->
-
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger>
