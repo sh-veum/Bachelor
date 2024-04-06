@@ -121,7 +121,6 @@ const updateResponseData = (message: any) => {
         const date = new Date(timeStamp)
         const formattedTimeStamp = date.toISOString().replace(/T/, ' ').replace(/\..+/, '')
         const newLog: WaterQualityLog = {
-          id: waterQualityLogs.value.length + 1,
           offset: o,
           timeStamp: formattedTimeStamp,
           ph: parseFloat(ph),

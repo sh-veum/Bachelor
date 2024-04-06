@@ -1,7 +1,6 @@
 import axios from 'axios'
 
 export interface WaterQualityLog {
-  id: number
   offset: number
   timeStamp: string
   ph: number

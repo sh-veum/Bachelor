@@ -12,8 +12,10 @@ using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Services.Interfaces;
 using NetBackend.Services.Interfaces.Keys;
+using NetBackend.Services.Interfaces.MessageHandler;
 using NetBackend.Services.Kafka;
 using NetBackend.Services.Keys;
+using NetBackend.Services.MessageHandlers;
 using NetBackend.Services.WebSocket;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -99,6 +101,10 @@ builder.Services.AddScoped<ISensorService, SensorService>();
 builder.Services.AddSingleton<ICryptoService, CryptoService>();
 builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
 builder.Services.AddSingleton<IAppWebSocketManager, AppWebSocketManager>();
+builder.Services.AddScoped<BoatLocationMessageHandler>();
+builder.Services.AddScoped<WaterQualityMessageHandler>();
+builder.Services.AddSingleton<IMessageHandlerFactory, MessageHandlerFactory>();
+
 
 builder.Services.AddSingleton<SensorConsumerService>();
 builder.Services.AddSingleton<ISensorConsumerService>(sp => sp.GetRequiredService<SensorConsumerService>());

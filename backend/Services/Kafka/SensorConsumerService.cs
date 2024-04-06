@@ -6,6 +6,9 @@ using NetBackend.Constants;
 using NetBackend.Models;
 using NetBackend.Models.Enums;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Interfaces.MessageHandler;
+using NetBackend.Services.MessageHandlers;
+using NetBackend.Tools;
 
 namespace NetBackend.Services.Kafka;
 
@@ -50,6 +53,11 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
     {
         Task.Run(async () =>
         {
+            if (_consumer.Subscription.Count == 0)
+            {
+                _consumer.Subscribe(_activeTopics.Keys);
+            }
+
             while (!stoppingToken.IsCancellationRequested && !_loopCancellationTokenSource.Token.IsCancellationRequested)
             {
                 try
@@ -99,7 +107,7 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
         }, stoppingToken);
     }
 
-    public void SubscribeToTopic(string newTopic, SensorType sensorType, bool sendHistoricalData = false)
+    public async Task SubscribeToTopicAsync(string newTopic, SensorType sensorType, bool sendHistoricalData = false)
     {
         _logger.LogInformation($"Subscribing to topic: {newTopic}, sendHistoricalData: {sendHistoricalData}");
 
@@ -116,13 +124,10 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
 
         if (sendHistoricalData)
         {
-            Task.Run(() => ConsumeHistoricalData(newTopic));
+            await ConsumeHistoricalData(newTopic);
         }
 
-        if (isNewSubscription)
-        {
-            InterruptAndRestartConsumeLoop();
-        }
+        InterruptAndRestartConsumeLoop();
     }
 
     // TODO: Send to a separate WebSocket endpoint for historical data
@@ -172,7 +177,8 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
             await ProcessPartitionBuffer(kvp.Value, kvp.Key);
         }
 
-        _consumer.Unassign();
+        // _consumer.Unassign();
+        _consumer.Unsubscribe();
         _consumer.Subscribe(_activeTopics.Keys);
     }
 
@@ -194,34 +200,25 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
     private void HandleMessage(string message, string topic, long currentOffset)
     {
         Task.Run(async () =>
-       {
-           try
-           {
-               if (!_activeTopics.TryGetValue(topic, out var sensorType))
-               {
-                   _logger.LogWarning($"No sensor type found for topic {topic}. Unable to process message.");
-                   return;
-               }
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var factory = scope.ServiceProvider.GetRequiredService<IMessageHandlerFactory>();
 
-               switch (sensorType)
-               {
-                   case SensorType.waterQuality:
-                       await HandleWaterQualityMessage(message, topic, currentOffset);
-                       break;
-                   case SensorType.boat:
-                       await HandleBoatMessage(message, topic, currentOffset);
-                       break;
-                   default:
-                       _logger.LogWarning($"Unhandled sensor type: {sensorType} for topic {topic}.");
-                       break;
-               }
-           }
-           catch (Exception ex)
-           {
-               _logger.LogError($"Failed to store message in database. Error: {ex.Message}");
-           }
-       });
+                if (_activeTopics.TryGetValue(topic, out var sensorType))
+                {
+                    var handler = factory.GetHandler(sensorType);
+                    await handler.HandleMessageAsync(message, topic, currentOffset);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to store message in database. Error: {ex.Message}");
+            }
+        });
     }
+
 
     private void InterruptAndRestartConsumeLoop()
     {
@@ -243,174 +240,6 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
         _loopCancellationTokenSource = new CancellationTokenSource();
     }
 
-    private async Task HandleWaterQualityMessage(string message, string topic, long messageOffset)
-    {
-        try
-        {
-            _logger.LogInformation($"Handling message from topic {topic}: {message}");
-
-            var timestampStr = ExtractValue(message, "TimeStamp:", ",");
-            var phStr = ExtractValue(message, "pH:", ",");
-            var turbidityStr = ExtractValue(message, "Turbidity:", "NTU");
-            var temperatureStr = ExtractValue(message, "Temperature:", "C");
-
-            // _logger.LogInformation($"Extracted values BEFORE tryParse: Timestamp: {timestampStr}, pH: {phStr}, Turbidity: {turbidityStr}, Temperature: {temperatureStr}");
-
-            if (!DateTimeOffset.TryParse(timestampStr, out var timestamp))
-            {
-                _logger.LogError($"Failed to parse timestamp: {timestampStr}");
-                return;
-            }
-
-            if (!double.TryParse(phStr, out var ph))
-            {
-                _logger.LogError($"Failed to parse pH value: '{phStr}'");
-                return;
-            }
-
-            if (!double.TryParse(turbidityStr, out var turbidity))
-            {
-                _logger.LogError($"Failed to parse turbidity value: '{turbidityStr}'");
-                return;
-            }
-
-            if (!double.TryParse(temperatureStr, out var temperature))
-            {
-                _logger.LogError($"Failed to parse temperature value: '{temperatureStr}'");
-                return;
-            }
-
-            // _logger.LogInformation($"Extracted values AFTER tryParse: Timestamp: {timestamp}, pH: {ph}, Turbidity: {turbidity}, Temperature: {temperature}");
-
-            DateTime timeStampUtc = timestamp.UtcDateTime;
-
-            _logger.LogInformation($"Parsed timestamp: {timeStampUtc}");
-
-            var logEntry = new WaterQualityLog
-            {
-                Offset = messageOffset,
-                TimeStamp = timeStampUtc,
-                Ph = ph,
-                Turbidity = turbidity,
-                Temperature = temperature
-            };
-
-            // Now use timestamp which is a DateTimeOffset
-            var userId = ExtractUserIdFromTopic(topic, KafkaConstants.WaterQualityLogTopic);
-            _logger.LogInformation($"SensorId: {userId}");
-
-            using (var scope = _scopeFactory.CreateScope())
-            {
-                var dbContextService = scope.ServiceProvider.GetRequiredService<IDbContextService>();
-                var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-                var (user, error) = await userService.GetUserByIdAsync(userId);
-
-                var dbContext = await dbContextService.GetUserDatabaseContext(user);
-
-                // Check if the offset allows for storing the message
-                var mostRecentLog = await dbContext.Set<WaterQualityLog>().OrderByDescending(log => log.Offset).FirstOrDefaultAsync();
-
-                if (mostRecentLog == null || mostRecentLog.Offset < messageOffset)
-                {
-                    dbContext.Set<WaterQualityLog>().Add(logEntry);
-                    await dbContext.SaveChangesAsync();
-                    _logger.LogInformation($"Stored water quality log with id: {logEntry.Id} and offset: {messageOffset}");
-                }
-                else
-                {
-                    _logger.LogInformation($"Skipping storage for water quality log due to offset {messageOffset} being less than the most recent log's offset {mostRecentLog.Offset}");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Failed to handle message from topic {topic}. Error: {ex.Message}");
-        }
-    }
-
-    private async Task HandleBoatMessage(string message, string topic, long messageOffset)
-    {
-        try
-        {
-            _logger.LogInformation($"Handling message from topic {topic}: {message}");
-
-            var timestampStr = ExtractValue(message, "TimeStamp:", ",");
-            var latitudeStr = ExtractValue(message, "Latitude:", ",");
-            var longitudeStr = ExtractValue(message, "Longitude:", "");
-
-            if (!DateTimeOffset.TryParse(timestampStr, out var timestamp))
-            {
-                _logger.LogError($"Failed to parse timestamp: {timestampStr}");
-                return;
-            }
-
-            if (!double.TryParse(latitudeStr, out var latitude))
-            {
-                _logger.LogError($"Failed to parse latitude value: '{latitudeStr}'");
-                return;
-            }
-
-            if (!double.TryParse(longitudeStr, out var longitude))
-            {
-                _logger.LogError($"Failed to parse longitude value: '{longitudeStr}'");
-                return;
-            }
-
-            DateTime timeStampUtc = timestamp.UtcDateTime;
-
-            _logger.LogInformation($"Parsed timestamp: {timeStampUtc}");
-
-            var logEntry = new BoatLocationLog
-            {
-                Offset = messageOffset,
-                TimeStamp = timeStampUtc,
-                Latitude = latitude,
-                Longitude = longitude
-            };
-
-            // Now use timestamp which is a DateTimeOffset
-            var userId = ExtractUserIdFromTopic(topic, KafkaConstants.BoatLogTopic);
-            _logger.LogInformation($"SensorId: {userId}");
-
-            using (var scope = _scopeFactory.CreateScope())
-            {
-                var dbContextService = scope.ServiceProvider.GetRequiredService<IDbContextService>();
-                var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-                var (user, error) = await userService.GetUserByIdAsync(userId);
-
-                var dbContext = await dbContextService.GetUserDatabaseContext(user);
-
-                // Check if the offset allows for storing the message
-                var mostRecentLog = await dbContext.Set<BoatLocationLog>().OrderByDescending(log => log.Offset).FirstOrDefaultAsync();
-                if (mostRecentLog == null || mostRecentLog.Offset < messageOffset)
-                {
-                    dbContext.Set<BoatLocationLog>().Add(logEntry);
-                    await dbContext.SaveChangesAsync();
-                    _logger.LogInformation($"Stored boat location log with id: {logEntry.Id}");
-                }
-                else
-                {
-                    _logger.LogInformation($"Skipping storage for boat location log due to offset {messageOffset} being less than the most recent log's offset {mostRecentLog.Offset}");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Failed to handle message from topic {topic}. Error: {ex.Message}");
-        }
-    }
-
-    private static string ExtractUserIdFromTopic(string topic, string topicPrefix)
-    {
-        string prefix = $"{topicPrefix}-";
-        if (topic.StartsWith(prefix))
-        {
-            return topic[prefix.Length..];
-        }
-
-        throw new ArgumentException($"Topic '{topic}' does not start with the expected prefix '{prefix}'.", nameof(topic));
-    }
-
     private async Task SendMessageToWebSocket(string topic, string message, long offset)
     {
         var webSocketMessage = new
@@ -422,25 +251,4 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
         var serializedMessage = JsonSerializer.Serialize(webSocketMessage);
         await _webSocketManager.SendMessageAsync(serializedMessage);
     }
-
-    private static string ExtractValue(string message, string label, string endDelimiter)
-    {
-        int startIndex = message.IndexOf(label) + label.Length;
-        if (startIndex < label.Length) return string.Empty; // Label not found
-
-        int endIndex = endDelimiter != "" ? message.IndexOf(endDelimiter, startIndex) : -1;
-        if (endIndex == -1) endIndex = message.Length;
-
-        string value = message.Substring(startIndex, endIndex - startIndex).Trim();
-
-        // Special handling for timestamp to ensure full ISO8601 format is preserved
-        if (label.StartsWith("TimeStamp"))
-        {
-            return value;
-        }
-
-        // Adjusting logic to safely handle numeric values including negatives
-        return new string(value.Where(c => char.IsDigit(c) || c == '.' || c == '-').ToArray()).Trim();
-    }
-
 }

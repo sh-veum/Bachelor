@@ -35,14 +35,14 @@ public class SensorService : ISensorService
                 newTopic = $"{KafkaConstants.WaterQualityLogTopic}-{sensorId}";
 
                 _logger.LogInformation($"Subscribing to topic: {newTopic}, sendHistoricalData: {sendHistoricalData}");
-                _sensorConsumerService.SubscribeToTopic(newTopic, SensorType.waterQuality, sendHistoricalData);
+                await _sensorConsumerService.SubscribeToTopicAsync(newTopic, SensorType.waterQuality, sendHistoricalData);
             }
             else if (sensorType == SensorType.boat)
             {
                 newTopic = $"{KafkaConstants.BoatLogTopic}-{sensorId}";
 
                 _logger.LogInformation($"Subscribing to topic: {newTopic}, sendHistoricalData: {sendHistoricalData}");
-                _sensorConsumerService.SubscribeToTopic(newTopic, SensorType.boat, sendHistoricalData);
+                await _sensorConsumerService.SubscribeToTopicAsync(newTopic, SensorType.boat, sendHistoricalData);
             }
 
             return (true, responseMessage);
