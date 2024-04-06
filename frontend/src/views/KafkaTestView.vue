@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button'
 import { ref } from 'vue'
 import { Lock, RotateCcw } from 'lucide-vue-next'
 import { subscribeToAllTopics } from '@/lib/kafka'
+import WebSocketService from '@/lib/WebSocketService'
 
 const accessKey = ref(
-  'l6qRuvJ6QTuP3O4SGB5R0pLeZvEXEsHXOcrDdXsB7QDhWkG9DPi16QJPmqNiKu1Fvmz8Gzc1asrIR+BoNuIPtQ=='
+  'nGni8WYnlCj9+95SAZwCdQ+er71VVBQFq7vnaHzwtgmH1kOcgiRFB091QKVPjjKBCmhLQsAh3j9uZpWs5xhBXQ=='
 )
 const isLocked = ref(false)
 
@@ -15,11 +16,10 @@ const toggleLock = () => {
   isLocked.value = !isLocked.value
   if (isLocked.value) {
     subscribeToAllTopics(accessKey.value)
+  } else {
+    WebSocketService.disconnect()
   }
 }
-
-const emits = defineEmits(['kafka-check-accesskey'])
-emits('kafka-check-accesskey', accessKey.value)
 </script>
 
 <template>
@@ -36,6 +36,6 @@ emits('kafka-check-accesskey', accessKey.value)
       </Button>
       <p class="italic text-sm text-zinc-500">(lock in access key)</p>
     </div>
-    <TheKafkaKeyTest v-if="isLocked" class="mt-2" :accessKey="accessKey" :isLocked="isLocked" />
+    <TheKafkaKeyTest v-if="isLocked" class="mt-2" :accessKey="accessKey" />
   </div>
 </template>

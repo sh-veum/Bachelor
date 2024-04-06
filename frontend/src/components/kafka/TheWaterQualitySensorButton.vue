@@ -30,8 +30,9 @@ const checkSensorStatus = async () => {
   if (selectedTopicType.value === '') return
 
   try {
-    const response = await axios.get(
-      `http://localhost:8088/api/sensor/${selectedTopicType.value}/activeSensors?id=${accessKey.value}`
+    const response = await axios.post(
+      `http://localhost:8088/api/sensor/${selectedTopicType.value}/activeSensors`,
+      { encryptedKey: accessKey.value }
     )
     const sensors = response.data
     // Check if any of the sensors' IDs match the userId
@@ -41,6 +42,10 @@ const checkSensorStatus = async () => {
   } catch (error) {
     console.error('Failed to fetch sensor status:', error)
   } finally {
+    console.log(
+      'Sensor status checked',
+      sensorRunning.value ? 'Sensor is running' : 'Sensor is not running'
+    )
     isLoading.value = false // Loading is complete
   }
 }
@@ -55,18 +60,18 @@ const toggleSensor = async () => {
 
   // Determine the appropriate URL and payload based on the sensor's current state
   const url = sensorRunning.value
-    ? `http://localhost:8088/api/sensor/${selectedTopicType.value}/stopSensor?id=${accessKey.value}`
-    : `http://localhost:8088/api/sensor/${selectedTopicType.value}/startSensor?id=${accessKey.value}`
+    ? `http://localhost:8088/api/sensor/${selectedTopicType.value}/stopSensor`
+    : `http://localhost:8088/api/sensor/${selectedTopicType.value}/startSensor?SendHistoricalData=${fetchAllData.value}`
 
   // When starting the sensor, include the SendHistoricalData flag in the request body
   if (!sensorRunning.value) {
-    data = {
-      SendHistoricalData: fetchAllData.value
-    }
-
     if (fetchAllData.value) {
       emit('clear-logs')
     }
+  }
+
+  data = {
+    encryptedKey: accessKey.value
   }
 
   try {

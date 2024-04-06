@@ -23,7 +23,6 @@ const boatLocationLogs = toRef(props, 'paginatedBoatLocationLogs')
     <TableCaption>Log list</TableCaption>
     <TableHeader>
       <TableRow>
-        <TableHead class="w-[50px]">Id</TableHead>
         <TableHead class="w-[50px]">Offset</TableHead>
         <TableHead class="w-[250px]">TimeStamp</TableHead>
         <TableHead class="w-[250px]">Latitude</TableHead>
@@ -31,8 +30,7 @@ const boatLocationLogs = toRef(props, 'paginatedBoatLocationLogs')
       </TableRow>
     </TableHeader>
     <TableBody>
-      <TableRow v-for="logs in boatLocationLogs" :key="logs.id">
-        <TableCell>{{ logs.id }}</TableCell>
+      <TableRow v-for="logs in boatLocationLogs" :key="logs.offset">
         <TableCell>{{ logs.offset }}</TableCell>
         <TableCell>{{ logs.timeStamp }}</TableCell>
         <TableCell>{{ logs.latitude }}</TableCell>

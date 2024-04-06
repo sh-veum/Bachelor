@@ -28,7 +28,7 @@ public class SensorController : ControllerBase
     }
 
     [HttpPost("{sensorType}/startSensor")]
-    public async Task<IActionResult> StartSensor([FromBody] StartSensorRequestDto request, SensorType sensorType, [FromQuery] AccessKeyDto? accessKey)
+    public async Task<IActionResult> StartSensor([FromQuery] StartSensorRequestDto request, SensorType sensorType, [FromBody] AccessKeyDto? accessKey)
     {
         var userIdResult = await ResolveUserId(accessKey?.EncryptedKey);
         if (userIdResult.Error != null)
@@ -45,7 +45,7 @@ public class SensorController : ControllerBase
     }
 
     [HttpPost("{sensorType}/stopSensor")]
-    public async Task<IActionResult> StopSensor(SensorType sensorType, [FromQuery] AccessKeyDto? accessKey)
+    public async Task<IActionResult> StopSensor(SensorType sensorType, [FromBody] AccessKeyDto? accessKey)
     {
         var userIdResult = await ResolveUserId(accessKey?.EncryptedKey);
         if (userIdResult.Error != null)
@@ -84,8 +84,8 @@ public class SensorController : ControllerBase
         }
     }
 
-    [HttpGet("{sensorType}/activeSensors")]
-    public async Task<IActionResult> GetActiveSensors(SensorType sensorType, [FromQuery] AccessKeyDto? accessKey)
+    [HttpPost("{sensorType}/activeSensors")]
+    public async Task<IActionResult> GetActiveSensors(SensorType sensorType, [FromBody] AccessKeyDto? accessKey)
     {
         // If access key isn't connected to a user, return error
         var error = await ResolveUserId(accessKey?.EncryptedKey);
@@ -114,8 +114,8 @@ public class SensorController : ControllerBase
     }
 
 
-    [HttpGet("{sensorType}/logs")]
-    public async Task<IActionResult> GetLogs(SensorType sensorType, [FromQuery] AccessKeyDto? accessKey)
+    [HttpPost("{sensorType}/logs")]
+    public async Task<IActionResult> GetLogs(SensorType sensorType, [FromBody] AccessKeyDto? accessKey)
     {
         var error = await ResolveUserId(accessKey?.EncryptedKey);
         if (error.Error != null)
@@ -161,6 +161,8 @@ public class SensorController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("Resolving user ID.");
+            _logger.LogInformation("Encrypted key: {EncryptedKey}", encryptedKey);
             if (encryptedKey != null)
             {
                 var (validationActionResult, kafkaKey) = await _kafkaKeyService.ValidateKafkaAccessKey(encryptedKey);

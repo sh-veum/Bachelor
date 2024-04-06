@@ -84,8 +84,9 @@ const processLogs = (logs: any, sortOrder: string) => {
 const fetchData = async (sortOrder: string) => {
   if (!selectedTopicType.value) return
   try {
-    const logResponse = await axios.get(
-      `http://localhost:8088/api/sensor/${selectedTopicType.value}/logs?id=${accessKeySensorId.value}`
+    const logResponse = await axios.post(
+      `http://localhost:8088/api/sensor/${selectedTopicType.value}/logs`,
+      { encryptedKey: accessKey.value }
     )
     const logs = processLogs(logResponse.data, sortOrder)
     if (selectedTopicType.value === 'waterQuality') waterQualityLogs.value = logs
@@ -136,7 +137,6 @@ const updateResponseData = (message: any) => {
         const date = new Date(timeStamp)
         const formattedTimeStamp = date.toISOString().replace(/T/, ' ').replace(/\..+/, '')
         const newLog: BoatLocationLog = {
-          id: boatLocationLogs.value.length + 1,
           offset: o,
           timeStamp: formattedTimeStamp,
           latitude: parseFloat(latitude),
