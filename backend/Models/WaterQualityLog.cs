@@ -7,7 +7,7 @@ public class WaterQualityLog
 {
     [Key]
     public int Id { get; set; }
-
+    public required long Offset { get; set; }
     public required DateTimeOffset TimeStamp { get; set; }
     public required double Ph { get; set; }
 
