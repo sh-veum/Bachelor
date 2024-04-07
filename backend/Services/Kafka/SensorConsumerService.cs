@@ -1,14 +1,9 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using Confluent.Kafka;
-using Microsoft.EntityFrameworkCore;
-using NetBackend.Constants;
-using NetBackend.Models;
 using NetBackend.Models.Enums;
 using NetBackend.Services.Interfaces;
 using NetBackend.Services.Interfaces.MessageHandler;
-using NetBackend.Services.MessageHandlers;
-using NetBackend.Tools;
 
 namespace NetBackend.Services.Kafka;
 

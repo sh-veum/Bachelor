@@ -8,7 +8,7 @@ import { subscribeToAllTopics } from '@/lib/kafka'
 import WebSocketService from '@/lib/WebSocketService'
 
 const accessKey = ref(
-  'nGni8WYnlCj9+95SAZwCdQ+er71VVBQFq7vnaHzwtgmH1kOcgiRFB091QKVPjjKBCmhLQsAh3j9uZpWs5xhBXQ=='
+  'PvYcOZfRhm/I5ApAq4j7n8HHM6nwlKi4WaYR7cX41DUZoNuOOcxpZGSO5eKMQ38MGGW2euikt7CjbLtxbkp8nQ=='
 )
 const isLocked = ref(false)
 

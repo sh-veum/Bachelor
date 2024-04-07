@@ -13,9 +13,11 @@ import { type WaterQualityLog } from '@/lib/kafka'
 
 const props = defineProps<{
   paginatedWaterQualityLogs: WaterQualityLog[]
+  showIdColumn: Boolean
 }>()
 
 const waterQualityLogs = toRef(props, 'paginatedWaterQualityLogs')
+const showIdColumn = toRef(props, 'showIdColumn')
 </script>
 
 <template>
@@ -23,6 +25,7 @@ const waterQualityLogs = toRef(props, 'paginatedWaterQualityLogs')
     <TableCaption>Log list</TableCaption>
     <TableHeader>
       <TableRow>
+        <TableHead class="w-[50px]" v-if="showIdColumn">ID</TableHead>
         <TableHead class="w-[50px]">Offset</TableHead>
         <TableHead class="w-[200px]">TimeStamp</TableHead>
         <TableHead class="w-[200px]">pH value</TableHead>
@@ -31,7 +34,8 @@ const waterQualityLogs = toRef(props, 'paginatedWaterQualityLogs')
       </TableRow>
     </TableHeader>
     <TableBody>
-      <TableRow v-for="logs in waterQualityLogs" :key="logs.offset">
+      <TableRow v-for="(logs, index) in waterQualityLogs" :key="index">
+        <TableCell v-if="showIdColumn">{{ logs.id }}</TableCell>
         <TableCell>{{ logs.offset }}</TableCell>
         <TableCell>{{ logs.timeStamp }}</TableCell>
         <TableCell>{{ logs.ph }}</TableCell>

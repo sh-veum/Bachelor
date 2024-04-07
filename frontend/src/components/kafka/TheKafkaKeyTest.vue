@@ -121,6 +121,7 @@ const updateResponseData = (message: any) => {
         const date = new Date(timeStamp)
         const formattedTimeStamp = date.toISOString().replace(/T/, ' ').replace(/\..+/, '')
         const newLog: WaterQualityLog = {
+          id: 0,
           offset: o,
           timeStamp: formattedTimeStamp,
           ph: parseFloat(ph),
@@ -136,6 +137,7 @@ const updateResponseData = (message: any) => {
         const date = new Date(timeStamp)
         const formattedTimeStamp = date.toISOString().replace(/T/, ' ').replace(/\..+/, '')
         const newLog: BoatLocationLog = {
+          id: 0,
           offset: o,
           timeStamp: formattedTimeStamp,
           latitude: parseFloat(latitude),
@@ -287,10 +289,12 @@ onBeforeUnmount(() => {
       <div>
         <TheWaterQualityLogTable
           :paginatedWaterQualityLogs="paginatedWaterQualityLogs"
+          :showIdColumn="!isLive"
           v-if="selectedTopic === 'water-quality-updates'"
         />
         <TheBoatLocationLogTable
           :paginatedBoatLocationLogs="paginatedBoatLocationLogs"
+          :showIdColumn="!isLive"
           v-else-if="selectedTopic === 'boat-location-updates'"
         />
         <TextArea v-else placeholder="No implemented topic selected" v-model="responseData" />

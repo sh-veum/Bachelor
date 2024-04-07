@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 export interface WaterQualityLog {
+  id: number
   offset: number
   timeStamp: string
   ph: number
@@ -9,12 +10,14 @@ export interface WaterQualityLog {
 }
 
 export interface BoatLocationLog {
+  id: number
   offset: number
   timeStamp: string
   latitude: number
   longitude: number
 }
 export interface KafkaKey {
+  id: string
   keyName: string
   createdBy: string
   expiresIn: number

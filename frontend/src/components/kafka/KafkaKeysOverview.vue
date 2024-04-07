@@ -1,11 +1,6 @@
 <script setup lang="ts">
-import {
-  toggleKafkaKeyEnabledStatus,
-  deleteKafkaKey,
-  fetchKafkaKeys,
-  type KafkaKey
-} from '@/lib/kafka'
-import { onMounted, toRef } from 'vue'
+import { toggleKafkaKeyEnabledStatus, deleteKafkaKey, type KafkaKey } from '@/lib/kafka'
+import { toRef } from 'vue'
 import {
   Table,
   TableBody,
@@ -28,14 +23,6 @@ const props = defineProps<{
 }>()
 
 const kafkaKeys = toRef(props, 'kafkaKeys')
-
-const fetchData = async () => {
-  try {
-    kafkaKeys.value = await fetchKafkaKeys()
-  } catch (error) {
-    console.error('Failed to fetch data:', error)
-  }
-}
 
 const toggleKeyEnabledStatus = async (id: string, isEnabled: boolean) => {
   try {
@@ -68,8 +55,6 @@ const deleteKey = async (id: string) => {
     console.error('Error deleting key:', error)
   }
 }
-
-onMounted(fetchData)
 </script>
 
 <template>

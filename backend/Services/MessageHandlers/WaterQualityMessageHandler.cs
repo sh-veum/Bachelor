@@ -81,18 +81,18 @@ public class WaterQualityMessageHandler : IMessageHandler
 
             var dbContext = await dbContextService.GetUserDatabaseContext(user);
 
-            // Check if the offset allows for storing the message
-            var mostRecentLog = await dbContext.Set<WaterQualityLog>().OrderByDescending(log => log.Offset).FirstOrDefaultAsync();
+            // check for duplicate
+            var existingLog = await dbContext.Set<WaterQualityLog>().AnyAsync(log => log.TimeStamp == logEntry.TimeStamp);
 
-            if (mostRecentLog == null || mostRecentLog.Offset < offset)
+            if (!existingLog)
             {
                 dbContext.Set<WaterQualityLog>().Add(logEntry);
                 await dbContext.SaveChangesAsync();
-                _logger.LogInformation($"Stored water quality log with id: {logEntry.Id} and offset: {offset}");
+                _logger.LogInformation($"Stored WaterQualityLog with id: {logEntry.Id} and offset: {offset}");
             }
             else
             {
-                _logger.LogInformation($"Skipping storage for water quality log due to offset {offset} being less than the most recent log's offset {mostRecentLog.Offset}");
+                _logger.LogInformation($"Skipping storing WaterQualityLog with offset {logEntry.Offset} due to it being a duplicate.");
             }
         }
         catch (Exception ex)

@@ -62,26 +62,25 @@ public class BoatLocationMessageHandler : IMessageHandler
             var userId = ExtractionTools.ExtractUserIdFromTopic(topic, KafkaConstants.BoatLogTopic);
             // _logger.LogInformation($"SensorId: {userId}");
 
-            using (var scope = _scopeFactory.CreateScope())
+            using var scope = _scopeFactory.CreateScope();
+            var dbContextService = scope.ServiceProvider.GetRequiredService<IDbContextService>();
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var (user, error) = await userService.GetUserByIdAsync(userId);
+
+            var dbContext = await dbContextService.GetUserDatabaseContext(user);
+
+            // check for duplicate
+            var existingLog = await dbContext.Set<BoatLocationLog>().AnyAsync(log => log.TimeStamp == logEntry.TimeStamp);
+
+            if (!existingLog)
             {
-                var dbContextService = scope.ServiceProvider.GetRequiredService<IDbContextService>();
-                var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-                var (user, error) = await userService.GetUserByIdAsync(userId);
-
-                var dbContext = await dbContextService.GetUserDatabaseContext(user);
-
-                // Check if the offset allows for storing the message
-                var mostRecentLog = await dbContext.Set<BoatLocationLog>().OrderByDescending(log => log.Offset).FirstOrDefaultAsync();
-                if (mostRecentLog == null || mostRecentLog.Offset < offset)
-                {
-                    dbContext.Set<BoatLocationLog>().Add(logEntry);
-                    await dbContext.SaveChangesAsync();
-                    _logger.LogInformation($"Stored boat location log with id: {logEntry.Id}");
-                }
-                else
-                {
-                    _logger.LogInformation($"Skipping storage for boat location log due to offset {offset} being less than the most recent log's offset {mostRecentLog.Offset}");
-                }
+                dbContext.Set<BoatLocationLog>().Add(logEntry);
+                await dbContext.SaveChangesAsync();
+                _logger.LogInformation($"Stored BoatLocationLog log with id: {logEntry.Id}");
+            }
+            else
+            {
+                _logger.LogInformation($"Skipping storing BoatLocationLog with offset {logEntry.Offset} due to it being a duplicate.");
             }
         }
         catch (Exception ex)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineEmits, defineProps, toRef, watch, onMounted } from 'vue'
+import { ref, toRef, watch, onMounted } from 'vue'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
 import { userId } from '@/lib/useAuth'
