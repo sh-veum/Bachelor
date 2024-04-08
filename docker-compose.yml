@@ -91,7 +91,7 @@ services:
     ports:
       - "8088:80"
     build:
-      context: ./backend/NetBackend/
+      context: ./backend/
       dockerfile: Dockerfile
     environment:
       - ConnectionStrings__DefaultConnection=User ID=postgres;Password=password;Server=postgresTest;Database=postgresTestDB;Pooling=true;Port=5432;
