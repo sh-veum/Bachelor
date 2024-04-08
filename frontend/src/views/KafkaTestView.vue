@@ -7,9 +7,7 @@ import { Lock, RotateCcw } from 'lucide-vue-next'
 import { subscribeToAllTopics } from '@/lib/kafka'
 import WebSocketService from '@/lib/WebSocketService'
 
-const accessKey = ref(
-  'PvYcOZfRhm/I5ApAq4j7n8HHM6nwlKi4WaYR7cX41DUZoNuOOcxpZGSO5eKMQ38MGGW2euikt7CjbLtxbkp8nQ=='
-)
+const accessKey = ref('')
 const isLocked = ref(false)
 
 const toggleLock = () => {

@@ -91,7 +91,7 @@ services:
     ports:
       - "8088:80"
     build:
-      context: ./backend/
+      context: ./backend/NetBackend/
       dockerfile: Dockerfile
     environment:
       - ConnectionStrings__DefaultConnection=User ID=postgres;Password=password;Server=postgresTest;Database=postgresTestDB;Pooling=true;Port=5432;
@@ -112,7 +112,7 @@ services:
       - "5433:5432"
     restart: always
     volumes:
-      - ./backend/.containers/postgresTestDb:/var/lib/postgresql/data
+      - ./backend/NetBackend/.containers/postgresTestDb:/var/lib/postgresql/data
     networks:
       - dev
 
@@ -127,7 +127,7 @@ services:
       - "5434:5432"
     restart: always
     volumes:
-      - ./backend/.containers/postgresCustomerOneDb:/var/lib/postgresql/data
+      - ./backend/NetBackend/.containers/postgresCustomerOneDb:/var/lib/postgresql/data
     networks:
       - dev
 
@@ -142,7 +142,7 @@ services:
       - "5435:5432"
     restart: always
     volumes:
-      - ./backend/.containers/postgresCustomerTwoDb:/var/lib/postgresql/data
+      - ./backend/NetBackend/.containers/postgresCustomerTwoDb:/var/lib/postgresql/data
     networks:
       - dev
 
