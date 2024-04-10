@@ -7,7 +7,7 @@ networks:
 
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: confluentinc/cp-zookeeper:7.0.14
     container_name: zookeeper
     networks:
       - dev
@@ -18,7 +18,7 @@ services:
 
   # reachable on 9092 from the host and on 29092 from inside docker compose
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.0.14
     container_name: kafka
     networks:
       - dev
