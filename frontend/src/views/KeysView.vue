@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button'
 import { toTypedSchema } from '@vee-validate/zod'
+import axios from 'axios'
 import { useForm } from 'vee-validate'
 import * as z from 'zod'
-import axios from 'axios'
 
 import {
   Table,
@@ -17,7 +17,6 @@ import {
 
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -29,8 +28,11 @@ import { Input } from '@/components/ui/input'
 
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 
-import { Check, ChevronsUpDown, Copy } from 'lucide-vue-next'
+import { Check, ChevronsUpDown } from 'lucide-vue-next'
 
+import CreatedKeyDialog from '@/components/CreatedKeyDialog.vue'
+import type { Key, Theme } from '@/components/interfaces/RestSchema'
+import ThemeCollapsible from '@/components/rest/ThemeCollapsible.vue'
 import {
   Command,
   CommandEmpty,
@@ -41,11 +43,7 @@ import {
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import ThemeCollapsible from '@/components/rest/ThemeCollapsible.vue'
-import { ref, onMounted } from 'vue'
-import Label from '@/components/ui/label/Label.vue'
-import type { Key, Theme } from '@/components/interfaces/RestSchema'
-import CreatedKeyDialog from '@/components/CreatedKeyDialog.vue'
+import { onMounted, ref } from 'vue'
 
 const keys = ref<Key[]>([])
 const themes = ref<Theme[]>([])
@@ -155,6 +153,12 @@ const fetchData = async () => {
 onMounted(() => {
   fetchData()
 })
+
+const collapsibleStates = ref<Record<string, boolean>>({})
+
+const toggleCollapsible = (index: string) => {
+  collapsibleStates.value[index] = !collapsibleStates.value[index]
+}
 </script>
 
 <template>
@@ -273,16 +277,23 @@ onMounted(() => {
       <TableRow>
         <TableHead class="w-[200px]">Name</TableHead>
         <TableHead>Themes</TableHead>
-        <TableHead class="w-[200px]">Expires in (days)</TableHead>
-        <TableHead class="w-[200px] text-center">Disable</TableHead>
-        <TableHead class="w-[200px] text-center">Delete</TableHead>
+        <TableHead class="w-[100px]">Expires in (days)</TableHead>
+        <TableHead class="w-[100px] text-center">Disable</TableHead>
+        <TableHead class="w-[100px] text-center">Delete</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
-      <TableRow v-for="key in keys" :key="key.id">
-        <TableCell>{{ key.keyName }}</TableCell>
-        <TableCell>
-          <ThemeCollapsible v-if="key.themes.length > 0" :apiKey="key" />
+      <TableRow v-for="(key, index) in keys" :key="key.id">
+        <TableCell class="text-xl break-all">{{ key.keyName }}</TableCell>
+        <TableCell
+          @click="toggleCollapsible(index.toString())"
+          class="align-top cursor-pointer group"
+        >
+          <ThemeCollapsible
+            v-model:is-open="collapsibleStates[index.toString()]"
+            v-if="key.themes.length > 0"
+            :apiKey="key"
+          />
           <div v-else class="py-3 font-mono text-sm">No themes</div>
         </TableCell>
         <TableCell>{{ key.expiresIn }}</TableCell>

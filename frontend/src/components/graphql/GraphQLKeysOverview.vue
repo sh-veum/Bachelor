@@ -103,10 +103,10 @@ onUnmounted(() => {
       <TableHeader>
         <TableRow>
           <TableHead class="w-[200px]">Key Name</TableHead>
-          <TableHead class="w-[200px]">Permissions</TableHead>
-          <TableHead class="w-[200px]">Expires in (days)</TableHead>
-          <TableHead class="w-[100px]">Disable</TableHead>
-          <TableHead class="w-[100px]">Delete</TableHead>
+          <TableHead>Permissions</TableHead>
+          <TableHead class="w-[100px]">Expires in (days)</TableHead>
+          <TableHead class="w-[100px] text-center">Disable</TableHead>
+          <TableHead class="w-[100px] text-center">Delete</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -130,7 +130,7 @@ onUnmounted(() => {
           <TableCell>
             <p>{{ graphQLKey.expiresIn }} days</p>
           </TableCell>
-          <TableCell>
+          <TableCell class="text-center">
             <Button
               class="bg-zinc-600"
               v-if="graphQLKey.isEnabled"
@@ -146,7 +146,7 @@ onUnmounted(() => {
               Enable
             </Button>
           </TableCell>
-          <TableCell>
+          <TableCell class="text-center">
             <Button variant="destructive" @click="deleteKey(graphQLKey.id)"> Delete key </Button>
           </TableCell>
         </TableRow>

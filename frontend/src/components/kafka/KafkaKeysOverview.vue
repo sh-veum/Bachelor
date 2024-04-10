@@ -64,10 +64,10 @@ const deleteKey = async (id: string) => {
       <TableHeader>
         <TableRow>
           <TableHead class="w-[200px]">Key Name</TableHead>
-          <TableHead class="w-[200px]">Topics</TableHead>
-          <TableHead class="w-[200px]">Expires in (days)</TableHead>
-          <TableHead class="w-[100px]">Disable</TableHead>
-          <TableHead class="w-[100px]">Delete</TableHead>
+          <TableHead>Topics</TableHead>
+          <TableHead class="w-[100px]">Expires in (days)</TableHead>
+          <TableHead class="w-[100px] text-center">Disable</TableHead>
+          <TableHead class="w-[100px] text-center">Delete</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -88,7 +88,7 @@ const deleteKey = async (id: string) => {
           <TableCell>
             <p>{{ kafkaKey.expiresIn }} days</p>
           </TableCell>
-          <TableCell>
+          <TableCell class="text-center">
             <Button
               class="bg-zinc-600"
               v-if="kafkaKey.isEnabled"
@@ -100,7 +100,7 @@ const deleteKey = async (id: string) => {
               Enable
             </Button>
           </TableCell>
-          <TableCell>
+          <TableCell class="text-center">
             <Button variant="destructive" @click="deleteKey(kafkaKey.id)"> Delete key </Button>
           </TableCell>
         </TableRow>
