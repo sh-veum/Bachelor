@@ -17,6 +17,7 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
     private readonly ConcurrentDictionary<string, SensorType> _activeTopics;
     private CancellationTokenSource _loopCancellationTokenSource = new();
     private CancellationTokenSource? _stoppingCancellationTokenSource;
+    private readonly ConcurrentDictionary<string, List<string>> _subscriptions = new();
 
     public SensorConsumerService(IConfiguration configuration, ILogger<SensorConsumerService> logger, IAppWebSocketManager webSocketManager, IServiceScopeFactory scopeFactory)
     {
@@ -102,9 +103,9 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
         }, stoppingToken);
     }
 
-    public async Task SubscribeToTopicAsync(string newTopic, SensorType sensorType, bool sendHistoricalData = false)
+    public async Task SubscribeToTopicAsync(string newTopic, SensorType sensorType, bool sendHistoricalData = false, string? currentSessionId = null)
     {
-        _logger.LogInformation($"Subscribing to topic: {newTopic}, sendHistoricalData: {sendHistoricalData}");
+        _logger.LogInformation($"Subscribing to topic: {newTopic}, sendHistoricalData: {sendHistoricalData}, currentSessionId: {currentSessionId}");
 
         _consumer.Unsubscribe();
 
@@ -117,16 +118,15 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
             _logger.LogInformation($"Subscribed to new topic: {newTopic}");
         }
 
-        if (sendHistoricalData)
+        if (sendHistoricalData && currentSessionId != null)
         {
-            await ConsumeHistoricalData(newTopic);
+            await ConsumeHistoricalData(newTopic, currentSessionId);
         }
 
         InterruptAndRestartConsumeLoop();
     }
 
-    // TODO: Send to a separate WebSocket endpoint for historical data
-    private async Task ConsumeHistoricalData(string topic)
+    private async Task ConsumeHistoricalData(string topic, string currentSessionId)
     {
         var partitionBuffers = new Dictionary<int, SortedList<long, ConsumeResult<Ignore, string>>>();
         var adminConfig = new AdminClientConfig { BootstrapServers = _configuration["Kafka:BootstrapServers"] };
@@ -153,7 +153,7 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
             if (consumeResult.IsPartitionEOF)
             {
                 // Process messages for this partition.
-                await ProcessPartitionBuffer(partitionBuffers[consumeResult.Partition.Value], consumeResult.Partition.Value);
+                await ProcessPartitionBuffer(partitionBuffers[consumeResult.Partition.Value], consumeResult.Partition.Value, currentSessionId);
                 partitionBuffers.Remove(consumeResult.Partition.Value);
                 shouldContinue = partitionBuffers.Count > 0;
                 continue;
@@ -169,7 +169,7 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
         // Ensure all buffers are processed at the end.
         foreach (var kvp in partitionBuffers)
         {
-            await ProcessPartitionBuffer(kvp.Value, kvp.Key);
+            await ProcessPartitionBuffer(kvp.Value, kvp.Key, currentSessionId);
         }
 
         // _consumer.Unassign();
@@ -177,7 +177,7 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
         _consumer.Subscribe(_activeTopics.Keys);
     }
 
-    private async Task ProcessPartitionBuffer(SortedList<long, ConsumeResult<Ignore, string>> buffer, int partitionId)
+    private async Task ProcessPartitionBuffer(SortedList<long, ConsumeResult<Ignore, string>> buffer, int partitionId, string currentSessionId)
     {
         foreach (var kvp in buffer)
         {
@@ -187,7 +187,7 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
             _logger.LogInformation($"Processing message for Topic: {consumeResult.Topic}, Partition: {partitionId}, Offset: {currentOffset}");
 
             // await HandleMessage(consumeResult.Message.Value, consumeResult.Topic);
-            await SendMessageToWebSocket(consumeResult.Topic, consumeResult.Message.Value, currentOffset);
+            await SendMessageToWebSocket(consumeResult.Topic, consumeResult.Message.Value, currentOffset, currentSessionId);
         }
         buffer.Clear();
     }
@@ -214,7 +214,6 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
         });
     }
 
-
     private void InterruptAndRestartConsumeLoop()
     {
         _loopCancellationTokenSource.Cancel();
@@ -235,7 +234,7 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
         _loopCancellationTokenSource = new CancellationTokenSource();
     }
 
-    private async Task SendMessageToWebSocket(string topic, string message, long offset)
+    private async Task SendMessageToWebSocket(string topic, string message, long offset, string? currentSessionId = null)
     {
         var webSocketMessage = new
         {
@@ -244,6 +243,8 @@ public class SensorConsumerService : BackgroundService, ISensorConsumerService
             offset
         };
         var serializedMessage = JsonSerializer.Serialize(webSocketMessage);
-        await _webSocketManager.SendMessageAsync(serializedMessage);
+
+        _logger.LogInformation($"Sending message to WebSocket: {serializedMessage}, Topic: {topic}, Offset: {offset}, currentSessionId: {currentSessionId}");
+        await _webSocketManager.SendMessageAsync(serializedMessage, topic, currentSessionId);
     }
 }

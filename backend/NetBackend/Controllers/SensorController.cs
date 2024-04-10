@@ -39,8 +39,10 @@ public class SensorController : ControllerBase
         string userId = userIdResult.UserId!;
 
         _logger.LogInformation("Starting {SensorType} sensor for user {UserId}", sensorType, userId);
+        _logger.LogInformation("SendHistoricalData: {SendHistoricalData}", request.SendHistoricalData);
+        _logger.LogInformation("SessionId: {SessionId}", request.SessionId);
 
-        var (success, message) = await _sensorService.StartSensorAsync(userId, sensorType, request.SendHistoricalData);
+        var (success, message) = await _sensorService.StartSensorAsync(userId, sensorType, request.SendHistoricalData, request.SessionId);
         return success ? Ok(message) : BadRequest(message);
     }
 

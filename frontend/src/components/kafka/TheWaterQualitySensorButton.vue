@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { userId } from '@/lib/useAuth'
 import Switch from '@/components/ui/switch/Switch.vue'
 import Label from '@/components/ui/label/Label.vue'
+import WebSocketService from '@/lib/WebSocketService'
 
 interface Sensor {
   sensorId: string
@@ -58,20 +59,25 @@ const toggleSensor = async () => {
   isLoading.value = true
   let data = {}
 
-  // Determine the appropriate URL and payload based on the sensor's current state
-  const url = sensorRunning.value
-    ? `http://localhost:8088/api/sensor/${selectedTopicType.value}/stopSensor`
-    : `http://localhost:8088/api/sensor/${selectedTopicType.value}/startSensor?SendHistoricalData=${fetchAllData.value}`
+  const sessionId = WebSocketService.sessionId
 
-  // When starting the sensor, include the SendHistoricalData flag in the request body
-  if (!sensorRunning.value) {
+  // Determine the appropriate URL and payload based on the sensor's current state
+  let url = `http://localhost:8088/api/sensor/${selectedTopicType.value}/`
+  if (sensorRunning.value) {
+    url += 'stopSensor'
+    data = {
+      encryptedKey: accessKey.value
+    }
+  } else {
+    url += 'startSensor'
+    data = {
+      encryptedKey: accessKey.value
+    }
     if (fetchAllData.value) {
       emit('clear-logs')
     }
-  }
-
-  data = {
-    encryptedKey: accessKey.value
+    url += `?SendHistoricalData=${encodeURIComponent(fetchAllData.value)}&SessionId=${encodeURIComponent(sessionId)}`
+    console.log('URL:', url)
   }
 
   try {

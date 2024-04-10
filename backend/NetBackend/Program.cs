@@ -16,7 +16,6 @@ using NetBackend.Services.Interfaces.MessageHandler;
 using NetBackend.Services.Kafka;
 using NetBackend.Services.Keys;
 using NetBackend.Services.MessageHandlers;
-using NetBackend.Services.WebSocket;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -147,12 +146,14 @@ app.Use(async (context, next) =>
     {
         if (context.WebSockets.IsWebSocketRequest)
         {
+            var topic = context.Request.Query["topic"].ToString();
+            var sessionId = context.Request.Query["sessionId"].ToString();
             WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
             var webSocketManager = app.Services.GetService<IAppWebSocketManager>();
 
-            if (webSocketManager != null)
+            if (webSocketManager != null && !string.IsNullOrWhiteSpace(topic) && !string.IsNullOrWhiteSpace(sessionId))
             {
-                await webSocketManager.HandleWebSocketAsync(webSocket);
+                await webSocketManager.HandleWebSocketAsync(webSocket, topic, sessionId);
             }
             else
             {

@@ -1,16 +1,33 @@
+import { generateUniqueId } from './tools'
+
 type MessageHandler = (data: any) => void
 
 class WebSocketService {
   private socket: WebSocket | null = null
   private messageHandlers: Record<string, MessageHandler[]> = {}
+  private currentTopic: string | null = null
+  public sessionId: string = generateUniqueId()
 
   constructor(private url: string) {}
 
-  connect() {
-    console.log('connecting to websocket: ', this.url)
+  connect(topic: string) {
+    this.currentTopic = topic
+    const topicURL = `${this.url}?topic=${encodeURIComponent(topic)}&sessionId=${encodeURIComponent(this.sessionId)}`
+
+    console.log('Connecting to WebSocket: ', topicURL)
     if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
-      this.socket = new WebSocket(this.url)
+      this.socket = new WebSocket(topicURL)
+      this.socket.onopen = () => {
+        console.log('WebSocket connection established: ', topicURL)
+      }
       this.socket.onmessage = (event) => this.handleMessage(event)
+    }
+  }
+
+  updateTopic(topic: string) {
+    if (this.currentTopic !== topic) {
+      this.disconnect()
+      this.connect(topic)
     }
   }
 
@@ -41,10 +58,11 @@ class WebSocketService {
   }
 
   disconnect() {
-    console.log('disconnecting websocket')
     if (this.socket) {
+      console.log('Disconnecting WebSocket')
       this.socket.close()
-      console.log('websocket disconnected')
+      this.socket = null
+      console.log('WebSocket disconnected')
     }
   }
 

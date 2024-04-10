@@ -17,7 +17,7 @@ public class SensorService : ISensorService
         _sensorConsumerService = sensorConsumerService;
     }
 
-    public async Task<(bool success, string message)> StartSensorAsync(string sensorId, SensorType sensorType, bool sendHistoricalData = false)
+    public async Task<(bool success, string message)> StartSensorAsync(string sensorId, SensorType sensorType, bool sendHistoricalData = false, string? currentSessionId = null)
     {
         var client = _httpClientFactory.CreateClient("MockSensorClient");
         var response = await client.PostAsync($"sensors/{sensorType}/startSensor/{sensorId}", null);
@@ -34,15 +34,13 @@ public class SensorService : ISensorService
             {
                 newTopic = $"{KafkaConstants.WaterQualityLogTopic}-{sensorId}";
 
-                _logger.LogInformation($"Subscribing to topic: {newTopic}, sendHistoricalData: {sendHistoricalData}");
-                await _sensorConsumerService.SubscribeToTopicAsync(newTopic, SensorType.waterQuality, sendHistoricalData);
+                await _sensorConsumerService.SubscribeToTopicAsync(newTopic, SensorType.waterQuality, sendHistoricalData, currentSessionId);
             }
             else if (sensorType == SensorType.boat)
             {
                 newTopic = $"{KafkaConstants.BoatLogTopic}-{sensorId}";
 
-                _logger.LogInformation($"Subscribing to topic: {newTopic}, sendHistoricalData: {sendHistoricalData}");
-                await _sensorConsumerService.SubscribeToTopicAsync(newTopic, SensorType.boat, sendHistoricalData);
+                await _sensorConsumerService.SubscribeToTopicAsync(newTopic, SensorType.boat, sendHistoricalData, currentSessionId);
             }
 
             return (true, responseMessage);

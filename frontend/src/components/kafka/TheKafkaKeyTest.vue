@@ -98,18 +98,21 @@ const fetchData = async (sortOrder: string) => {
 
 const startStopLiveFeed = (start = true) => {
   const topic = `${selectedTopic.value}-${accessKeySensorId.value}`
+  console.log('topic: ', topic)
   if (start) {
-    if (!WebSocketService.isConnected()) WebSocketService.connect()
+    if (!WebSocketService.isConnected()) {
+      WebSocketService.connect(topic)
+    } else {
+      WebSocketService.updateTopic(topic)
+    }
     WebSocketService.subscribe(topic, updateResponseData)
   } else {
-    WebSocketService.unsubscribe(topic, updateResponseData)
+    WebSocketService.disconnect()
   }
 }
 
 const updateResponseData = (message: any) => {
   const { topic, message: msg, offset: o } = message
-
-  //   console.log(`Received message: ${msg}` + ' from topic: ' + topic)
 
   if (topic.startsWith(`${selectedTopic.value}-`)) {
     if (selectedTopic.value === 'water-quality-updates') {
@@ -203,8 +206,8 @@ watch(
 
 watch(
   selectedTopic,
-  (newTopic) => {
-    if (newTopic) {
+  (newTopic, oldTopic) => {
+    if (newTopic && newTopic !== oldTopic) {
       startStopLiveFeed(false)
       selectedSortOrder.value === 'live'
         ? startStopLiveFeed(true)
@@ -220,7 +223,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  startStopLiveFeed(false)
+  WebSocketService.disconnect()
 })
 </script>
 

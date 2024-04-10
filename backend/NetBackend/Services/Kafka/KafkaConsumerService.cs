@@ -59,7 +59,7 @@ public class KafkaConsumerService : BackgroundService, IKafkaConsumerService
                         };
 
                         var serializedMessage = JsonSerializer.Serialize(webSocketMessage);
-                        await _webSocketManager.SendMessageAsync(serializedMessage);
+                        await _webSocketManager.SendMessageAsync(serializedMessage, consumeResult.Topic);
                         _logger.LogInformation($"WebSocket message sent: {serializedMessage}");
                     }
                 }
