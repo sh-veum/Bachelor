@@ -57,13 +57,13 @@ const copyLink = () => {
           <Label for="link" class="sr-only"> Link </Label>
           <Input id="link" :model-value="encryptedKey" readonly />
         </div>
-        <Button type="submit" size="sm" class="px-3">
+        <Button @click="copyLink" type="submit" size="sm" class="px-3">
           <span class="sr-only">Copy</span>
           <div v-if="copySuccess">
             <Check class="w-4 h-4 text-green-500" />
           </div>
           <div v-else>
-            <Copy @click="copyLink" class="w-4 h-4" />
+            <Copy class="w-4 h-4" />
           </div>
         </Button>
       </div>
