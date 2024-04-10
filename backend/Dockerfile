@@ -18,7 +18,7 @@ COPY . .
 # Build the main project
 RUN dotnet build "NetBackend/NetBackend.csproj" -c Release -o /app/build
 # Test the main project
-RUN dotnet test "NetBackend.Tests/NetBackend.Tests.csproj" --no-restore --verbosity normal
+RUN dotnet test "NetBackend.Tests/NetBackend.Tests.csproj" --verbosity normal
 
 # Publish the application
 FROM build AS publish
