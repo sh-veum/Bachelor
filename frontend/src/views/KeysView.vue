@@ -162,159 +162,161 @@ const toggleCollapsible = (index: string) => {
 </script>
 
 <template>
-  <CreatedKeyDialog v-model:is-open="copyIsOpen" :encrypted-key="encryptedKey" />
+  <div class="mx-6">
+    <CreatedKeyDialog v-model:is-open="copyIsOpen" :encrypted-key="encryptedKey" />
 
-  <div class="flex justify-between">
-    <h1 class="text-3xl font-semibold mb-8 px-2">Your API keys</h1>
-    <Dialog v-model:open="createIsOpen">
-      <DialogTrigger as-child>
-        <Button class="mr-4"> Create new key </Button>
-      </DialogTrigger>
-      <DialogContent class="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Create new key</DialogTitle>
-          <DialogDescription>
-            Choose a name for the key and which themes the key can access.
-          </DialogDescription>
-        </DialogHeader>
-        <form class="space-y-6" @submit="onSubmit">
-          <div class="grid gap-4 py-4">
-            <FormField v-slot="{ componentField }" name="name">
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input type="text" placeholder="Name" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
+    <div class="flex justify-between">
+      <h1 class="text-3xl font-semibold mb-8 px-2">Your API keys</h1>
+      <Dialog v-model:open="createIsOpen">
+        <DialogTrigger as-child>
+          <Button class="mr-4"> Create new key </Button>
+        </DialogTrigger>
+        <DialogContent class="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create new key</DialogTitle>
+            <DialogDescription>
+              Choose a name for the key and which themes the key can access.
+            </DialogDescription>
+          </DialogHeader>
+          <form class="space-y-6" @submit="onSubmit">
+            <div class="grid gap-4 py-4">
+              <FormField v-slot="{ componentField }" name="name">
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="Name" v-bind="componentField" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
 
-            <FormField name="themes">
-              <FormItem class="flex flex-col">
-                <FormLabel>Themes</FormLabel>
-                <Popover>
-                  <PopoverTrigger as-child>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        :class="
-                          cn(
-                            'w-[200px] justify-between',
-                            !values.themes?.length && 'text-muted-foreground'
-                          )
-                        "
-                      >
-                        {{
-                          values.themes?.length
-                            ? values.themes.length === 1
-                              ? themes.find((t) => t.id === values.themes?.[0])?.themeName
-                              : `${values.themes.length} themes selected`
-                            : 'Select themes...'
-                        }}
-                        <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent class="w-[200px] p-0">
-                    <Command multiple>
-                      <CommandInput placeholder="Search themes..." />
-                      <CommandEmpty>Nothing found.</CommandEmpty>
-                      <CommandList>
-                        <CommandGroup>
-                          <!-- To remove themes from the select all together: -->
-                          <!-- v-for="theme in themes.filter((t) => !t.isDeprecated)" -->
-                          <CommandItem
-                            v-for="theme in themes"
-                            :key="theme.id"
-                            :value="theme.id"
-                            :disabled="theme.isDeprecated"
-                            @select="
-                              () => {
-                                const selectedThemes = values.themes?.includes(theme.id)
-                                  ? values.themes.filter((t) => t !== theme.id)
-                                  : [...(values.themes ?? []), theme.id]
-                                setValues({
-                                  themes: selectedThemes
-                                })
-                                console.log('Selected themes:', selectedThemes)
-                              }
-                            "
-                          >
-                            <Check
-                              :class="
-                                cn(
-                                  'mr-2 h-4 w-4',
-                                  values.themes?.includes(theme.id) ? 'opacity-100' : 'opacity-0'
-                                )
+              <FormField name="themes">
+                <FormItem class="flex flex-col">
+                  <FormLabel>Themes</FormLabel>
+                  <Popover>
+                    <PopoverTrigger as-child>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          :class="
+                            cn(
+                              'w-[200px] justify-between',
+                              !values.themes?.length && 'text-muted-foreground'
+                            )
+                          "
+                        >
+                          {{
+                            values.themes?.length
+                              ? values.themes.length === 1
+                                ? themes.find((t) => t.id === values.themes?.[0])?.themeName
+                                : `${values.themes.length} themes selected`
+                              : 'Select themes...'
+                          }}
+                          <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent class="w-[200px] p-0">
+                      <Command multiple>
+                        <CommandInput placeholder="Search themes..." />
+                        <CommandEmpty>Nothing found.</CommandEmpty>
+                        <CommandList>
+                          <CommandGroup>
+                            <!-- To remove themes from the select all together: -->
+                            <!-- v-for="theme in themes.filter((t) => !t.isDeprecated)" -->
+                            <CommandItem
+                              v-for="theme in themes"
+                              :key="theme.id"
+                              :value="theme.id"
+                              :disabled="theme.isDeprecated"
+                              @select="
+                                () => {
+                                  const selectedThemes = values.themes?.includes(theme.id)
+                                    ? values.themes.filter((t) => t !== theme.id)
+                                    : [...(values.themes ?? []), theme.id]
+                                  setValues({
+                                    themes: selectedThemes
+                                  })
+                                  console.log('Selected themes:', selectedThemes)
+                                }
                               "
-                            />
-                            {{ theme.themeName }}
-                            <span v-if="theme.isDeprecated" class="text-red-500">
-                              (deprecated)</span
                             >
-                          </CommandItem>
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-          </div>
-          <DialogFooter>
-            <Button type="submit"> Create </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  </div>
+                              <Check
+                                :class="
+                                  cn(
+                                    'mr-2 h-4 w-4',
+                                    values.themes?.includes(theme.id) ? 'opacity-100' : 'opacity-0'
+                                  )
+                                "
+                              />
+                              {{ theme.themeName }}
+                              <span v-if="theme.isDeprecated" class="text-red-500">
+                                (deprecated)</span
+                              >
+                            </CommandItem>
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+            </div>
+            <DialogFooter>
+              <Button type="submit"> Create </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
 
-  <Table>
-    <TableCaption>A list of your created keys</TableCaption>
-    <TableHeader>
-      <TableRow>
-        <TableHead class="w-[200px]">Name</TableHead>
-        <TableHead>Themes</TableHead>
-        <TableHead class="w-[100px]">Expires in (days)</TableHead>
-        <TableHead class="w-[100px] text-center">Disable</TableHead>
-        <TableHead class="w-[100px] text-center">Delete</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      <TableRow v-for="(key, index) in keys" :key="key.id">
-        <TableCell class="text-xl break-all">{{ key.keyName }}</TableCell>
-        <TableCell
-          @click="toggleCollapsible(index.toString())"
-          class="align-top cursor-pointer group"
-        >
-          <ThemeCollapsible
-            v-model:is-open="collapsibleStates[index.toString()]"
-            v-if="key.themes.length > 0"
-            :apiKey="key"
-          />
-          <div v-else class="py-3 font-mono text-sm">No themes</div>
-        </TableCell>
-        <TableCell>{{ key.expiresIn }}</TableCell>
-        <TableCell class="text-center">
-          <Button
-            class="bg-zinc-600"
-            v-if="key.isEnabled"
-            @click="toggleKeyEnabledStatus(key.id, false)"
+    <Table>
+      <TableCaption>A list of your created keys</TableCaption>
+      <TableHeader>
+        <TableRow>
+          <TableHead class="w-[200px]">Name</TableHead>
+          <TableHead>Themes</TableHead>
+          <TableHead class="w-[100px]">Expires in (days)</TableHead>
+          <TableHead class="w-[100px] text-center">Disable</TableHead>
+          <TableHead class="w-[100px] text-center">Delete</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        <TableRow v-for="(key, index) in keys" :key="key.id">
+          <TableCell class="text-xl break-all">{{ key.keyName }}</TableCell>
+          <TableCell
+            @click="toggleCollapsible(index.toString())"
+            class="align-top cursor-pointer group"
           >
-            Disable
-          </Button>
-          <Button class="bg-green-600" v-else @click="toggleKeyEnabledStatus(key.id, true)">
-            Enable
-          </Button>
-        </TableCell>
-        <TableCell class="text-center"
-          ><Button variant="destructive" @click="deleteAccessKey(key.id)">
-            Delete
-          </Button></TableCell
-        >
-      </TableRow>
-    </TableBody>
-  </Table>
+            <ThemeCollapsible
+              v-model:is-open="collapsibleStates[index.toString()]"
+              v-if="key.themes.length > 0"
+              :apiKey="key"
+            />
+            <div v-else class="py-3 font-mono text-sm">No themes</div>
+          </TableCell>
+          <TableCell>{{ key.expiresIn }}</TableCell>
+          <TableCell class="text-center">
+            <Button
+              class="bg-zinc-600"
+              v-if="key.isEnabled"
+              @click="toggleKeyEnabledStatus(key.id, false)"
+            >
+              Disable
+            </Button>
+            <Button class="bg-green-600" v-else @click="toggleKeyEnabledStatus(key.id, true)">
+              Enable
+            </Button>
+          </TableCell>
+          <TableCell class="text-center"
+            ><Button variant="destructive" @click="deleteAccessKey(key.id)">
+              Delete
+            </Button></TableCell
+          >
+        </TableRow>
+      </TableBody>
+    </Table>
+  </div>
 </template>
