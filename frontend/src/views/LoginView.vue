@@ -14,20 +14,19 @@ const { toast } = useToast()
 
 const handleLogin = async () => {
   attemptedLogin.value = true
-  await login(email.value, password.value)
+  await login(email.value, password.value).then(() => {
+    if (isLoggedIn.value) {
+      toast({
+        description: 'Logged in successfully!'
+      })
+    }
+  })
   // If login is successful, show the toast notification
-  toast({
-    description: 'Logged in successfully!',
-  });
-  // TODO: Redirect the user to a different page or give some type of feedback
 }
 
 const handleLogout = async () => {
   logout()
 }
-
-
-
 </script>
 
 <template>
