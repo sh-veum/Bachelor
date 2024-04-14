@@ -3,22 +3,31 @@ import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/lib/useAuth'
+import { useToast } from '@/components/ui/toast/use-toast'
 
 const email = ref('')
 const password = ref('')
 const attemptedLogin = ref(false)
 
 const { isLoggedIn, login, logout, isAdmin, loginErrors } = useAuth()
+const { toast } = useToast()
 
 const handleLogin = async () => {
   attemptedLogin.value = true
   await login(email.value, password.value)
+  // If login is successful, show the toast notification
+  toast({
+    description: 'Logged in successfully!',
+  });
   // TODO: Redirect the user to a different page or give some type of feedback
 }
 
 const handleLogout = async () => {
   logout()
 }
+
+
+
 </script>
 
 <template>
