@@ -8,32 +8,50 @@ using NetBackend.Services.Interfaces.MessageHandler;
 
 namespace NetBackend.Services.Kafka;
 
-public class KafkaConsumerService : BackgroundService, IKafkaConsumerService
+public class HistoricalConsumerService : BackgroundService, IHistoricalConsumerService
 {
-    private readonly ILogger<KafkaConsumerService> _logger;
-    private readonly IConsumer<Ignore, string> _consumer;
+    private readonly ILogger<HistoricalConsumerService> _logger;
     private readonly IAppWebSocketManager _webSocketManager;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _configuration;
     private readonly ConcurrentDictionary<string, SensorType> _activeTopics;
     private CancellationTokenSource _loopCancellationTokenSource = new();
     private CancellationTokenSource? _stoppingCancellationTokenSource;
+    private IConsumer<Ignore, string>? _consumer;
+    private volatile string _currentSessionId;
+    private IAdminClient? _adminClient;
 
-    public KafkaConsumerService(IConfiguration configuration, ILogger<KafkaConsumerService> logger, IAppWebSocketManager webSocketManager, IServiceScopeFactory scopeFactory)
+    public HistoricalConsumerService(IConfiguration configuration, ILogger<HistoricalConsumerService> logger, IAppWebSocketManager webSocketManager, IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
         _webSocketManager = webSocketManager;
         _scopeFactory = scopeFactory;
         _activeTopics = new ConcurrentDictionary<string, SensorType>();
         _configuration = configuration;
+        _currentSessionId = string.Empty;
 
+        InitializeConsumer();
+        InitializeAdminClient();
+    }
+
+    private void InitializeConsumer()
+    {
         var consumerConfig = new ConsumerConfig
         {
             BootstrapServers = _configuration["Kafka:BootstrapServers"],
-            GroupId = _configuration["Kafka:GroupId"],
+            GroupId = Guid.NewGuid().ToString(),
             AutoOffsetReset = AutoOffsetReset.Earliest
         };
         _consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build();
+    }
+
+    private void InitializeAdminClient()
+    {
+        var adminConfig = new AdminClientConfig
+        {
+            BootstrapServers = _configuration["Kafka:BootstrapServers"]
+        };
+        _adminClient = new AdminClientBuilder(adminConfig).Build();
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -47,10 +65,7 @@ public class KafkaConsumerService : BackgroundService, IKafkaConsumerService
     {
         Task.Run(async () =>
         {
-            if (_consumer.Subscription.Count == 0)
-            {
-                _consumer.Subscribe(_activeTopics.Keys);
-            }
+            if (_consumer == null) return;
 
             while (!stoppingToken.IsCancellationRequested && !_loopCancellationTokenSource.Token.IsCancellationRequested)
             {
@@ -62,11 +77,19 @@ public class KafkaConsumerService : BackgroundService, IKafkaConsumerService
 
                         if (consumeResult != null && !consumeResult.IsPartitionEOF)
                         {
-                            _logger.LogInformation($"Consume Loop Sending Topic: {consumeResult.Topic}, Message: {consumeResult.Message.Value}, Offset: {consumeResult.Offset}");
+                            _logger.LogInformation($"Historical Consume Loop Sending Topic: {consumeResult.Topic}, Message: {consumeResult.Message.Value}, Offset: {consumeResult.Offset}, SessionId: {_currentSessionId}");
 
-                            await SendMessageToWebSocket(consumeResult.Topic, consumeResult.Message.Value, consumeResult.Offset);
+                            await SendMessageToWebSocket(consumeResult.Topic, consumeResult.Message.Value, consumeResult.Offset, _currentSessionId);
 
                             HandleMessage(consumeResult.Message.Value, consumeResult.Topic, consumeResult.Offset);
+
+                            if (IsLastOffset(consumeResult.Topic, consumeResult.Offset))
+                            {
+                                _logger.LogInformation($"Last message consumed for topic {consumeResult.Topic}. Unsubscribing and resetting session.");
+                                _consumer.Unsubscribe();
+                                _activeTopics.TryRemove(consumeResult.Topic, out _);
+                                _currentSessionId = string.Empty;
+                            }
                         }
                     }
                     catch (ConsumeException ex) when (ex.Error.Reason.Contains("Unknown topic or partition"))
@@ -103,20 +126,43 @@ public class KafkaConsumerService : BackgroundService, IKafkaConsumerService
         }, stoppingToken);
     }
 
-    public void SubscribeToTopic(string newTopic, SensorType sensorType)
+
+    public void SubscribeToTopic(string newTopic, SensorType sensorType, string sessionId)
     {
-        _logger.LogInformation($"Subscribing to topic: {newTopic}");
+        _logger.LogInformation($"Historical Consumer subscribing to topic: {newTopic} with sensor type: {sensorType} and session id: {sessionId}.");
 
-        _consumer.Unsubscribe();
+        _currentSessionId = sessionId;
+        _activeTopics.TryAdd(newTopic, sensorType);
+        ResetConsumerAndRestart(newTopic);
+    }
 
-        if (_activeTopics.TryAdd(newTopic, sensorType))
+    private void ResetConsumerAndRestart(string newTopic)
+    {
+        if (_consumer != null)
         {
-            _logger.LogInformation($"activeTopics: {_activeTopics.Keys}");
-            _consumer.Subscribe(_activeTopics.Keys);
-            _logger.LogInformation($"Subscribed to new topic: {newTopic}");
+            try
+            {
+                _consumer.Unsubscribe();
+                _consumer.Close();
+                _consumer.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error cleaning up Kafka consumer: {ex.Message}");
+            }
         }
 
-        InterruptAndRestartConsumeLoop();
+        // Re-initialize the consumer
+        InitializeConsumer();
+        if (_consumer != null)
+        {
+            _consumer.Subscribe(newTopic);
+            InterruptAndRestartConsumeLoop();
+        }
+        else
+        {
+            _logger.LogError("Failed to reinitialize the Kafka consumer.");
+        }
     }
 
     private void HandleMessage(string message, string topic, long currentOffset)
@@ -125,7 +171,6 @@ public class KafkaConsumerService : BackgroundService, IKafkaConsumerService
         {
             try
             {
-
                 if (_activeTopics.TryGetValue(topic, out var sensorType))
                 {
                     if (sensorType != SensorType.none)
@@ -169,7 +214,7 @@ public class KafkaConsumerService : BackgroundService, IKafkaConsumerService
         _loopCancellationTokenSource = new CancellationTokenSource();
     }
 
-    private async Task SendMessageToWebSocket(string topic, string message, long offset)
+    private async Task SendMessageToWebSocket(string topic, string message, long offset, string currentSessionId)
     {
         var webSocketMessage = new
         {
@@ -179,9 +224,25 @@ public class KafkaConsumerService : BackgroundService, IKafkaConsumerService
         };
         var serializedMessage = JsonSerializer.Serialize(webSocketMessage);
 
-        _logger.LogInformation($"Sending message to WebSocket: {serializedMessage}, Topic: {topic}, Offset: {offset}");
+        _logger.LogInformation($"Historical: Sending message to WebSocket: {serializedMessage}, Topic: {topic}, Offset: {offset}, SessionId: {currentSessionId}");
 
-        await _webSocketManager.SendMessageAsync(serializedMessage, topic);
+        await _webSocketManager.SendMessageAsync(serializedMessage, topic, currentSessionId);
+    }
 
+    private bool IsLastOffset(string topic, Offset currentOffset)
+    {
+        if (_adminClient != null && _consumer != null)
+        {
+            var metadata = _adminClient.GetMetadata(topic, TimeSpan.FromSeconds(5));
+            foreach (var partition in metadata.Topics[0].Partitions)
+            {
+                var watermarkOffsets = _consumer.QueryWatermarkOffsets(new TopicPartition(topic, new Partition(partition.PartitionId)), TimeSpan.FromSeconds(5));
+                if (currentOffset == watermarkOffsets.High - 1)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

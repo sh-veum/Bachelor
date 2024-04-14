@@ -1,18 +1,19 @@
 using System.Text.Json;
 using Confluent.Kafka;
-using NetBackend.Services.Interfaces;
+using NetBackend.Services.Interfaces.Kafka;
+
 namespace NetBackend.Services.Kafka;
 
 public class KafkaProducerService : IKafkaProducerService
 {
-    private readonly IProducer<Null, string> _producer;
     private readonly ILogger<KafkaProducerService> _logger;
+    private readonly IProducer<Null, string> _producer;
 
     public KafkaProducerService(IConfiguration configuration, ILogger<KafkaProducerService> logger)
     {
+        _logger = logger;
         var producerConfig = new ProducerConfig { BootstrapServers = configuration["Kafka:BootstrapServers"] };
         _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
-        _logger = logger;
         _logger.LogInformation($"Kafka producer configured with bootstrap servers: {producerConfig.BootstrapServers}");
     }
 

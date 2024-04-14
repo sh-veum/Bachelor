@@ -1,4 +1,4 @@
-namespace NetBackend.Models.Dto;
+namespace NetBackend.Models.Dto.Keys;
 
 public class StartSensorRequestDto
 {

@@ -1,4 +1,4 @@
-namespace NetBackend.Services.Interfaces;
+namespace NetBackend.Services.Interfaces.Kafka;
 
 public interface IKafkaProducerService
 {

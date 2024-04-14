@@ -11,6 +11,7 @@ using NetBackend.Middleware;
 using NetBackend.Models.User;
 using NetBackend.Services;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Interfaces.Kafka;
 using NetBackend.Services.Interfaces.Keys;
 using NetBackend.Services.Interfaces.MessageHandler;
 using NetBackend.Services.Kafka;
@@ -98,20 +99,22 @@ builder.Services.AddScoped<IRestKeyService, RestKeyService>();
 builder.Services.AddScoped<IKafkaKeyService, KafkaKeyService>();
 builder.Services.AddScoped<ISensorService, SensorService>();
 builder.Services.AddSingleton<ICryptoService, CryptoService>();
-builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
 builder.Services.AddSingleton<IAppWebSocketManager, AppWebSocketManager>();
 builder.Services.AddScoped<BoatLocationMessageHandler>();
 builder.Services.AddScoped<WaterQualityMessageHandler>();
 builder.Services.AddSingleton<IMessageHandlerFactory, MessageHandlerFactory>();
 
-
-builder.Services.AddSingleton<SensorConsumerService>();
-builder.Services.AddSingleton<ISensorConsumerService>(sp => sp.GetRequiredService<SensorConsumerService>());
-builder.Services.AddHostedService(sp => sp.GetRequiredService<SensorConsumerService>());
+// Kafka Services
+builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
+builder.Services.AddScoped<IKafkaService, KafkaService>();
 
 builder.Services.AddSingleton<KafkaConsumerService>();
 builder.Services.AddSingleton<IKafkaConsumerService>(sp => sp.GetRequiredService<KafkaConsumerService>());
 builder.Services.AddHostedService(sp => sp.GetRequiredService<KafkaConsumerService>());
+
+builder.Services.AddSingleton<HistoricalConsumerService>();
+builder.Services.AddSingleton<IHistoricalConsumerService>(sp => sp.GetRequiredService<HistoricalConsumerService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<HistoricalConsumerService>());
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>
@@ -148,12 +151,13 @@ app.Use(async (context, next) =>
         {
             var topic = context.Request.Query["topic"].ToString();
             var sessionId = context.Request.Query["sessionId"].ToString();
+            var historical = bool.Parse(context.Request.Query["historical"].ToString());
             WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
             var webSocketManager = app.Services.GetService<IAppWebSocketManager>();
 
             if (webSocketManager != null && !string.IsNullOrWhiteSpace(topic) && !string.IsNullOrWhiteSpace(sessionId))
             {
-                await webSocketManager.HandleWebSocketAsync(webSocket, topic, sessionId);
+                await webSocketManager.HandleWebSocketAsync(webSocket, topic, sessionId, historical);
             }
             else
             {

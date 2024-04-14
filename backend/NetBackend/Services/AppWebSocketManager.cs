@@ -7,62 +7,56 @@ namespace NetBackend.Services;
 
 public class AppWebSocketManager : IAppWebSocketManager
 {
-    private readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
-    private readonly ConcurrentDictionary<string, List<string>> _subscriptions = new();
     private readonly ILogger<AppWebSocketManager> _logger;
+    private readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
+    private readonly ConcurrentDictionary<string, List<(string sessionId, bool historical)>> _subscriptions = new();
 
     public AppWebSocketManager(ILogger<AppWebSocketManager> logger)
     {
         _logger = logger;
     }
 
-    public async Task SendMessageAsync(string message, IEnumerable<string> sessionIds)
+    public async Task SendMessageAsync(string message, string topic, string? currentSessionId = null)
     {
-        _logger.LogInformation($"Sending message to all sockets");
-        foreach (var sessionId in sessionIds)
+        if (_subscriptions.TryGetValue(topic, out var subscriptions))
         {
-            _logger.LogInformation($"Sending message to socket {sessionId}");
-            if (_sockets.TryGetValue(sessionId, out WebSocket? socket))
+            foreach (var (sessionId, historical) in subscriptions)
             {
-                if (socket.State == WebSocketState.Open)
+                if (_sockets.TryGetValue(sessionId, out var socket) && socket?.State == WebSocketState.Open)
                 {
-                    await socket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(message)), WebSocketMessageType.Text, true, CancellationToken.None);
+                    bool shouldSend = (currentSessionId != null && historical) || (currentSessionId == null && !historical);
+                    if (shouldSend)
+                    {
+                        var buffer = Encoding.UTF8.GetBytes(message);
+                        await socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                        _logger.LogInformation($"Message sent to session {sessionId} under topic {topic} with historical setting {historical}.");
+                    }
                 }
             }
         }
     }
 
-    public void SubscribeSessionToTopic(string topic, string sessionId)
+    public async Task HandleWebSocketAsync(WebSocket webSocket, string topic, string sessionId, bool historical)
     {
-        _logger.LogInformation($"Subscribing session {sessionId} to topic {topic}");
-        _subscriptions.AddOrUpdate(topic, [sessionId], (key, existingSessionIds) =>
-        {
-            if (!existingSessionIds.Contains(sessionId))
-            {
-                existingSessionIds.Add(sessionId);
-            }
-            _logger.LogInformation($"Subscriptions for topic {topic}: {existingSessionIds.Count}");
-            return existingSessionIds;
-        });
-    }
-
-    public void UnsubscribeSessionFromTopic(string topic, string sessionId)
-    {
-        if (_subscriptions.TryGetValue(topic, out var sessionIds))
-        {
-            sessionIds.Remove(sessionId);
-            if (!sessionIds.Any())
-            {
-                _subscriptions.TryRemove(topic, out _);
-            }
-        }
-    }
-
-    public async Task HandleWebSocketAsync(WebSocket webSocket, string topic, string sessionId)
-    {
-        _logger.LogInformation($"Handling WebSocket session {sessionId} with topic {topic}");
+        _logger.LogInformation($"Handling WebSocket session {sessionId} with topic {topic} and historical setting {historical}");
         _sockets.TryAdd(sessionId, webSocket);
-        SubscribeSessionToTopic(topic, sessionId);
+
+        _subscriptions.AddOrUpdate(topic, new List<(string, bool)> { (sessionId, historical) }, (key, existing) =>
+        {
+            // Remove existing subscription with the same sessionId but different historical flag
+            var oppositeSubscription = existing.FirstOrDefault(sub => sub.sessionId == sessionId && sub.historical != historical);
+            if (oppositeSubscription != default)
+            {
+                existing.Remove(oppositeSubscription);
+            }
+
+            // Add new subscription if it does not already exist
+            if (!existing.Any(sub => sub.sessionId == sessionId && sub.historical == historical))
+            {
+                existing.Add((sessionId, historical));
+            }
+            return existing;
+        });
 
         var buffer = new byte[1024 * 4];
         WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
@@ -74,10 +68,5 @@ public class AppWebSocketManager : IAppWebSocketManager
 
         _sockets.TryRemove(sessionId, out _);
         await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
-    }
-
-    public List<string> GetTopicSubscribers(string topic)
-    {
-        return _subscriptions.TryGetValue(topic, out var sessionIds) ? sessionIds : [];
     }
 }

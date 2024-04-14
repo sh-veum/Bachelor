@@ -37,7 +37,7 @@ const accessKeySensorId = ref<string>('')
 const kafkaErrorMessage = ref<string | null>(null)
 const waterQualityLogs = ref<WaterQualityLog[]>([])
 const boatLocationLogs = ref<BoatLocationLog[]>([])
-const selectedSortOrder = ref('live')
+const selectedView = ref('live')
 const currentPage = ref(1)
 const itemsPerPage = 10
 const selectedTopic = ref('')
@@ -55,7 +55,8 @@ const totalItems = computed(
     (selectedTopicType.value === 'waterQuality' ? waterQualityLogs : boatLocationLogs).value.length
 )
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage))
-const isLive = computed(() => selectedSortOrder.value === 'live')
+const isLive = computed(() => selectedView.value === 'live')
+const isHistorical = computed(() => selectedView.value === 'historical')
 
 const paginatedWaterQualityLogs = computed(() => {
   if (selectedTopicType.value !== 'waterQuality') return []
@@ -76,9 +77,15 @@ const processLogs = (logs: any, sortOrder: string) => {
       ...log,
       timeStamp: new Date(log.timeStamp).toISOString().replace(/T/, ' ').replace(/\..+/, '')
     }))
-    .sort((a: any, b: any) =>
-      sortOrder === 'newest' ? new Date(b.timeStamp).getTime() - new Date(a.timeStamp).getTime() : 0
-    )
+    .sort((a: any, b: any) => {
+      if (sortOrder === 'newest-rest') {
+        return new Date(b.timeStamp).getTime() - new Date(a.timeStamp).getTime()
+      } else if (sortOrder === 'oldest-rest') {
+        return new Date(a.timeStamp).getTime() - new Date(b.timeStamp).getTime()
+      } else {
+        return 0
+      }
+    })
 }
 
 const fetchData = async (sortOrder: string) => {
@@ -96,16 +103,18 @@ const fetchData = async (sortOrder: string) => {
   }
 }
 
-const startStopLiveFeed = (start = true) => {
+const startStopLiveFeed = (start = true, historical = false) => {
   const topic = `${selectedTopic.value}-${accessKeySensorId.value}`
-  console.log('topic: ', topic)
+  console.log(`Starting live feed for topic: ${topic}, historical: ${historical}`)
   if (start) {
     if (!WebSocketService.isConnected()) {
-      WebSocketService.connect(topic)
+      console.log('Connecting to topic:', topic, historical)
+      WebSocketService.connect(topic, historical)
     } else {
-      WebSocketService.updateTopic(topic)
+      console.log('Updating topic:', topic, historical)
+      WebSocketService.updateTopic(topic, historical)
     }
-    WebSocketService.subscribe(topic, updateResponseData)
+    WebSocketService.setHandler(updateResponseData)
   } else {
     WebSocketService.disconnect()
   }
@@ -189,15 +198,40 @@ const clearLogs = () => {
   boatLocationLogs.value = []
 }
 
+const getHistoricalData = async () => {
+  console.log('Getting historical data...')
+
+  clearLogs()
+
+  if (selectedTopicType.value === '') return
+
+  try {
+    const sessionId = WebSocketService.sessionId
+
+    await axios.post(
+      `http://localhost:8088/api/kafka/historical?SessionId=${encodeURIComponent(sessionId)}&SensorType=${encodeURIComponent(selectedTopicType.value ?? '')}`,
+      {
+        encryptedKey: accessKey.value
+      }
+    )
+  } catch (error) {
+    console.error('Failed to get historical data status:', error)
+  }
+}
+
 watch(
-  selectedSortOrder,
+  selectedView,
   (newSortOrder) => {
     waterQualityLogs.value = []
     boatLocationLogs.value = []
+
     if (newSortOrder === 'live') {
-      startStopLiveFeed(true)
+      startStopLiveFeed(true, false)
+    } else if (newSortOrder === 'historical') {
+      startStopLiveFeed(true, true)
+      getHistoricalData()
     } else {
-      startStopLiveFeed(false)
+      startStopLiveFeed(false, false)
       fetchData(newSortOrder)
     }
   },
@@ -209,16 +243,14 @@ watch(
   (newTopic, oldTopic) => {
     if (newTopic && newTopic !== oldTopic) {
       startStopLiveFeed(false)
-      selectedSortOrder.value === 'live'
-        ? startStopLiveFeed(true)
-        : fetchData(selectedSortOrder.value)
+      selectedView.value === 'live' ? startStopLiveFeed(true) : fetchData(selectedView.value)
     }
   },
   { immediate: true }
 )
 
 onMounted(() => {
-  fetchData(selectedSortOrder.value)
+  fetchData(selectedView.value)
   fetchTopics()
 })
 
@@ -246,96 +278,100 @@ onBeforeUnmount(() => {
           </SelectGroup>
         </SelectContent>
       </Select>
-      <div class="flex justify-between items-center my-2">
-        <div class="flex justify-center items-center gap-4">
-          <TheWaterQualitySensorButton
-            v-if="
-              selectedTopic === 'water-quality-updates' || selectedTopic === 'boat-location-updates'
-            "
-            @water-logs-updated="handleWaterQualityLogsUpdated"
-            @boat-logs-updated="handleBoatLocationLogsUpdated"
-            @clear-logs="clearLogs"
-            :isLive="isLive"
-            :selectedTopicType="selectedTopicType"
-            :accessKey="accessKey"
+      <div v-if="selectedTopic">
+        <div class="flex justify-between items-center my-2">
+          <div class="flex justify-center items-center gap-4">
+            <TheWaterQualitySensorButton
+              v-if="
+                selectedTopic === 'water-quality-updates' ||
+                selectedTopic === 'boat-location-updates'
+              "
+              @water-logs-updated="handleWaterQualityLogsUpdated"
+              @boat-logs-updated="handleBoatLocationLogsUpdated"
+              @clear-logs="clearLogs"
+              :isLive="isLive"
+              :selectedTopicType="selectedTopicType"
+              :accessKey="accessKey"
+            />
+          </div>
+          <div class="w-[250px]">
+            <Select v-model="selectedView">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="live">Live Feed (Kafka)</SelectItem>
+                  <SelectItem value="historical">Historical Feed (Kafka)</SelectItem>
+                  <SelectItem
+                    v-if="
+                      selectedTopic === 'water-quality-updates' ||
+                      selectedTopic === 'boat-location-updates'
+                    "
+                    value="oldest-rest"
+                    >Oldest Values (REST)</SelectItem
+                  >
+                  <SelectItem
+                    v-if="
+                      selectedTopic === 'water-quality-updates' ||
+                      selectedTopic === 'boat-location-updates'
+                    "
+                    value="newest-rest"
+                    >Newest Values (REST)</SelectItem
+                  >
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div>
+          <TheWaterQualityLogTable
+            :paginatedWaterQualityLogs="paginatedWaterQualityLogs"
+            :showIdColumn="!(isLive || isHistorical)"
+            v-if="selectedTopic === 'water-quality-updates'"
           />
+          <TheBoatLocationLogTable
+            :paginatedBoatLocationLogs="paginatedBoatLocationLogs"
+            :showIdColumn="!(isLive || isHistorical)"
+            v-else-if="selectedTopic === 'boat-location-updates'"
+          />
+          <TextArea v-else placeholder="No implemented topic selected" v-model="responseData" />
         </div>
-        <div class="w-[250px]">
-          <Select v-model="selectedSortOrder">
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem
-                  v-if="
-                    selectedTopic === 'water-quality-updates' ||
-                    selectedTopic === 'boat-location-updates'
-                  "
-                  value="oldest"
-                  >Oldest Values (REST)</SelectItem
+
+        <div class="mt-2">
+          <Pagination
+            v-slot="{ page }"
+            :total="totalPages * 10"
+            :sibling-count="1"
+            show-edges
+            v-model:page="currentPage"
+          >
+            <PaginationList v-slot="{ items }" class="flex items-center gap-1">
+              <PaginationFirst />
+              <PaginationPrev />
+
+              <template v-for="(item, index) in items">
+                <PaginationListItem
+                  v-if="item.type === 'page'"
+                  :key="index"
+                  :value="item.value"
+                  as-child
                 >
-                <SelectItem
-                  v-if="
-                    selectedTopic === 'water-quality-updates' ||
-                    selectedTopic === 'boat-location-updates'
-                  "
-                  value="newest"
-                  >Newest Values (REST)</SelectItem
-                >
-                <SelectItem value="live">Live Feed</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+                  <Button
+                    class="w-10 h-10 p-0"
+                    :variant="item.value === page ? 'default' : 'outline'"
+                  >
+                    {{ item.value }}
+                  </Button>
+                </PaginationListItem>
+                <PaginationEllipsis v-else :key="item.type" :index="index" />
+              </template>
+
+              <PaginationNext />
+              <PaginationLast />
+            </PaginationList>
+          </Pagination>
         </div>
-      </div>
-      <div>
-        <TheWaterQualityLogTable
-          :paginatedWaterQualityLogs="paginatedWaterQualityLogs"
-          :showIdColumn="!isLive"
-          v-if="selectedTopic === 'water-quality-updates'"
-        />
-        <TheBoatLocationLogTable
-          :paginatedBoatLocationLogs="paginatedBoatLocationLogs"
-          :showIdColumn="!isLive"
-          v-else-if="selectedTopic === 'boat-location-updates'"
-        />
-        <TextArea v-else placeholder="No implemented topic selected" v-model="responseData" />
-      </div>
-
-      <div class="mt-2">
-        <Pagination
-          v-slot="{ page }"
-          :total="totalPages * 10"
-          :sibling-count="1"
-          show-edges
-          v-model:page="currentPage"
-        >
-          <PaginationList v-slot="{ items }" class="flex items-center gap-1">
-            <PaginationFirst />
-            <PaginationPrev />
-
-            <template v-for="(item, index) in items">
-              <PaginationListItem
-                v-if="item.type === 'page'"
-                :key="index"
-                :value="item.value"
-                as-child
-              >
-                <Button
-                  class="w-10 h-10 p-0"
-                  :variant="item.value === page ? 'default' : 'outline'"
-                >
-                  {{ item.value }}
-                </Button>
-              </PaginationListItem>
-              <PaginationEllipsis v-else :key="item.type" :index="index" />
-            </template>
-
-            <PaginationNext />
-            <PaginationLast />
-          </PaginationList>
-        </Pagination>
       </div>
     </div>
   </div>

@@ -24,9 +24,9 @@ public class BoatLocationMessageHandler : IMessageHandler, IDisposable
         _topic = "";
 
         _flushTimer = new Timer(async _ => await FlushMessagesAsync(),
-                                                 null,
-                                                 TimeSpan.Zero,
-                                                 TimeSpan.FromSeconds(10));
+                                null,
+                                TimeSpan.Zero,
+                                TimeSpan.FromSeconds(10));
     }
 
     public Task HandleMessage(string message, string topic, long offset)

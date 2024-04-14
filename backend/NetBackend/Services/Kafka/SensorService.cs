@@ -1,16 +1,16 @@
 using NetBackend.Constants;
 using NetBackend.Models.Enums;
-using NetBackend.Services.Interfaces;
+using NetBackend.Services.Interfaces.Kafka;
 
-namespace NetBackend.Services;
+namespace NetBackend.Services.Kafka;
 
 public class SensorService : ISensorService
 {
     private readonly ILogger<SensorService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ISensorConsumerService _sensorConsumerService;
+    private readonly IKafkaConsumerService _sensorConsumerService;
 
-    public SensorService(ILogger<SensorService> logger, IHttpClientFactory httpClientFactory, ISensorConsumerService sensorConsumerService)
+    public SensorService(ILogger<SensorService> logger, IHttpClientFactory httpClientFactory, IKafkaConsumerService sensorConsumerService)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
@@ -34,13 +34,13 @@ public class SensorService : ISensorService
             {
                 newTopic = $"{KafkaConstants.WaterQualityLogTopic}-{sensorId}";
 
-                await _sensorConsumerService.SubscribeToTopicAsync(newTopic, SensorType.waterQuality, sendHistoricalData, currentSessionId);
+                _sensorConsumerService.SubscribeToTopic(newTopic, SensorType.waterQuality);
             }
             else if (sensorType == SensorType.boat)
             {
                 newTopic = $"{KafkaConstants.BoatLogTopic}-{sensorId}";
 
-                await _sensorConsumerService.SubscribeToTopicAsync(newTopic, SensorType.boat, sendHistoricalData, currentSessionId);
+                _sensorConsumerService.SubscribeToTopic(newTopic, SensorType.boat);
             }
 
             return (true, responseMessage);

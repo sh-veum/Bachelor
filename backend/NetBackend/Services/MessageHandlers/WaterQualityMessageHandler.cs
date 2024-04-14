@@ -42,8 +42,6 @@ public class WaterQualityMessageHandler : IMessageHandler, IDisposable
             var turbidityStr = ExtractionTools.ExtractValue(message, "Turbidity:", "NTU");
             var temperatureStr = ExtractionTools.ExtractValue(message, "Temperature:", "C");
 
-            // _logger.LogInformation($"Extracted values BEFORE tryParse: Timestamp: {timestampStr}, pH: {phStr}, Turbidity: {turbidityStr}, Temperature: {temperatureStr}");
-
             if (!DateTimeOffset.TryParse(timestampStr, out var timestamp))
             {
                 _logger.LogError($"Failed to parse timestamp: {timestampStr}");

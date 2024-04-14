@@ -6,6 +6,7 @@ using NetBackend.Constants;
 using NetBackend.Models;
 using NetBackend.Models.Dto;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Interfaces.Kafka;
 using NetBackend.Services.Interfaces.Keys;
 
 namespace NetBackend.Controllers;

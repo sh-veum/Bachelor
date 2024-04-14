@@ -4,7 +4,6 @@ namespace NetBackend.Services.Interfaces;
 
 public interface IAppWebSocketManager
 {
-    Task SendMessageAsync(string message, IEnumerable<string> sessionIds);
-    Task HandleWebSocketAsync(WebSocket webSocket, string topic, string sessionId);
-    List<string> GetTopicSubscribers(string topic);
+    Task SendMessageAsync(string message, string topic, string? currentSessionId = null);
+    Task HandleWebSocketAsync(WebSocket webSocket, string topic, string sessionId, bool historical);
 }

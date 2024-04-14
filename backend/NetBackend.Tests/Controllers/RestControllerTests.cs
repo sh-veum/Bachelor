@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using NetBackend.Models.Dto.Keys;
 using Netbackend.Models.Dto.Keys;
 using NetBackend.Models.Keys;
+using NetBackend.Services.Interfaces.Kafka;
 
 namespace NetBackend.Tests.Controllers
 {

@@ -4,9 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Netbackend.Models.Dto.Keys;
 using NetBackend.Constants;
 using NetBackend.Models;
-using NetBackend.Models.Dto;
+using NetBackend.Models.Dto.Keys;
 using NetBackend.Models.Enums;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Interfaces.Kafka;
 using NetBackend.Services.Interfaces.Keys;
 
 namespace NetBackend.Controllers;
@@ -38,9 +39,9 @@ public class SensorController : ControllerBase
 
         string userId = userIdResult.UserId!;
 
-        _logger.LogInformation("Starting {SensorType} sensor for user {UserId}", sensorType, userId);
-        _logger.LogInformation("SendHistoricalData: {SendHistoricalData}", request.SendHistoricalData);
-        _logger.LogInformation("SessionId: {SessionId}", request.SessionId);
+        // _logger.LogInformation("Starting {SensorType} sensor for user {UserId}", sensorType, userId);
+        // _logger.LogInformation("SendHistoricalData: {SendHistoricalData}", request.SendHistoricalData);
+        // _logger.LogInformation("SessionId: {SessionId}", request.SessionId);
 
         var (success, message) = await _sensorService.StartSensorAsync(userId, sensorType, request.SendHistoricalData, request.SessionId);
         return success ? Ok(message) : BadRequest(message);

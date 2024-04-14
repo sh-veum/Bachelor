@@ -2,9 +2,6 @@
 import { ref, toRef, watch, onMounted } from 'vue'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
-import { userId } from '@/lib/useAuth'
-import Switch from '@/components/ui/switch/Switch.vue'
-import Label from '@/components/ui/label/Label.vue'
 import WebSocketService from '@/lib/WebSocketService'
 
 interface Sensor {
@@ -17,12 +14,10 @@ const isLoading = ref(true)
 const fetchAllData = ref(false)
 
 const props = defineProps({
-  isLive: Boolean,
   selectedTopicType: String,
   accessKey: String
 })
 
-const isLive = toRef(props, 'isLive')
 const selectedTopicType = toRef(props, 'selectedTopicType')
 const accessKey = toRef(props, 'accessKey')
 
@@ -35,11 +30,15 @@ const checkSensorStatus = async () => {
       `http://localhost:8088/api/sensor/${selectedTopicType.value}/activeSensors`,
       { encryptedKey: accessKey.value }
     )
+
     const sensors = response.data
     // Check if any of the sensors' IDs match the userId
-    sensorRunning.value = sensors.some(
-      (sensor: Sensor) => sensor.sensorId === userId.value && sensor.active
-    )
+    // TODO: Get topic id and match with sensor id?
+    sensorRunning.value = sensors.some((sensor: Sensor) => sensor.active)
+
+    if (sensors.length === 0) {
+      sensorRunning.value = false
+    }
   } catch (error) {
     console.error('Failed to fetch sensor status:', error)
   } finally {
@@ -92,10 +91,6 @@ const toggleSensor = async () => {
 
 const emit = defineEmits(['water-logs-updated', 'boat-logs-updated', 'clear-logs'])
 
-const handleSwitchChange = (value: boolean) => {
-  fetchAllData.value = value
-}
-
 watch(selectedTopicType, () => {
   checkSensorStatus()
 })
@@ -114,14 +109,5 @@ onMounted(() => {
     >
       {{ isLoading ? 'Loading...' : sensorRunning ? 'Stop Sensor' : 'Start Sensor' }}
     </Button>
-    <div class="flex justify-center items-center gap-2">
-      <Switch
-        :checked="fetchAllData"
-        @update:checked="handleSwitchChange"
-        :disabled="!isLive"
-        id="fetchAllData"
-      />
-      <Label for="fetchAllData" class="text-sm w-max">Fetch all data</Label>
-    </div>
   </div>
 </template>

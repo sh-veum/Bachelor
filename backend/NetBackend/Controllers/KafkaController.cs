@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Netbackend.Models.Dto.Keys;
 using NetBackend.Constants;
 using NetBackend.Models.Dto.Keys;
+using NetBackend.Models.Enums;
 using NetBackend.Models.Keys;
 using NetBackend.Services.Interfaces;
+using NetBackend.Services.Interfaces.Kafka;
 using NetBackend.Services.Interfaces.Keys;
 using NetBackend.Tools;
 
@@ -19,14 +21,16 @@ public class KafkaController : ControllerBase
     private readonly IUserService _userService;
     private readonly IKafkaProducerService _kafkaProducerService;
     private readonly IKafkaConsumerService _kafkaConsumerService;
+    private readonly IKafkaService _kafkaService;
 
-    public KafkaController(ILogger<KafkaController> logger, IKafkaKeyService kafkaKeyService, IUserService userService, IKafkaProducerService kafkaProducerService, IKafkaConsumerService kafkaConsumerService)
+    public KafkaController(ILogger<KafkaController> logger, IKafkaKeyService kafkaKeyService, IUserService userService, IKafkaProducerService kafkaProducerService, IKafkaConsumerService kafkaConsumerService, IKafkaService kafkaService)
     {
         _logger = logger;
         _kafkaKeyService = kafkaKeyService;
         _userService = userService;
         _kafkaProducerService = kafkaProducerService;
         _kafkaConsumerService = kafkaConsumerService;
+        _kafkaService = kafkaService;
     }
 
     [HttpPost("create-accesskey")]
@@ -265,7 +269,7 @@ public class KafkaController : ControllerBase
             foreach (var baseTopic in topics)
             {
                 var userSpecificTopic = $"{baseTopic}-{kafkaKey.UserId}";
-                _kafkaConsumerService.SubscribeToTopic(userSpecificTopic);
+                _kafkaConsumerService.SubscribeToTopic(userSpecificTopic, SensorType.none);
             }
 
             return Ok("User topics updated successfully.");
@@ -277,11 +281,35 @@ public class KafkaController : ControllerBase
         }
     }
 
-    [HttpPatch("get-subscribed-topics")]
-    [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
-    public List<string> GetSubscribedTopics()
+    [HttpPost("historical")]
+    public async Task<IActionResult> GetHistoricalData([FromQuery] KafkaHistoricalRequestDto request, [FromBody] AccessKeyDto? accessKey)
     {
-        return _kafkaConsumerService.GetSubscribedTopics();
+        string userId = string.Empty;
+
+        if (accessKey != null)
+        {
+            var userIdResult = await ResolveUserId(accessKey?.EncryptedKey);
+            if (userIdResult.Error != null)
+            {
+                return userIdResult.Error;
+            }
+            userId = userIdResult.UserId!;
+        }
+        else
+        {
+            var userResult = await _userService.GetUserByHttpContextAsync(HttpContext);
+            var user = userResult.user;
+            userId = user.Id ?? throw new InvalidOperationException("User ID is null.");
+        }
+
+        if (request.SessionId == null)
+        {
+            return BadRequest("Session ID is null.");
+        }
+
+        var (success, message) = await _kafkaService.StartHistoricalConsumer(userId, request.SensorType ?? SensorType.none, request.SessionId);
+
+        return success ? Ok(message) : BadRequest(message);
     }
 
     private async Task<IApiKey> DecryptAndValidateApiKey(string encryptedKey, string userId)
@@ -298,5 +326,34 @@ public class KafkaController : ControllerBase
         }
 
         return apiKey;
+    }
+
+    private async Task<(string? UserId, IActionResult? Error)> ResolveUserId(string? encryptedKey)
+    {
+        try
+        {
+            _logger.LogInformation("Resolving user ID.");
+            _logger.LogInformation("Encrypted key: {EncryptedKey}", encryptedKey);
+            if (encryptedKey != null)
+            {
+                var (validationActionResult, kafkaKey) = await _kafkaKeyService.ValidateKafkaAccessKey(encryptedKey);
+                if (validationActionResult != null) return (null, validationActionResult);
+
+                if (kafkaKey?.UserId == null) return (null, BadRequest("User ID is null."));
+                return (kafkaKey.UserId, null);
+            }
+            else
+            {
+                var (user, error) = await _userService.GetUserByHttpContextAsync(HttpContext);
+                if (error != null) return (null, error);
+                if (user.Id == null) return (null, BadRequest("User ID is null."));
+                return (user.Id, null);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while resolving user ID.");
+            return (null, BadRequest(ex.Message));
+        }
     }
 }
