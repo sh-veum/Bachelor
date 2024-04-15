@@ -17,7 +17,8 @@ const handleLogin = async () => {
   await login(email.value, password.value).then(() => {
     if (isLoggedIn.value) {
       toast({
-        description: 'Logged in successfully!'
+        description: 'Logged in successfully!',
+        variant: 'success'
       })
     }
   })
