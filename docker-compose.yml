@@ -148,13 +148,13 @@ services:
 
   mock-sensors:
     image: docker.io/library/mocksensors
-    container_name: mock-sensors
+    container_name: mockSensors
     depends_on:
       - kafka
     networks:
       - dev
     build:
-      context: ./kafka/MockSensors/
+      context: ./backend/NetBackend.MockSensors/
       dockerfile: Dockerfile
     ports:
       - "8089:80"

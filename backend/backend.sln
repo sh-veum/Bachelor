@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetBackend", "NetBackend\Ne
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetBackend.Tests", "NetBackend.Tests\NetBackend.Tests.csproj", "{C9A0142A-2664-4EB6-BBFF-40FF4966FC54}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetBackend.MockSensors", "NetBackend.MockSensors\NetBackend.MockSensors.csproj", "{870593BA-B43E-4B14-8426-51264596A2E9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{C9A0142A-2664-4EB6-BBFF-40FF4966FC54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9A0142A-2664-4EB6-BBFF-40FF4966FC54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9A0142A-2664-4EB6-BBFF-40FF4966FC54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{870593BA-B43E-4B14-8426-51264596A2E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{870593BA-B43E-4B14-8426-51264596A2E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{870593BA-B43E-4B14-8426-51264596A2E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{870593BA-B43E-4B14-8426-51264596A2E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
