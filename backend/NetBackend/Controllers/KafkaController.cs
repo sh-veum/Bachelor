@@ -199,6 +199,7 @@ public class KafkaController : ControllerBase
     }
 
     [HttpGet("get-available-topics")]
+    [Authorize]
     [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
     public IActionResult GetAvailableTopics()
     {
