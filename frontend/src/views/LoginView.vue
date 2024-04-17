@@ -28,11 +28,6 @@ const handleLogin = async () => {
 const handleLogout = async () => {
   logout()
 }
-
-const printEnvVariables = () => {
-  console.log('API URL:', import.meta.env.VITE_VUE_APP_API_URL)
-  console.log('WebSocket URL:', import.meta.env.VITE_VUE_APP_API_WEBSOCKET_URL)
-}
 </script>
 
 <template>
@@ -67,7 +62,6 @@ const printEnvVariables = () => {
         >
       </div>
     </div>
-    <Button @click="printEnvVariables" class="w-full mt-4">Print Env Variables</Button>
   </div>
 </template>
 
