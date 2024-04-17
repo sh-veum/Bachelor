@@ -117,9 +117,9 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:80
 
-  vuebackend:
+  vuefrontend:
     image: docker.io/library/mocksensors
-    container_name: vuebackend
+    container_name: vuefrontend
     build:
       context: ./frontend/
       dockerfile: Dockerfile
@@ -139,7 +139,7 @@ services:
     ports:
       - 81:81
     depends_on:
-      - vuebackend
+      - vuefrontend
     networks:
       - dev
 
