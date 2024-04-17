@@ -187,8 +187,8 @@ app.UseMiddleware<GraphQLRequestLoggingMiddleware>();
 app.MapIdentityApi<UserModel>();
 
 // Apllying CORS policy
-app.UseCors("AllowSpecificOrigin");
-// app.UseCors("AllowAnyOrigin"); // For Development
+// app.UseCors("AllowSpecificOrigin");
+app.UseCors("AllowAnyOrigin"); // For Development
 
 app.UseRouting();
 
