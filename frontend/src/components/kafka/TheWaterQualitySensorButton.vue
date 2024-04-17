@@ -27,7 +27,7 @@ const checkSensorStatus = async () => {
 
   try {
     const response = await axios.post(
-      `http://localhost:8088/api/sensor/${selectedTopicType.value}/activeSensors`,
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/sensor/${selectedTopicType.value}/activeSensors`,
       { encryptedKey: accessKey.value }
     )
 
@@ -61,7 +61,7 @@ const toggleSensor = async () => {
   const sessionId = WebSocketService.sessionId
 
   // Determine the appropriate URL and payload based on the sensor's current state
-  let url = `http://localhost:8088/api/sensor/${selectedTopicType.value}/`
+  let url = `${import.meta.env.VITE_VUE_APP_API_URL}/api/sensor/${selectedTopicType.value}/`
   if (sensorRunning.value) {
     url += 'stopSensor'
     data = {

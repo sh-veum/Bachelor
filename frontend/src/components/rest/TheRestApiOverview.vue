@@ -41,9 +41,12 @@ const fetchThemes = async (accessKey: string) => {
     /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/g.test(accessKey)
   ) {
     try {
-      const response = await axios.post('http://localhost:8088/api/rest/accesskey-themes', {
-        encryptedKey: accessKey
-      })
+      const response = await axios.post(
+        `${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/accesskey-themes`,
+        {
+          encryptedKey: accessKey
+        }
+      )
       themes.value = response.data
     } catch (error) {
       console.error('Failed to fetch data:', error)
@@ -66,7 +69,7 @@ watch(
 const testApiEndpointWithAccessKey = async (endpoint: Endpoint) => {
   try {
     let response
-    const url = `http://localhost:8088${endpoint.path}`
+    const url = `${import.meta.env.VITE_VUE_APP_API_URL}${endpoint.path}`
     const body = {
       encryptedKey: props.accessKey
     }

@@ -79,10 +79,13 @@ const createAccessKey = async (keyName: string, themes: Theme[]) => {
   console.log('Creating access key:', keyName, themes)
 
   try {
-    const response = await axios.post('http://localhost:8088/api/rest/create-accesskey', {
-      keyName: keyName,
-      themeIds: themes.map((theme) => theme.id)
-    })
+    const response = await axios.post(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/create-accesskey`,
+      {
+        keyName: keyName,
+        themeIds: themes.map((theme) => theme.id)
+      }
+    )
     console.log('Access key created:', response.data)
     encryptedKey.value = response.data.encryptedKey
     copyIsOpen.value = true
@@ -95,7 +98,7 @@ const createAccessKey = async (keyName: string, themes: Theme[]) => {
 const deleteAccessKey = async (id: string) => {
   try {
     await axios
-      .delete(`http://localhost:8088/api/rest/delete-accesskey?id=${id}`, {})
+      .delete(`${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/delete-accesskey?id=${id}`, {})
       .then((response) => {
         // update the list of keys in frontend
         console.log('Key deleted:', response)
@@ -112,7 +115,9 @@ const deleteAccessKey = async (id: string) => {
 const fetchKeys = async () => {
   try {
     //TODO: should the url be more dynamic?
-    const keysResponse = await axios.get('http://localhost:8088/api/rest/get-keys-by-user')
+    const keysResponse = await axios.get(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/get-keys-by-user`
+    )
     keys.value = keysResponse.data
   } catch (error) {
     console.error('Failed to fetch keys:', error)
@@ -122,7 +127,9 @@ const fetchKeys = async () => {
 const fetchThemes = async () => {
   try {
     //TODO: should the url be more dynamic?
-    const themesResponse = await axios.get('http://localhost:8088/api/rest/get-themes-by-user')
+    const themesResponse = await axios.get(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/get-themes-by-user`
+    )
     themes.value = themesResponse.data
   } catch (error) {
     console.error('Failed to fetch themes:', error)
@@ -131,7 +138,7 @@ const fetchThemes = async () => {
 
 const toggleKeyEnabledStatus = async (id: string, isEnabled: boolean) => {
   try {
-    await axios.patch('http://localhost:8088/api/rest/toggle-apikey', {
+    await axios.patch(`${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/toggle-apikey`, {
       id: id,
       keyType: 'rest',
       isEnabled: isEnabled

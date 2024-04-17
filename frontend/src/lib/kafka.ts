@@ -32,10 +32,13 @@ export interface KafkaTopicAndId {
 
 export const createKafkaKey = async (keyName: string, topics: string[]) => {
   try {
-    const response = await axios.post('http://localhost:8088/api/kafka/create-accesskey', {
-      keyName,
-      topics
-    })
+    const response = await axios.post(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/kafka/create-accesskey`,
+      {
+        keyName,
+        topics
+      }
+    )
     return response.data
   } catch (error) {
     console.error('Failed to create kafka key:', error)
@@ -44,7 +47,9 @@ export const createKafkaKey = async (keyName: string, topics: string[]) => {
 
 export const fetchKafkaKeys = async () => {
   try {
-    const keysResponse = await axios.get('http://localhost:8088/api/kafka/get-keys-by-user')
+    const keysResponse = await axios.get(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/kafka/get-keys-by-user`
+    )
     return keysResponse.data
   } catch (error) {
     console.error('Failed to fetch keys:', error)
@@ -54,7 +59,7 @@ export const fetchKafkaKeys = async () => {
 export const deleteKafkaKey = async (id: string) => {
   try {
     const keysResponse = await axios.delete(
-      `http://localhost:8088/api/kafka/delete-accesskey?id=${id}`,
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/kafka/delete-accesskey?id=${id}`,
       {}
     )
     return keysResponse.status
@@ -65,11 +70,14 @@ export const deleteKafkaKey = async (id: string) => {
 
 export const toggleKafkaKeyEnabledStatus = async (id: string, isEnabled: boolean) => {
   try {
-    const response = await axios.patch('http://localhost:8088/api/kafka/toggle-key', {
-      id: id,
-      isEnabled: isEnabled,
-      keyType: 'kafka'
-    })
+    const response = await axios.patch(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/kafka/toggle-key`,
+      {
+        id: id,
+        isEnabled: isEnabled,
+        keyType: 'kafka'
+      }
+    )
 
     return response.status
   } catch (error) {
@@ -79,7 +87,9 @@ export const toggleKafkaKeyEnabledStatus = async (id: string, isEnabled: boolean
 
 export const getAvailableKafkatopics = async () => {
   try {
-    const response = await axios.get('http://localhost:8088/api/kafka/get-available-topics')
+    const response = await axios.get(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/kafka/get-available-topics`
+    )
     return response.data
   } catch (error) {
     console.error('Error fetching available topics:', error)
@@ -94,9 +104,12 @@ export const fetchKafkaKeyTopics = async (
     /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/g.test(accessKey)
   ) {
     try {
-      const response = await axios.post('http://localhost:8088/api/kafka/accesskey-kafka-topics', {
-        encryptedKey: accessKey
-      })
+      const response = await axios.post(
+        `${import.meta.env.VITE_VUE_APP_API_URL}/api/kafka/accesskey-kafka-topics`,
+        {
+          encryptedKey: accessKey
+        }
+      )
       return response.data as KafkaTopicAndId
     } catch (error: any) {
       if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -116,9 +129,12 @@ export const subscribeToAllTopics = async (accessKey: string): Promise<void> => 
     /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/g.test(accessKey)
   ) {
     try {
-      const response = await axios.patch('http://localhost:8088/api/kafka/subscribe-to-topics', {
-        encryptedKey: accessKey
-      })
+      const response = await axios.patch(
+        `${import.meta.env.VITE_VUE_APP_API_URL}/api/kafka/subscribe-to-topics`,
+        {
+          encryptedKey: accessKey
+        }
+      )
       console.log('Message: ' + response.data.message)
     } catch (error) {
       console.error('Failed to subscribe to all topics:', error)

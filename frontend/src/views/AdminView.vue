@@ -42,15 +42,17 @@ const roles = ref<string[]>([])
 // Fetch all users, databases, and roles
 const fetchData = async () => {
   try {
-    const usersResponse = await axios.get('http://localhost:8088/api/user/get-all-users')
+    const usersResponse = await axios.get(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/user/get-all-users`
+    )
     users.value = usersResponse.data.map((user: User) => ({ ...user, isEditing: false }))
 
     const databasesResponse = await axios.get(
-      'http://localhost:8088/api/database/get-database-names'
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/database/get-database-names`
     )
     databases.value = databasesResponse.data
 
-    const rolesResponse = await axios.get('http://localhost:8088/api/user/roles')
+    const rolesResponse = await axios.get(`${import.meta.env.VITE_VUE_APP_API_URL}/api/user/roles`)
     roles.value = rolesResponse.data.map((role: any) => role.name)
   } catch (error) {
     console.error('Failed to fetch data:', error)
@@ -69,13 +71,13 @@ const saveChanges = async (user: EditableUser) => {
     console.log('newRole:', user.newRole)
     console.log('role:', user.role)
     if (user.newRole !== user.role) {
-      await axios.post('http://localhost:8088/api/user/change-role', {
+      await axios.post(`${import.meta.env.VITE_VUE_APP_API_URL}/api/user/change-role`, {
         email: user.email,
         role: user.newRole
       })
     }
     if (user.newDatabase !== user.assignedDatabase) {
-      await axios.post('http://localhost:8088/api/user/update-database-name', {
+      await axios.post(`${import.meta.env.VITE_VUE_APP_API_URL}/api/user/update-database-name`, {
         email: user.email,
         database: user.newDatabase
       })

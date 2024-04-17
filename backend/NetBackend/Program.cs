@@ -126,6 +126,13 @@ builder.Services.AddCors(options =>
                                 .AllowAnyHeader()
                                 .AllowAnyMethod();
                       });
+    options.AddPolicy(name: "AllowAnyOrigin",
+                      policy =>
+                      {
+                          policy.AllowAnyOrigin()
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
 });
 
 builder.Services
@@ -181,6 +188,7 @@ app.MapIdentityApi<UserModel>();
 
 // Apllying CORS policy
 app.UseCors("AllowSpecificOrigin");
+// app.UseCors("AllowAnyOrigin"); // For Development
 
 app.UseRouting();
 

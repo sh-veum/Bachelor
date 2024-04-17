@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
-import { ChevronsUpDown, Pencil, PowerOff, SquarePen, Trash, Trash2 } from 'lucide-vue-next'
-import { ChevronsDown } from 'lucide-vue-next'
-import { ChevronsUp } from 'lucide-vue-next'
-import { MoreHorizontal } from 'lucide-vue-next'
+import { Pencil, PowerOff, Trash2 } from 'lucide-vue-next'
 import axios from 'axios'
-import Separator from '../ui/separator/Separator.vue'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import type { UUID } from 'crypto'
 import type { Theme } from '../interfaces/RestSchema'
@@ -26,7 +22,10 @@ const isOpen = ref(true)
 
 const deleteTheme = async (themeId: UUID) => {
   try {
-    await axios.delete(`http://localhost:8088/api/rest/delete-theme?id=${themeId}`, {})
+    await axios.delete(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/delete-theme?id=${themeId}`,
+      {}
+    )
   } catch (error) {
     console.error('Failed to delete theme:', error)
   }
@@ -44,8 +43,8 @@ const handleDeprecate = async (theme: Theme) => {
   // also updates the frontend meaning we do not need to refetch
   theme.isDeprecated = true
   try {
-    //TODO: change backend to be able to use `http://localhost:8088/api/key/update-theme?id=${id}`?
-    await axios.put('http://localhost:8088/api/rest/update-theme', theme)
+    //TODO: change backend to be able to use `${import.meta.env.VITE_VUE_APP_API_URL}/api/key/update-theme?id=${id}`?
+    await axios.put(`${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/update-theme`, theme)
   } catch (error) {
     console.error('Failed to deprecate theme:', error)
   }

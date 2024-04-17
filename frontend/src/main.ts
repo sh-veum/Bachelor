@@ -16,6 +16,7 @@ axios.interceptors.request.use(
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`
     }
+    console.log('Making request to:', config.url)
     return config
   },
   (error) => {
@@ -25,7 +26,7 @@ axios.interceptors.request.use(
 
 // HTTP connection to GraphQL
 const httpLink = createHttpLink({
-  uri: 'http://localhost:8088/graphql/'
+  uri: `${import.meta.env.VITE_VUE_APP_API_URL}/graphql/`
 })
 
 // Middleware for appending the auth token to the headers of GraphQL apollo requests

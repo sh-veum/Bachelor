@@ -20,5 +20,12 @@ export default defineConfig({
       //   '@': fileURLToPath(new URL('./src', import.meta.url))
       '@': path.resolve(__dirname, './src')
     }
+  },
+  server: {
+    host: true,
+    port: 81,
+    watch: {
+      usePolling: true
+    }
   }
 })

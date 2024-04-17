@@ -73,4 +73,4 @@ class WebSocketService {
   }
 }
 
-export default new WebSocketService('ws://localhost:8088/ws')
+export default new WebSocketService(`${import.meta.env.VITE_VUE_APP_API_WEBSOCKET_URL}`)

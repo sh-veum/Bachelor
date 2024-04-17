@@ -9,12 +9,13 @@ const email = ref('')
 const password = ref('')
 const attemptedLogin = ref(false)
 
-const { isLoggedIn, login, logout, isAdmin, loginErrors } = useAuth()
+const { isLoggedIn, login, logout, loginErrors } = useAuth()
 const { toast } = useToast()
 
 const handleLogin = async () => {
   attemptedLogin.value = true
   await login(email.value, password.value).then(() => {
+    // If login is successful, show the toast notification
     if (isLoggedIn.value) {
       toast({
         description: 'Logged in successfully!',
@@ -22,11 +23,15 @@ const handleLogin = async () => {
       })
     }
   })
-  // If login is successful, show the toast notification
 }
 
 const handleLogout = async () => {
   logout()
+}
+
+const printEnvVariables = () => {
+  console.log('API URL:', import.meta.env.VITE_VUE_APP_API_URL)
+  console.log('WebSocket URL:', import.meta.env.VITE_VUE_APP_API_WEBSOCKET_URL)
 }
 </script>
 
@@ -62,6 +67,7 @@ const handleLogout = async () => {
         >
       </div>
     </div>
+    <Button @click="printEnvVariables" class="w-full mt-4">Print Env Variables</Button>
   </div>
 </template>
 

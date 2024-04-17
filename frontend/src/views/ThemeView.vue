@@ -15,7 +15,9 @@ const isOpen = ref(false)
 const fetchThemes = async () => {
   try {
     //TODO: should the url be more dynamic?
-    const themesResponse = await axios.get('http://localhost:8088/api/rest/get-themes-by-user')
+    const themesResponse = await axios.get(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/get-themes-by-user`
+    )
     themes.value = themesResponse.data
   } catch (error) {
     console.error('Failed to fetch data:', error)

@@ -92,7 +92,7 @@ const fetchData = async (sortOrder: string) => {
   if (!selectedTopicType.value) return
   try {
     const logResponse = await axios.post(
-      `http://localhost:8088/api/sensor/${selectedTopicType.value}/logs`,
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/sensor/${selectedTopicType.value}/logs`,
       { encryptedKey: accessKey.value }
     )
     const logs = processLogs(logResponse.data, sortOrder)
@@ -209,7 +209,7 @@ const getHistoricalData = async () => {
     const sessionId = WebSocketService.sessionId
 
     await axios.post(
-      `http://localhost:8088/api/kafka/historical?SessionId=${encodeURIComponent(sessionId)}&SensorType=${encodeURIComponent(selectedTopicType.value ?? '')}`,
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/kafka/historical?SessionId=${encodeURIComponent(sessionId)}&SensorType=${encodeURIComponent(selectedTopicType.value ?? '')}`,
       {
         encryptedKey: accessKey.value
       }

@@ -28,9 +28,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
-import { ref, onMounted, watch, watchEffect } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
-import type { UUID } from 'crypto'
 import type { Theme } from '../interfaces/RestSchema'
 
 const props = defineProps<{
@@ -46,7 +45,7 @@ const fetchEndpoints = async () => {
   try {
     //TODO: find a way to make the url more dynamic?
     const endpointsResponse = await axios.get(
-      'http://localhost:8088/api/database/get-default-endpoints'
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/database/get-default-endpoints`
     )
     endpoints.value = endpointsResponse.data.map((endpoint: any) => endpoint.path)
   } catch (error) {
@@ -71,7 +70,7 @@ const { handleSubmit, setValues, values } = useForm({
 
 const createTheme = async (values: { name: string; endpoints: string[] }) => {
   try {
-    await axios.post('http://localhost:8088/api/rest/create-theme', {
+    await axios.post(`${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/create-theme`, {
       themeName: values.name,
       accessibleEndpoints: values.endpoints,
       isDeprecated: false
@@ -83,8 +82,8 @@ const createTheme = async (values: { name: string; endpoints: string[] }) => {
 
 const editTheme = async (id: string, values: { name: string; endpoints: string[] }) => {
   try {
-    //TODO: change backend to be able to use `http://localhost:8088/api/key/update-theme?id=${id}`?
-    await axios.put('http://localhost:8088/api/rest/update-theme', {
+    //TODO: change backend to be able to use `${import.meta.env.VITE_VUE_APP_API_URL}/api/key/update-theme?id=${id}`?
+    await axios.put(`${import.meta.env.VITE_VUE_APP_API_URL}/api/rest/update-theme`, {
       id,
       themeName: values.name,
       accessibleEndpoints: values.endpoints,

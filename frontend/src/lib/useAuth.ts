@@ -13,10 +13,12 @@ export function useAuth() {
   const registrationErrors = ref({})
   const loginErrors = ref({})
 
-
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post('http://localhost:8088/login', { email, password })
+      const response = await axios.post(`${import.meta.env.VITE_VUE_APP_API_URL}/login`, {
+        email,
+        password
+      })
       if (response.status === 200) {
         authToken.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken
@@ -26,12 +28,12 @@ export function useAuth() {
         if (refreshToken.value !== null) {
           localStorage.setItem('refreshToken', refreshToken.value)
         }
-        loginErrors.value = {}  // Reset login errors on successful login
+        loginErrors.value = {} // Reset login errors on successful login
         await fetchUserInfo()
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        if (error.response.status === 401) { 
+        if (error.response.status === 401) {
           loginErrors.value = { credentials: ['Email and password do not match.'] }
         } else if (error.response.status === 400) {
           loginErrors.value = error.response.data.errors || {}
@@ -43,7 +45,6 @@ export function useAuth() {
       }
     }
   }
-  
 
   const logout = async () => {
     authToken.value = null
@@ -59,7 +60,10 @@ export function useAuth() {
 
   const register = async (email: string, password: string) => {
     try {
-      const response = await axios.post('http://localhost:8088/register', { email, password })
+      const response = await axios.post(`${import.meta.env.VITE_VUE_APP_API_URL}/register`, {
+        email,
+        password
+      })
       if (response.status === 200) {
         isRegistered.value = true
       }
@@ -76,9 +80,12 @@ export function useAuth() {
   const fetchUserInfo = async () => {
     if (authToken.value) {
       try {
-        const response = await axios.get('http://localhost:8088/api/user/userinfo', {
-          headers: { Authorization: `Bearer ${authToken.value}` }
-        })
+        const response = await axios.get(
+          `${import.meta.env.VITE_VUE_APP_API_URL}/api/user/userinfo`,
+          {
+            headers: { Authorization: `Bearer ${authToken.value}` }
+          }
+        )
         if (response.status === 200) {
           userId.value = response.data.id
           localStorage.setItem('userId', response.data.id)
@@ -101,7 +108,7 @@ export function useAuth() {
     const localRefreshToken = localStorage.getItem('refreshToken')
     if (localRefreshToken) {
       try {
-        const response = await axios.post('http://localhost:8088/refresh', {
+        const response = await axios.post(`${import.meta.env.VITE_VUE_APP_API_URL}/refresh`, {
           refreshToken: localRefreshToken
         })
         if (response.status === 200) {
