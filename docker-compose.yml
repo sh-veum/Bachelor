@@ -15,6 +15,9 @@ services:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+    volumes:
+      - ./backend/NetBackend/.containers/zookeeper_data:/var/lib/zookeeper/data
+      - ./backend/NetBackend/.containers/zookeeper_log:/var/lib/zookeeper/log
 
   # reachable on 9092 from the host and on kafka:29092 from inside docker compose
   kafka:
@@ -34,7 +37,11 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
       KAFKA_MIN_INSYNC_REPLICAS: "1"
+    volumes:
+      - ./backend/NetBackend/.containers/kafka-data:/var/lib/kafka/data
 
   netbackend:
     image: docker.io/library/netbackend
