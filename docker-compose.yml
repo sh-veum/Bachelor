@@ -118,13 +118,15 @@ services:
       - ASPNETCORE_URLS=http://+:80
 
   vuefrontend:
-    image: docker.io/library/mocksensors
+    image: docker.io/library/vuefrontend
     container_name: vuefrontend
     build:
       context: ./frontend/
       dockerfile: Dockerfile
     ports:
-      - "8080:81"
+      - "8080:80"
+    depends_on:
+      - nginx
     networks:
       - dev
     environment:
@@ -137,9 +139,7 @@ services:
     volumes:
       - ./frontend/nginx/default.conf:/etc/nginx/conf.d/default.conf
     ports:
-      - 81:81
-    depends_on:
-      - vuefrontend
+      - 80:80
     networks:
       - dev
 
