@@ -16,6 +16,14 @@ RUN npm install
 # Copy the rest of the project files to the container
 COPY . .
 
+# Declare ARGs to receive build-time variables
+ARG VITE_VUE_APP_API_URL
+ARG VITE_VUE_APP_API_WEBSOCKET_URL
+
+# Set the ARGs as environment variables so Vite can use them during build
+ENV VITE_VUE_APP_API_URL=$VITE_VUE_APP_API_URL
+ENV VITE_VUE_APP_API_WEBSOCKET_URL=$VITE_VUE_APP_API_WEBSOCKET_URL
+
 #Build the Vue.js application to the production mode to dist folder
 RUN npm run build
 

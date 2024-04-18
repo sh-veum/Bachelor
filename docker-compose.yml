@@ -123,15 +123,15 @@ services:
     build:
       context: ./frontend/
       dockerfile: Dockerfile
+      args:
+        - VITE_VUE_APP_API_URL=http://localhost:8088
+        - VITE_VUE_APP_API_WEBSOCKET_URL=ws://localhost:8088/ws
     ports:
       - "8080:80"
     depends_on:
       - nginx
     networks:
       - dev
-    environment:
-      - VITE_VUE_APP_API_URL=http://localhost:8088
-      - VITE_VUE_APP_API_WEBSOCKET_URL=ws://localhost:8088/ws
 
   nginx:
     image: nginx:alpine
