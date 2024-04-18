@@ -243,7 +243,8 @@ watch(
   (newTopic, oldTopic) => {
     if (newTopic && newTopic !== oldTopic) {
       startStopLiveFeed(false)
-      selectedView.value === 'live' ? startStopLiveFeed(true) : fetchData(selectedView.value)
+      selectedView.value = 'live'
+      startStopLiveFeed(true)
     }
   },
   { immediate: true }
