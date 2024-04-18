@@ -15,6 +15,7 @@ public class HistoricalConsumerService : BackgroundService, IHistoricalConsumerS
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _configuration;
     private readonly ConcurrentDictionary<string, SensorType> _activeTopics;
+    private readonly ConcurrentDictionary<TopicPartition, Offset> _offsetCache = new();
     private CancellationTokenSource _loopCancellationTokenSource = new();
     private CancellationTokenSource? _stoppingCancellationTokenSource;
     private IConsumer<Ignore, string>? _consumer;
@@ -81,7 +82,8 @@ public class HistoricalConsumerService : BackgroundService, IHistoricalConsumerS
 
                             await SendMessageToWebSocket(consumeResult.Topic, consumeResult.Message.Value, consumeResult.Offset, _currentSessionId);
 
-                            HandleMessage(consumeResult.Message.Value, consumeResult.Topic, consumeResult.Offset);
+                            // Probably redundant since normal consumer will handle this
+                            // HandleMessage(consumeResult.Message.Value, consumeResult.Topic, consumeResult.Offset);
 
                             if (IsLastOffset(consumeResult.Topic, consumeResult.Offset))
                             {
@@ -95,7 +97,7 @@ public class HistoricalConsumerService : BackgroundService, IHistoricalConsumerS
                     catch (ConsumeException ex) when (ex.Error.Reason.Contains("Unknown topic or partition"))
                     {
                         _logger.LogWarning($"Topic not available yet, waiting before retrying. Error: {ex.Message}");
-                        await Task.Delay(TimeSpan.FromSeconds(1)); // Wait for 5 seconds before retrying
+                        await Task.Delay(TimeSpan.FromSeconds(1)); // Wait for 1 second before retrying
                         ResetLoopCancellationToken();
                         continue;
                     }
@@ -231,18 +233,32 @@ public class HistoricalConsumerService : BackgroundService, IHistoricalConsumerS
 
     private bool IsLastOffset(string topic, Offset currentOffset)
     {
-        if (_adminClient != null && _consumer != null)
+        if (_adminClient == null || _consumer == null)
+            return false;
+
+        var metadata = _adminClient.GetMetadata(topic, TimeSpan.FromSeconds(5));
+        bool isLast = false;
+
+        foreach (var partition in metadata.Topics[0].Partitions)
         {
-            var metadata = _adminClient.GetMetadata(topic, TimeSpan.FromSeconds(5));
-            foreach (var partition in metadata.Topics[0].Partitions)
+            var topicPartition = new TopicPartition(topic, new Partition(partition.PartitionId));
+            if (!_offsetCache.TryGetValue(topicPartition, out var cachedOffset) || currentOffset >= cachedOffset - 1)
             {
-                var watermarkOffsets = _consumer.QueryWatermarkOffsets(new TopicPartition(topic, new Partition(partition.PartitionId)), TimeSpan.FromSeconds(5));
-                if (currentOffset == watermarkOffsets.High - 1)
-                {
-                    return true;
-                }
+                // Refresh the cache
+                var watermarkOffsets = _consumer.QueryWatermarkOffsets(topicPartition, TimeSpan.FromSeconds(5));
+                cachedOffset = watermarkOffsets.High;
+                _offsetCache[topicPartition] = cachedOffset;
+
+                _logger.LogInformation($"Updated offset cache for {topicPartition.Topic}-{topicPartition.Partition}: {cachedOffset}");
+            }
+
+            if (currentOffset == cachedOffset - 1)
+            {
+                isLast = true;
+                _logger.LogInformation($"Last offset reached for {topicPartition.Topic}-{topicPartition.Partition}: {currentOffset}");
             }
         }
-        return false;
+
+        return isLast;
     }
 }
