@@ -1,7 +1,9 @@
 import os
 import subprocess
 
-def run_operations(migrations_name=None, folder_path='NetBackend/Data/DbContexts/'):
+def run_operations(migrations_name=None, folder_path='Data/DbContexts/'):
+    os.chdir('NetBackend')
+    
     # Ensure the folder exists
     if not os.path.exists(folder_path):
         print(f"The folder {folder_path} does not exist.")
