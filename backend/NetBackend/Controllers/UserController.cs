@@ -57,6 +57,34 @@ public class UserController : ControllerBase
         }
     }
 
+    [HttpDelete("delete-user-by-email")]
+    [Authorize(Roles = RoleConstants.AdminRole)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeleteUserByEmail([FromQuery] string email)
+    {
+        try
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return NotFound($"User with email {email} not found.");
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                return BadRequest("Failed to delete user.");
+            }
+
+            return Ok($"User with email {email} deleted successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting user.");
+            return BadRequest(ex.Message);
+        }
+    }
+
     [HttpPost("update-database-name")]
     [Authorize(Roles = RoleConstants.AdminRole)]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
