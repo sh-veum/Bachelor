@@ -128,6 +128,7 @@ public class Query
         }
     }
 
+    // TODO: should add [Authorize] equvivalent check?
     public List<ClassInfo> GetAvailableClassTables()
     {
         var classInfos = new List<ClassInfo>();
@@ -145,6 +146,7 @@ public class Query
         return classInfos;
     }
 
+    // TODO: should add [Authorize] equvivalent check?
     public List<List<string>> GetAvailableQueries()
     {
         return [.. GraphQLConstants.AvailableQueries];

@@ -97,6 +97,27 @@ public class KafkaController : ControllerBase
         }
     }
 
+    [HttpDelete("delete-accesskey-by-encryptedkey")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeleteAccessKeyByEncryptedKey([FromBody] AccessKeyDto accessKeyDto)
+    {
+        try
+        {
+            var result = await _kafkaKeyService.RemoveKafkaAccessKey(accessKeyDto.EncryptedKey);
+            if (result == null)
+            {
+                return BadRequest("Failed to delete API key.");
+            }
+
+            return Ok("API key deleted successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting access key.");
+            return BadRequest(ex.Message);
+        }
+    }
+
     [HttpPost("decrypt-accesskey")]
     [Authorize(Roles = RoleConstants.AdminRole)]
     [ProducesResponseType(typeof(KafkaKeyDto), StatusCodes.Status200OK)]

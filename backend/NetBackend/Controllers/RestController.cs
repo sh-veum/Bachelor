@@ -99,6 +99,28 @@ public class RestController : ControllerBase
         }
     }
 
+    [HttpDelete("delete-accesskey-by-encryptedkey")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeleteAccessKeyByEncryptedKey([FromBody] AccessKeyDto accessKeyDto)
+    {
+        try
+        {
+            var result = await _restKeyService.RemoveRestAccessKey(accessKeyDto.EncryptedKey);
+            if (result == null)
+            {
+                return BadRequest("Failed to delete API key.");
+            }
+
+            return Ok("API key deleted successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting access key.");
+            return BadRequest(ex.Message);
+        }
+    }
+
     [HttpPost("accesskey-themes")]
     [ProducesResponseType(typeof(List<RestApiThemeDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetThemeInfo([FromBody] AccessKeyDto accessKeyDto)

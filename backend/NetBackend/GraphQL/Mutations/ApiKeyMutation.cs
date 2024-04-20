@@ -23,6 +23,7 @@ public class ApiKeyMutation
         _kafkaProducerService = kafkaProducerService;
     }
 
+    // TODO: should add [Authorize] equvivalent check?
     public async Task<AccessKeyDto> CreateGraphQLAccessKey(
              [Service] IGraphQLKeyService graphQLKeyService,
              [Service] IUserService userService,
@@ -58,6 +59,7 @@ public class ApiKeyMutation
         };
     }
 
+    // TODO: should add [Authorize] equvivalent check?
     public async Task<ResponseDto> ToggleApiKey(
         [Service] IRestKeyService restKeyService,
         [Service] IGraphQLKeyService graphQLKeyService,
@@ -83,7 +85,7 @@ public class ApiKeyMutation
                     return new ResponseDto { IsSuccess = false, Message = "Invalid key type." };
             }
 
-            var successMessage = keyType == "REST" ? "REST API key status toggled successfully" : "GraphQL API key status toggled successfully";
+            var successMessage = keyType == "rest" ? "REST API key status toggled successfully" : "GraphQL API key status toggled successfully";
 
             return ConvertToResponseDto(result, successMessage);
         }
@@ -115,6 +117,7 @@ public class ApiKeyMutation
         }
     }
 
+    // TODO: should add [Authorize] equvivalent check?
     public async Task<ResponseDto> DeleteGraphQLApiKey(
         [Service] IGraphQLKeyService graphQLKeyService,
         Guid id)
@@ -123,6 +126,31 @@ public class ApiKeyMutation
         try
         {
             result = await graphQLKeyService.DeleteGraphQLApiKeyById(id, "graphqlapikey");
+
+            var successMessage = "GraphQL API key deleted successfully";
+
+            return ConvertToResponseDto(result, successMessage);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting the API key.");
+            return new ResponseDto
+            {
+                IsSuccess = false,
+                Message = ex.Message
+            };
+        }
+    }
+
+    // TODO: should add [Authorize] equvivalent check?
+    public async Task<ResponseDto> DeleteGraphQLApiKeyByEncryptedKey(
+        [Service] IGraphQLKeyService graphQLKeyService,
+        string encryptedKey)
+    {
+        IActionResult result;
+        try
+        {
+            result = await graphQLKeyService.RemoveGraphQLAccessKey(encryptedKey);
 
             var successMessage = "GraphQL API key deleted successfully";
 
