@@ -63,6 +63,15 @@ const toggleSelectedField = (tableName: string, propertyName: string) => {
   }
 }
 
+const toggleAllFieldsForQuery = (queryName: string, properties: string[]) => {
+  const currentSelectedFields = selectedFields.value[queryName] || []
+  if (currentSelectedFields.length === properties.length) {
+    selectedFields.value[queryName] = []
+  } else {
+    selectedFields.value[queryName] = [...properties]
+  }
+}
+
 const CREATE_GRAPHQL_KEY_MUTATION = gql`
   mutation CreateGraphQLAccessKey(
     $keyName: String!
@@ -135,11 +144,27 @@ const createKey = async () => {
           </div>
           <ul>
             <li v-for="(query, index) in availableQueries" :key="index">
-              <p class="text-lg font-bold">{{ query.queryResponseTable }}</p>
+              <div class="flex items-center space-x-3 h-6 mb-1">
+                <Checkbox
+                  :checked="
+                    selectedFields[query.queryName]?.length ===
+                    availableClassTables[index].properties.length
+                  "
+                  @update:checked="
+                    () =>
+                      toggleAllFieldsForQuery(
+                        query.queryName,
+                        availableClassTables[index].properties.map((p) => p.name)
+                      )
+                  "
+                />
+                <p class="text-lg font-bold">{{ query.queryResponseTable }}</p>
+              </div>
+
               <div
                 v-for="property in availableClassTables[index].properties"
                 :key="`property-${property.name}`"
-                class="flex items-center space-x-3 h-6"
+                class="flex items-center space-x-3 h-6 ml-6"
               >
                 <Checkbox
                   :checked="selectedFields[query.queryName]?.includes(property.name)"

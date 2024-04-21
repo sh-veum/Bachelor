@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { createKafkaKey, getAvailableKafkatopics } from '@/lib/kafka'
 import { computed, ref } from 'vue'
 import CreatedKeyDialog from '../CreatedKeyDialog.vue'
+import { watch } from 'fs'
 
 const keyName = ref('')
 const availableTopics = ref<string[]>([])
@@ -41,8 +42,20 @@ const fetchData = async () => {
 const toggleSelectedTopic = (topic: string) => {
   if (selectedTopics.value.has(topic)) {
     selectedTopics.value.delete(topic)
+    console.log('Selected topics 1: ', selectedTopics.value)
   } else {
     selectedTopics.value.add(topic)
+    console.log('Selected topics 2: ', selectedTopics.value)
+  }
+}
+
+const toggleAllTopics = () => {
+  if (selectedTopics.value.size === availableTopics.value.length) {
+    selectedTopics.value.clear()
+    console.log('Selected topics 3: ', selectedTopics.value)
+  } else {
+    selectedTopics.value = new Set(availableTopics.value)
+    console.log('Selected topics 4: ', selectedTopics.value)
   }
 }
 
@@ -86,10 +99,21 @@ const createKey = async () => {
           <p v-if="keyNameErrorMessage" class="text-red-500">{{ keyNameErrorMessage }}</p>
           <p class="text-2xl font-bold mt-2">Available Topics</p>
           <hr class="my-2" />
+          <div class="flex items-center space-x-3 h-6">
+            <Checkbox
+              @update:checked="toggleAllTopics"
+              :checked="selectedTopics.size === availableTopics.length"
+            />
+            <p class="font-normal">Select all</p>
+          </div>
+          <hr class="my-2" />
           <ul>
             <li v-for="(topic, index) in availableTopics" :key="index">
               <div class="flex items-center space-x-3 h-6">
-                <Checkbox @update:checked="() => toggleSelectedTopic(topic)" />
+                <Checkbox
+                  @update:checked="() => toggleSelectedTopic(topic)"
+                  :checked="selectedTopics.has(topic)"
+                />
                 <p class="font-normal">{{ topic }}</p>
                 <hr class="my-2" />
               </div>
