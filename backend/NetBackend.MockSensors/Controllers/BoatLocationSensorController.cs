@@ -5,9 +5,9 @@ namespace MockSensors.Controllers;
 
 [ApiController]
 [Route("sensors/boat")]
-public class BoatController : SensorControllerBase<BoatSensorManager>
+public class BoatLocationSensorController : SensorControllerBase<BoatSensorManager>
 {
-    public BoatController(BoatSensorManager sensorManager, ILogger<BoatController> logger) : base(sensorManager, logger) { }
+    public BoatLocationSensorController(BoatSensorManager sensorManager, ILogger<BoatLocationSensorController> logger) : base(sensorManager, logger) { }
 
     [HttpPost("startSensor/{id}")]
     public IActionResult StartBoatSensor(string id) => StartSensor(id);
