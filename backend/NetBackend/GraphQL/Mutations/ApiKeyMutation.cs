@@ -9,7 +9,6 @@ using NetBackend.Services.Interfaces.Keys;
 
 namespace NetBackend.GraphQL.Mutations;
 
-// TODO: NOTE: Might have to manually put everything in the constructors instead of private fields
 public class ApiKeyMutation
 {
     private readonly ILogger<ApiKeyMutation> _logger;
@@ -23,7 +22,6 @@ public class ApiKeyMutation
         _kafkaProducerService = kafkaProducerService;
     }
 
-    // TODO: should add [Authorize] equvivalent check?
     public async Task<AccessKeyDto> CreateGraphQLAccessKey(
              [Service] IGraphQLKeyService graphQLKeyService,
              [Service] IUserService userService,
@@ -59,13 +57,18 @@ public class ApiKeyMutation
         };
     }
 
-    // TODO: should add [Authorize] equvivalent check?
-    public async Task<ResponseDto> ToggleApiKey(
+    public async Task<ResponseDto?> ToggleApiKey(
         [Service] IRestKeyService restKeyService,
         [Service] IGraphQLKeyService graphQLKeyService,
         [Service] IKafkaKeyService kafkaKeyService,
+        [Service] IUserService userService,
         ToggleApiKeyStatusDto toggleApiKeyStatusDto)
     {
+        // NOTE: Workaround to replace [Autorize]
+        var (user, error) = await userService.GetUserByHttpContextAsync(_httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null. User unauthorized or session expired."));
+
+        if (user == null) return null;
+
         IActionResult result;
         try
         {
@@ -117,11 +120,16 @@ public class ApiKeyMutation
         }
     }
 
-    // TODO: should add [Authorize] equvivalent check?
-    public async Task<ResponseDto> DeleteGraphQLApiKey(
+    public async Task<ResponseDto?> DeleteGraphQLApiKey(
         [Service] IGraphQLKeyService graphQLKeyService,
+        [Service] IUserService userService,
         Guid id)
     {
+        // NOTE: Workaround to replace [Autorize]
+        var (user, error) = await userService.GetUserByHttpContextAsync(_httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null. User unauthorized or session expired."));
+
+        if (user == null) return null;
+
         IActionResult result;
         try
         {
@@ -142,11 +150,16 @@ public class ApiKeyMutation
         }
     }
 
-    // TODO: should add [Authorize] equvivalent check?
-    public async Task<ResponseDto> DeleteGraphQLApiKeyByEncryptedKey(
+    public async Task<ResponseDto?> DeleteGraphQLApiKeyByEncryptedKey(
         [Service] IGraphQLKeyService graphQLKeyService,
+        [Service] IUserService userService,
         string encryptedKey)
     {
+        // NOTE: Workaround to replace [Autorize]
+        var (user, error) = await userService.GetUserByHttpContextAsync(_httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null. User unauthorized or session expired."));
+
+        if (user == null) return null;
+
         IActionResult result;
         try
         {

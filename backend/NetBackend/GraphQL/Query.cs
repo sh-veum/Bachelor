@@ -10,7 +10,6 @@ using NetBackend.Tools;
 
 namespace NetBackend.GraphQL;
 
-// TODO: Figure out why UserService has to be specified in the constructor parameters of a method or it messes up getting a user from the httpContext
 public class Query
 {
     private readonly ILogger<Query> _logger;
@@ -123,14 +122,38 @@ public class Query
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting organizations");
+            _logger.LogError(ex, "Error getting water quality logs");
             return null;
         }
     }
 
-    // TODO: should add [Authorize] equvivalent check?
-    public List<ClassInfo> GetAvailableClassTables()
+    public async Task<IQueryable<BoatLocationLog>?> GetBoatLocationLogs(
+        [Service(ServiceKind.Synchronized)] IDbContextService dbContextService,
+        [Service] IUserService userService)
     {
+        try
+        {
+            var userResult = await GetContextFromUser(userService, dbContextService);
+            if (userResult.Error != null) return null;
+
+            BaseDbContext? dbContext = userResult.DbContext as BaseDbContext;
+
+            return dbContext?.GetBoatLocationLogs();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting boat location logs");
+            return null;
+        }
+    }
+
+    public async Task<List<ClassInfo>?> GetAvailableClassTables([Service] IUserService userService)
+    {
+        // NOTE: Workaround to replace [Autorize]
+        var (user, error) = await userService.GetUserByHttpContextAsync(_httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null. User unauthorized or session expired."));
+
+        if (user == null) return null;
+
         var classInfos = new List<ClassInfo>();
 
         foreach (var tableName in GraphQLConstants.AvailableQueryTables)
@@ -146,9 +169,13 @@ public class Query
         return classInfos;
     }
 
-    // TODO: should add [Authorize] equvivalent check?
-    public List<List<string>> GetAvailableQueries()
+    public async Task<List<List<string>>?> GetAvailableQueries([Service] IUserService userService)
     {
+        // NOTE: Workaround to replace [Autorize]
+        var (user, error) = await userService.GetUserByHttpContextAsync(_httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null. User unauthorized or session expired."));
+
+        if (user == null) return null;
+
         return [.. GraphQLConstants.AvailableQueries];
     }
 
@@ -156,13 +183,15 @@ public class Query
     // Need to split it up into two since the GraphQL schema cant detect the return type of the method since it returns IApiKeyDto
     // NOTE:
     // cant fetch GetRestApiKeysByUser and GetGraphQLApiKeysByUser unless (ServiceKind.Synchronized) is added to the IKeyService
-    public async Task<List<RestApiKeyDto>> GetRestApiKeysByUser(
+    public async Task<List<RestApiKeyDto>?> GetRestApiKeysByUser(
         [Service] IRestKeyService restKeyService,
         [Service] IUserService userService)
     {
         var httpContext = _httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null.");
         var userResult = await userService.GetUserByHttpContextAsync(httpContext);
         var user = userResult.user;
+
+        if (user == null) return null;
 
         var apiKeys = await restKeyService.GetRestApiKeysByUserId(user.Id);
 
@@ -193,24 +222,26 @@ public class Query
     }
 
 
-    public async Task<List<GraphQLApiKeyDto>> GetGraphQLApiKeysByUser(
+    public async Task<List<GraphQLApiKeyDto>?> GetGraphQLApiKeysByUser(
         [Service] IUserService userService,
         [Service] IGraphQLKeyService graphQlKeyService)
     {
         _logger.LogInformation("GetGraphQLApiKeysByUser");
         var httpContext = _httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(_httpContextAccessor), "HttpContextAccessor's HttpContext is null.");
 
-        _logger.LogInformation("Getting user...");
+        // _logger.LogInformation("Getting user...");
         var userResult = await userService.GetUserByHttpContextAsync(httpContext);
         var user = userResult.user;
-        _logger.LogInformation("Got user: {user}", user.Email ?? "error fetching user email");
+        // _logger.LogInformation("Got user: {user}", user.Email ?? "error fetching user email");
 
-        _logger.LogInformation("Getting api keys...");
+        if (user == null) return null;
+
+        // _logger.LogInformation("Getting api keys...");
         var apiKeys = await graphQlKeyService.GetGraphQLApiKeysByUserId(user.Id);
         var apiKeysDto = new List<GraphQLApiKeyDto>();
-        _logger.LogInformation("Got api keys: {apiKeys}", apiKeys.Count);
+        // _logger.LogInformation("Got api keys: {apiKeys}", apiKeys.Count);
 
-        _logger.LogInformation("Getting permissions ...");
+        // _logger.LogInformation("Getting permissions ...");
         foreach (var apiKey in apiKeys)
         {
             var permissions = await graphQlKeyService.GetGraphQLAccessKeyPermissions(apiKey.Id);
