@@ -17,6 +17,15 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
@@ -91,6 +100,17 @@ const saveChanges = async (user: EditableUser) => {
   }
 }
 
+const deleteUser = async (userEmail: string) => {
+  try {
+    await axios.delete(
+      `${import.meta.env.VITE_VUE_APP_API_URL}/api/user/delete-user-by-email?email=${userEmail}`
+    )
+    fetchData()
+  } catch (error) {
+    console.error('Failed to delete user:', error)
+  }
+}
+
 onMounted(fetchData)
 </script>
 
@@ -102,7 +122,8 @@ onMounted(fetchData)
         <TableHead class="w-[200px]">Email</TableHead>
         <TableHead class="w-[200px]">Database</TableHead>
         <TableHead class="w-[200px]">Role</TableHead>
-        <TableHead class="w-[200px]">Actions</TableHead>
+        <TableHead class="w-[200px]">Edit</TableHead>
+        <TableHead class="w-[200px]">Delete</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
@@ -151,6 +172,36 @@ onMounted(fetchData)
           <Button v-else @click="editUser(user)" class="p-2 bg-green-500 text-white rounded">
             Edit
           </Button>
+        </TableCell>
+        <TableCell>
+          <Dialog>
+            <DialogTrigger as-child>
+              <Button
+                variant="destructive"
+                class="p-2 hover:bg-red-800"
+                :disabled="user.role === 'ADMIN'"
+              >
+                Delete
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete User</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this user? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  @click="deleteUser(user.email)"
+                  variant="destructive"
+                  class="p-2 hover:bg-red-800"
+                >
+                  Confirm Delete
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TableCell>
       </TableRow>
     </TableBody>
