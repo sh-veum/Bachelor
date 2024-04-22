@@ -4,7 +4,6 @@ import { toTypedSchema } from '@vee-validate/zod'
 import axios from 'axios'
 import { useForm } from 'vee-validate'
 import * as z from 'zod'
-
 import {
   Table,
   TableBody,
@@ -14,7 +13,6 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-
 import {
   Dialog,
   DialogContent,
@@ -25,11 +23,8 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
-
 import CreatedKeyDialog from '@/components/CreatedKeyDialog.vue'
 import type { Key, Theme } from '@/components/interfaces/RestSchema'
 import ThemeCollapsible from '@/components/rest/ThemeCollapsible.vue'
@@ -317,11 +312,24 @@ const toggleCollapsible = (index: string) => {
               Enable
             </Button>
           </TableCell>
-          <TableCell class="text-center"
-            ><Button variant="destructive" @click="deleteAccessKey(key.id)">
-              Delete
-            </Button></TableCell
-          >
+          <TableCell class="text-center">
+            <Dialog>
+              <DialogTrigger as-child>
+                <Button variant="destructive" class="p-2 hover:bg-red-800"> Delete </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete User</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this user? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="destructive" @click="deleteAccessKey(key.id)"> Delete </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </TableCell>
         </TableRow>
       </TableBody>
     </Table>

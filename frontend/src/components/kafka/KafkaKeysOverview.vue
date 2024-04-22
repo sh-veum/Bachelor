@@ -16,6 +16,15 @@ import {
   AccordionItem,
   AccordionTrigger
 } from '@/components/ui/accordion'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
 const props = defineProps<{
@@ -101,7 +110,24 @@ const deleteKey = async (id: string) => {
             </Button>
           </TableCell>
           <TableCell class="text-center">
-            <Button variant="destructive" @click="deleteKey(kafkaKey.id)"> Delete key </Button>
+            <Dialog>
+              <DialogTrigger as-child>
+                <Button variant="destructive" class="p-2 hover:bg-red-800"> Delete </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete User</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this user? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="destructive" @click="deleteKey(kafkaKey.id)">
+                    Delete key
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TableCell>
         </TableRow>
       </TableBody>

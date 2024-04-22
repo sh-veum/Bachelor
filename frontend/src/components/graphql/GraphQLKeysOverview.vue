@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { ref } from 'vue'
 import {
   Table,
   TableBody,
@@ -15,13 +15,20 @@ import {
   AccordionItem,
   AccordionTrigger
 } from '@/components/ui/accordion'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import type { GraphQLKey } from '../interfaces/GraphQLSchema'
 import { toggleApiKey, deleteGraphQLApiKey } from '@/lib/graphQL'
 import type { UUID } from 'crypto'
 
-// Initialize a ref for the WebSocket
-const webSocket = ref<WebSocket | null>(null)
 const receivedMessage = ref(null)
 
 const graphQLKeys = defineModel('graphQLKeys', {
@@ -61,38 +68,6 @@ const deleteKey = async (id: UUID) => {
     console.error('Error deleting key:', error)
   }
 }
-
-// Function to handle incoming WebSocket messages
-const handleWebSocketMessage = (event: MessageEvent) => {
-  const message = JSON.parse(event.data)
-  console.log('Received message:', message)
-
-  if (message.topic === 'graphql-key-updates') {
-    receivedMessage.value = message.message
-  }
-}
-
-const setupWebSocket = () => {
-  webSocket.value = new WebSocket('ws://localhost:8088/ws')
-
-  webSocket.value.onmessage = handleWebSocketMessage
-  webSocket.value.onopen = () => console.log('WebSocket connected')
-  webSocket.value.onclose = () => console.log('WebSocket disconnected')
-}
-
-const cleanupWebSocket = () => {
-  if (webSocket.value) {
-    webSocket.value.close()
-  }
-}
-
-onMounted(() => {
-  setupWebSocket()
-})
-
-onUnmounted(() => {
-  cleanupWebSocket()
-})
 </script>
 
 <template>
@@ -147,7 +122,24 @@ onUnmounted(() => {
             </Button>
           </TableCell>
           <TableCell class="text-center">
-            <Button variant="destructive" @click="deleteKey(graphQLKey.id)"> Delete key </Button>
+            <Dialog>
+              <DialogTrigger as-child>
+                <Button variant="destructive" class="p-2 hover:bg-red-800"> Delete </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete User</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this user? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="destructive" @click="deleteKey(graphQLKey.id)">
+                    Delete key
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TableCell>
         </TableRow>
       </TableBody>
