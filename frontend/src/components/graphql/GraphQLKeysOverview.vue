@@ -90,7 +90,16 @@ const deleteKey = async (id: UUID) => {
           <TableCell>
             <Accordion type="single" collapsible>
               <AccordionItem :value="`${index}`">
-                <AccordionTrigger>{{ graphQLKey.permissions.length }} permissions</AccordionTrigger>
+                <AccordionTrigger>
+                  Total: {{ graphQLKey.permissions.length }} tables,
+                  {{
+                    graphQLKey.permissions.reduce(
+                      (total, permissions) => total + permissions.allowedFields.length,
+                      0
+                    )
+                  }}
+                  fields
+                </AccordionTrigger>
                 <AccordionContent>
                   <div v-for="(permissions, index) in graphQLKey.permissions" :key="index">
                     <p class="text-base font-bold">{{ permissions.queryName }}</p>
