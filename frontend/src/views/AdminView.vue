@@ -115,95 +115,97 @@ onMounted(fetchData)
 </script>
 
 <template>
-  <Table class="w-[800px]">
-    <TableCaption>List of All Users</TableCaption>
-    <TableHeader>
-      <TableRow>
-        <TableHead class="w-[200px]">Email</TableHead>
-        <TableHead class="w-[200px]">Database</TableHead>
-        <TableHead class="w-[200px]">Role</TableHead>
-        <TableHead class="w-[200px]">Edit</TableHead>
-        <TableHead class="w-[200px]">Delete</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      <TableRow v-for="user in users" :key="user.email" class="h-20">
-        <TableCell>{{ user.email }}</TableCell>
-        <TableCell>
-          <Select v-if="user.isEditing" v-model="user.newDatabase">
-            <SelectTrigger>
-              <SelectValue :value="user.newDatabase" placeholder="Select a database" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Databases</SelectLabel>
-                <SelectItem v-for="db in databases" :key="db" :value="db">
-                  {{ db }}
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <span v-else>{{ user.assignedDatabase || 'N/A' }}</span>
-        </TableCell>
-        <TableCell>
-          <Select v-if="user.isEditing" v-model="user.newRole">
-            <SelectTrigger>
-              <SelectValue :value="user.newRole" placeholder="Select a role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Roles</SelectLabel>
-                <SelectItem v-for="role in roles" :key="role" :value="role">
-                  {{ role }}
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <span v-else>{{ user.role || 'Unassigned' }}</span>
-        </TableCell>
-        <TableCell>
-          <Button
-            v-if="user.isEditing"
-            @click="saveChanges(user)"
-            class="p-2 bg-blue-500 text-white rounded"
-          >
-            Save
-          </Button>
-          <Button v-else @click="editUser(user)" class="p-2 bg-green-500 text-white rounded">
-            Edit
-          </Button>
-        </TableCell>
-        <TableCell>
-          <Dialog>
-            <DialogTrigger as-child>
-              <Button
-                variant="destructive"
-                class="p-2 hover:bg-red-800"
-                :disabled="user.role === 'ADMIN'"
-              >
-                Delete
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Delete User</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to delete this user? This action cannot be undone.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
+  <div class="mx-6">
+    <Table class="w-[800px]">
+      <TableCaption>List of All Users</TableCaption>
+      <TableHeader>
+        <TableRow>
+          <TableHead class="w-[200px]">Email</TableHead>
+          <TableHead class="w-[200px]">Database</TableHead>
+          <TableHead class="w-[200px]">Role</TableHead>
+          <TableHead class="w-[200px]">Edit</TableHead>
+          <TableHead class="w-[200px]">Delete</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        <TableRow v-for="user in users" :key="user.email" class="h-20">
+          <TableCell>{{ user.email }}</TableCell>
+          <TableCell>
+            <Select v-if="user.isEditing" v-model="user.newDatabase">
+              <SelectTrigger>
+                <SelectValue :value="user.newDatabase" placeholder="Select a database" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Databases</SelectLabel>
+                  <SelectItem v-for="db in databases" :key="db" :value="db">
+                    {{ db }}
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <span v-else>{{ user.assignedDatabase || 'N/A' }}</span>
+          </TableCell>
+          <TableCell>
+            <Select v-if="user.isEditing" v-model="user.newRole">
+              <SelectTrigger>
+                <SelectValue :value="user.newRole" placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Roles</SelectLabel>
+                  <SelectItem v-for="role in roles" :key="role" :value="role">
+                    {{ role }}
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <span v-else>{{ user.role || 'Unassigned' }}</span>
+          </TableCell>
+          <TableCell>
+            <Button
+              v-if="user.isEditing"
+              @click="saveChanges(user)"
+              class="p-2 bg-blue-500 text-white rounded"
+            >
+              Save
+            </Button>
+            <Button v-else @click="editUser(user)" class="p-2 bg-green-500 text-white rounded">
+              Edit
+            </Button>
+          </TableCell>
+          <TableCell>
+            <Dialog>
+              <DialogTrigger as-child>
                 <Button
-                  @click="deleteUser(user.email)"
                   variant="destructive"
                   class="p-2 hover:bg-red-800"
+                  :disabled="user.role === 'ADMIN'"
                 >
-                  Confirm Delete
+                  Delete
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </TableCell>
-      </TableRow>
-    </TableBody>
-  </Table>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete User</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this user? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    @click="deleteUser(user.email)"
+                    variant="destructive"
+                    class="p-2 hover:bg-red-800"
+                  >
+                    Confirm Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
+  </div>
 </template>
