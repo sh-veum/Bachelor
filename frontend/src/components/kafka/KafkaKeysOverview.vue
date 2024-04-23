@@ -69,7 +69,7 @@ const deleteKey = async (id: string) => {
 <template>
   <div>
     <Table>
-      <TableCaption>GraphQL Keys Overview</TableCaption>
+      <TableCaption>Kafka Keys Overview</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead class="w-[200px]">Key Name</TableHead>

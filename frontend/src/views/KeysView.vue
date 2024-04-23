@@ -275,7 +275,7 @@ const toggleCollapsible = (index: string) => {
     </div>
 
     <Table>
-      <TableCaption>A list of your created keys</TableCaption>
+      <TableCaption>REST API Keys Overview</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead class="w-[200px]">Name</TableHead>
