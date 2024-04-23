@@ -1,10 +1,10 @@
-# Define the base image for running the application
+# Base image for running the application
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-# Define the build environment and build the application
+# Build environment and build the application
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 # Copy the main project and its dependencies
