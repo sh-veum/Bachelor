@@ -1,3 +1,27 @@
+# Running the project
+
+## Prerequisites
+
+- Docker desktop
+- Node.js
+- .NET 8.0 SDK
+
+## Install frontend dependencies
+
+from the `frontend` directory, run the following command:
+
+```sh
+npm install
+```
+
+## Run the project
+
+from the root directory, run the following command:
+
+```sh
+docker-compose up --build
+```
+
 # Urls
 
 ### Backend
@@ -39,3 +63,15 @@ http://localhost:8089/startSensor
 ```
 http://localhost:8089/stopSensor
 ```
+
+# Logging in
+
+To log in as admin, use the following credentials:
+
+Email: `admin@mail.com`
+Password: `Password!1`
+
+To log in as user, use the following credentials:
+
+Email: `test@mail.com`
+Password: `TestPassword1!`
