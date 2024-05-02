@@ -1,6 +1,6 @@
-# frontend
+# Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+This is the frontend of the project. It is a Vue 3 project created with Vite.
 
 ## Recommended IDE Setup
 
@@ -28,12 +28,6 @@ npm run dev
 
 ```sh
 npm run build
-```
-<!-- TODO: remove because we have no unit tests in the frontend? -->
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
 ```
 
 ### Lint with [ESLint](https://eslint.org/)
