@@ -1,3 +1,7 @@
+# The project
+
+This a bachelor project for NTNU Ålesund and was commissioned by FiiZK. The project is a web application for Managing Data Retrieval in a Multi-tenant Environment.
+
 # Running the project
 
 ## Prerequisites
@@ -21,6 +25,12 @@ from the root directory, run the following command:
 ```sh
 docker-compose up --build
 ```
+
+## Further setup
+
+[Frontend README](frontend/README.md)
+
+[Backend README](backend/README.md)
 
 # Urls
 
