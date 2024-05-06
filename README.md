@@ -10,14 +10,6 @@ This a bachelor project for NTNU Ålesund and was commissioned by FiiZK. The pro
 - Node.js
 - .NET 8.0 SDK
 
-## Install frontend dependencies
-
-from the `frontend` directory, run the following command:
-
-```sh
-npm install
-```
-
 ## Run the project
 
 from the root directory, run the following command:
