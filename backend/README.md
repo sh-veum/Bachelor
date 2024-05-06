@@ -6,7 +6,7 @@ download dotnet ef tool by running command:
 dotnet tool install --global dotnet-ef
 ```
 
-run command: 
+run command and follow instructions: 
 
 ```sh
 python update-databases.py
