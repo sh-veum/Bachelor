@@ -116,9 +116,9 @@ const deleteKey = async (id: string) => {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Delete User</DialogTitle>
+                  <DialogTitle>Delete Key</DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to delete this user? This action cannot be undone.
+                    Are you sure you want to delete this key? This action cannot be undone.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
