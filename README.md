@@ -79,5 +79,4 @@ Email: `test@mail.com`
 Password: `TestPassword1!`
 
 # Demo Video
-A demo video of showcasing how to use the frontend.
-[Demo Video](https://youtu.be/o9TnndkU0Yg)
+The [Demo Video](https://youtu.be/o9TnndkU0Yg) showcases how to use the frontend website.
