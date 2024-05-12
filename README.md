@@ -77,3 +77,9 @@ To log in as user, use the following credentials:
 
 Email: `test@mail.com`
 Password: `TestPassword1!`
+
+# Demo Video
+A demo video of showcasing how to use the frontend.
+```
+https://youtu.be/o9TnndkU0Yg
+```
