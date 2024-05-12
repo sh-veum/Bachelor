@@ -80,4 +80,4 @@ Password: `TestPassword1!`
 
 # Demo Video
 A demo video of showcasing how to use the frontend.
-- [Demo Video](https://youtu.be/o9TnndkU0Yg)
+[Demo Video](https://youtu.be/o9TnndkU0Yg)
