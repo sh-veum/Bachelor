@@ -80,6 +80,4 @@ Password: `TestPassword1!`
 
 # Demo Video
 A demo video of showcasing how to use the frontend.
-```
-https://youtu.be/o9TnndkU0Yg
-```
+- [Demo Video]([https://duckduckgo.com](https://youtu.be/o9TnndkU0Yg))
