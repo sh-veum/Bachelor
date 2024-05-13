@@ -1,6 +1,15 @@
-# The project
+# Project Overview
 
 This a bachelor project for NTNU Ålesund and was commissioned by FiiZK. The project is a web application for Managing Data Retrieval in a Multi-tenant Environment.
+
+The project uses a combination of:
+- Vue (TypeScript)
+- .Net 8 webapi
+- REST API
+- GraphQL
+- Kafka
+- WebSocket
+- PostgreSQL
 
 # Running the project
 
