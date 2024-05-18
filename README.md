@@ -52,7 +52,7 @@ http://localhost:8088/graphql
 ### Frontend
 
 ```
-http://localhost:5173/
+http://localhost:8080/
 ```
 
 ### Kafka UI
